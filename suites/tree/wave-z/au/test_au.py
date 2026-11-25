@@ -103,6 +103,17 @@ Fake Stripe + Resend + legal pack (wave-r-back/pb/harness.py), a local store fol
 # 2026-11-25. eu_pixel.json is the EXACT pin of the EU edition as of this work (snap_eu_edition.mjs), eu_block.json stays as the base: the 1124 step is now checked
 # between the pins of the print offered later and of the list of prints. eu_pixel_raw.json (snap_eu.mjs) is the raw docs as of this work, the base of the
 # Australian and US editions' privacy policy, held to eu_cap_raw.json plus exactly the same blocks (en, de). A1, B1, B3 and E8 moved with " - 1125:" added.
+# 1125c refresh (2026-11-25, the owner's decision: "varnelę išimti visai", no consent box in the buy card but on the US market, taken knowing that without the
+# express consent the buyer of digital content keeps the 14-day right of withdrawal). The EU edition changed on purpose in its TERMS and its WITHDRAWAL PAGE only,
+# in all eight languages: the terms by exactly one block of "contract" (the order record names no consent) and the one block of "withdrawal" (the right lasts the 14
+# days; making and delivering the file do not end it); the withdrawal page by its description and lead, the section "expiry" (its title, two blocks in place of the
+# four with the checkbox) and three blocks of "online" (the first without its last sentence, the two about what happens then). The privacy policy, the legal notice
+# and the checkout wording (the texts of the boxes stay, for the US market and for the old orders that quote them) as they were; the consent version and
+# LEGAL_UPDATED (2026-11-25) as they were. eu_nobox.json is the EXACT pin of the EU edition as of this work (snap_eu_edition.mjs), eu_pixel.json stays as the
+# base: the 1125 step is now checked between the pins of the list of prints and of the pixel; eu_nobox_raw.json (snap_eu.mjs) holds the raw docs the same way.
+# The Australian market has no box either: its order records how it was placed (no consent), its confirmation quotes no consent and says the 14 days stay,
+# making that began does not end the right; an order that holds a consent (placed before) is read and answered as before (F1, F3, H2, I4). The US market keeps
+# its box (U). B1, B3, C2, C9, D2 to D5, E1, E4, E5, E8, E9, F1 to F3, H2, I4 and K1 to K3 moved with " - 1125c:" added.
 import os, sys, json, time, re, subprocess, importlib.util, calendar
 HERE = os.path.dirname(os.path.abspath(__file__))
 SP = os.path.dirname(os.path.dirname(HERE))
@@ -267,7 +278,9 @@ EU_GIFT = json.load(open(os.path.join(HERE, "eu_gift.json"), encoding="utf-8")) 
 EU_LANGS3 = json.load(open(os.path.join(HERE, "eu_langs3.json"), encoding="utf-8"))   # 1113 refresh: the EU edition with its Finnish, Estonian and Latvian texts (snap_eu_edition.mjs), the base is eu_gift.json; 1121: the base of the print paragraphs
 EU_PRINTLATER = json.load(open(os.path.join(HERE, "eu_printlater.json"), encoding="utf-8"))   # 1121 refresh: the EU edition whose print paragraphs say that a print is ordered after the artwork (snap_eu_edition.mjs), the base is eu_langs3.json; 1124: the base of the list of prints
 EU_BLOCK = json.load(open(os.path.join(HERE, "eu_block.json"), encoding="utf-8"))   # 1124 refresh: the EU edition whose list of prints has the acrylic block and the canvas' new price (snap_eu_edition.mjs), the base is eu_printlater.json
-EU_NOW = json.load(open(os.path.join(HERE, "eu_pixel.json"), encoding="utf-8"))   # 1125 refresh: the EU edition whose privacy policy describes the Meta pixel (snap_eu_edition.mjs), the base is eu_block.json
+EU_PIXEL = json.load(open(os.path.join(HERE, "eu_pixel.json"), encoding="utf-8"))   # 1125 refresh: the EU edition whose privacy policy describes the Meta pixel (snap_eu_edition.mjs), the base is eu_block.json; 1125c: the base of the edition without the consent box
+EU_NOW = json.load(open(os.path.join(HERE, "eu_nobox.json"), encoding="utf-8"))   # 1125c refresh: the EU edition without the consent box (snap_eu_edition.mjs), the base is eu_pixel.json
+EU_NOBOX_RAW = json.load(open(os.path.join(HERE, "eu_nobox_raw.json"), encoding="utf-8"))   # 1125c refresh: the raw docs without the consent box (snap_eu.mjs), held to eu_pixel_raw.json the same way
 EU_PIXEL_RAW = json.load(open(os.path.join(HERE, "eu_pixel_raw.json"), encoding="utf-8"))   # 1125 refresh: the raw docs with the Meta pixel's privacy passages (snap_eu.mjs), the base of the AU and US editions' privacy policy
 EU_CAP_RAW = json.load(open(os.path.join(HERE, "eu_cap_raw.json"), encoding="utf-8"))   # 1111 refresh: the raw docs (snap_eu.mjs), the base of the Australian and US editions' privacy policy
 LEGAL_NOW = "2026-11-25"        # 1125 refresh: the Meta pixel in the privacy policy. 1124 refresh: the terms' list of prints and prices (the acrylic block, the canvas' price). 1121 refresh (2026-11-21): the print paragraphs (a print is ordered after the artwork). 1113 refresh (2026-11-13): the Finnish, Estonian and Latvian texts of the EU edition. 1111 refresh (2026-11-11): the ceiling of free previews in the privacy policy. 1028 refresh: LEGAL_UPDATED, one date for every legal page and the pack (2026-10-20 for the counter, 2026-10-06 since WP18, 2026-10-05 at WP12, 2026-09-30 before)
@@ -669,11 +682,40 @@ def _step1125(new, old):
             and "Meta Platforms Ireland Limited" in first and all(any(w in json.dumps(d[k][0], ensure_ascii=False) for w in ("#meta", "_fbp")) for k in PRIV1125))
 
 
-pixel1125 = {l: _step1125(EDI["eu"]["privacy"][l], EU_BLOCK["privacy"][l]) for l in LANG8}
+pixel1125 = {l: _step1125(EU_PIXEL["privacy"][l], EU_BLOCK["privacy"][l]) for l in LANG8}      # 1125c: between the two pins
 pixel1125_raw = {l: _step1125(EU_PIXEL_RAW["privacy"][l], EU_CAP_RAW["privacy"][l]) for l in LANG2}
 pixel1125_ok = (all(pixel1125.values()) and all(pixel1125_raw.values())
-                and all(EDI["eu"][d][l] == EU_BLOCK[d][l] for d in ("terms", "withdrawal", "imprint") for l in LANG8)
-                and EU_NOW["checkout"] == EU_BLOCK["checkout"])
+                and all(EU_PIXEL[d][l] == EU_BLOCK[d][l] for d in ("terms", "withdrawal", "imprint") for l in LANG8)
+                and EU_PIXEL["checkout"] == EU_BLOCK["checkout"])
+# 1125c (the owner's decision of 2026-11-25, see the header): the terms differ from the pin of the pixel by exactly one block of "contract" and one of "withdrawal";
+# the withdrawal page by its description and lead, the title and blocks of "expiry" (two new ones, the four with the checkbox gone) and three blocks of "online";
+# the privacy policy, the legal notice and the checkout wording not at all, in all eight languages; the raw docs the same way (en, de)
+_FRAME = ("description", "lead")
+
+
+def _step1125c(ed, was):
+    t_fr, t_d = doc_diff(ed["terms"], was["terms"])
+    nw = dict(ed["withdrawal"], **{k: was["withdrawal"][k] for k in _FRAME})
+    nw["sections"] = [dict(s, title=o["title"]) if s["id"] == "expiry" else s for s, o in zip(ed["withdrawal"]["sections"], was["withdrawal"]["sections"])]
+    w_fr, w_d = doc_diff(nw, was["withdrawal"])
+    exp_new = next(s for s in ed["withdrawal"]["sections"] if s["id"] == "expiry")
+    exp_old = next(s for s in was["withdrawal"]["sections"] if s["id"] == "expiry")
+    return (t_fr and sorted(t_d) == ["contract", "withdrawal"] and all((len(a), len(r)) == (1, 1) for a, r in t_d.values())
+            and "14" in t_d["withdrawal"][0][0] and all(ed["withdrawal"][k] != was["withdrawal"][k] for k in _FRAME)
+            and w_fr and sorted(w_d) == ["expiry", "online"] and (len(w_d["expiry"][0]), len(w_d["expiry"][1])) == (2, 4)
+            and (len(w_d["online"][0]), len(w_d["online"][1])) == (3, 3) and exp_new["title"] != exp_old["title"]
+            and not any(isinstance(b, dict) and "box" in b for b in exp_new["blocks"]) and any(isinstance(b, dict) and "box" in b for b in exp_old["blocks"]))
+
+
+def _doc_of(pin, l):
+    return {d: pin[d][l] for d in ("terms", "withdrawal")}
+
+
+nobox1125c = {l: _step1125c(_doc_of(EDI["eu"], l), _doc_of(EU_PIXEL, l)) for l in LANG8}
+nobox1125c_raw = {l: _step1125c(_doc_of(EU_NOBOX_RAW, l), _doc_of(EU_PIXEL_RAW, l)) for l in LANG2}
+nobox1125c_ok = (all(nobox1125c.values()) and all(nobox1125c_raw.values())
+                 and all(EDI["eu"][d][l] == EU_PIXEL[d][l] for d in ("privacy", "imprint") for l in LANG8)
+                 and EU_NOW["checkout"] == EU_PIXEL["checkout"] and all(EU_NOBOX_RAW["privacy"][l] == EU_PIXEL_RAW["privacy"][l] for l in LANG2))
 pinned = {d: all(EDI["eu"][d][l] == EU_NOW[d][l] for l in LANG2) for d in DOCS4}
 editions4 = {d: sorted(EDI["eu"][d]) for d in DOCS4}
 check("B1 EU terms, withdrawal page and legal notice exactly as before (en, de)"
@@ -702,9 +744,13 @@ check("B1 EU terms, withdrawal page and legal notice exactly as before (en, de)"
       " page, the privacy policy and the legal notice not at all"
       " - 1125: the pin is eu_pixel.json; the 1124 step is checked between the pins of the print offered later and of the list of prints; the privacy policy differs from"
       " the pin of the list of prints by exactly the section meta (the Meta pixel) and the blocks of PRIV1125, in all eight languages, and the raw docs from eu_cap_raw.json"
-      " the same way (en, de); the terms, the withdrawal page and the legal notice not at all",
-      all(same.values()) and terms12_ok and terms18_ok and terms28_ok and prints28c_ok and gift1111g_ok and langs1113_ok and later1121_ok and block1124_ok and pixel1125_ok and all(pinned.values()) and all(v == ["de", "en", "et", "fi", "hr", "hu", "lt", "lv"] for v in editions4.values()),
-      (same, terms12_ok, terms18_ok, terms28_ok, prints28c_ok, gift1111g_ok, langs1113_ok, later1121_ok, block1124_ok, block1124, pixel1125, pixel1125_raw, {n: {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in x.items()} for n, x in later1121.items()}, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in terms1111g.items()}, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in terms28c.items()}, pinned, editions4, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in terms18.items()}))
+      " the same way (en, de); the terms, the withdrawal page and the legal notice not at all"
+      " - 1125c: the pin is eu_nobox.json; the 1125 step is checked between the pins of the list of prints and of the pixel; without the consent box (the owner's"
+      " decision of 2026-11-25) the terms differ from the pin of the pixel by exactly one block of contract (the order record) and one of withdrawal (the 14 days stay),"
+      " the withdrawal page by its description and lead, the section expiry (its title, two blocks for the four with the checkbox) and three blocks of online, in all"
+      " eight languages, and the raw docs from eu_pixel_raw.json the same way (en, de); the privacy policy, the legal notice and the checkout wording not at all",
+      all(same.values()) and terms12_ok and terms18_ok and terms28_ok and prints28c_ok and gift1111g_ok and langs1113_ok and later1121_ok and block1124_ok and pixel1125_ok and nobox1125c_ok and all(pinned.values()) and all(v == ["de", "en", "et", "fi", "hr", "hu", "lt", "lv"] for v in editions4.values()),
+      (same, terms12_ok, terms18_ok, terms28_ok, prints28c_ok, gift1111g_ok, langs1113_ok, later1121_ok, block1124_ok, block1124, pixel1125, pixel1125_raw, nobox1125c, nobox1125c_raw, {n: {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in x.items()} for n, x in later1121.items()}, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in terms1111g.items()}, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in terms28c.items()}, pinned, editions4, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in terms18.items()}))
 priv_diff = {l: doc_diff(EU_1ACEF["privacy"][l], EU_BEFORE["privacy"][l]) for l in LANG2}   # 1005: the old differences, on the pin of 1acef38
 priv_ok = {l: fr and sorted(d) == sorted(PRIV_ALLOWED[l])
            and all(len(d[sec][0]) == na and len(d[sec][1]) == nr and holds(d[sec][0], pa) and holds(d[sec][1], pr)
@@ -868,7 +914,7 @@ def _pack_1124(l):
     prices (eleven lines, the prints the offer has on by the server's own names, the three acrylic lines and the poster's as they were, the old canvas line
     gone) and the shipping table (its four lines of before, then three for the metal print and the canvas of 60 cm); the withdrawal page word for word; the
     pinned pack of this work holds the same texts."""
-    now = _norm(PACK["docs"][l]["terms"]["text"]).split("\n\n")
+    now = _norm(EU_PIXEL["pack"]["docs"][l]["terms"]["text"]).split("\n\n")      # 1125c: the pin of the pixel (the pack of now is held to it by _pack_1125c)
     was = _norm(EU_PRINTLATER["pack"]["docs"][l]["terms"]["text"]).split("\n\n")
     add, rem = [p for p in now if p not in was], [p for p in was if p not in now]
     if not (len(now) == len(was) and len(add) == 3 == len(rem) and _times1124(add[2], rem[2])):      # the third: the delivery paragraph, its times from the table
@@ -881,8 +927,20 @@ def _pack_1124(l):
             and new[:3] == old[:3] and old[4] in new and old[3] not in new and _digits(old[3]).endswith("6900")
             and len(ship_old) == 4 and len(ship_new) == 12 and ship_new[:4] == ship_old and all((metal + " 60") in x for x in ship_new[4:7])
             and all((": " + _PN.PRINT_NAMES["kinds"]["keyring"][l] + ": ") in x for x in ship_new[7:])
-            and _norm(PACK["docs"][l]["withdrawal"]["text"]) == _norm(EU_PRINTLATER["pack"]["docs"][l]["withdrawal"]["text"])
-            and all(_norm(PACK["docs"][l][d]["text"]) == _norm(EU_NOW["pack"]["docs"][l][d]["text"]) for d in ("terms", "withdrawal")))
+            and _norm(EU_PIXEL["pack"]["docs"][l]["withdrawal"]["text"]) == _norm(EU_PRINTLATER["pack"]["docs"][l]["withdrawal"]["text"]))
+
+
+def _pack_1125c(l):
+    """1125c (the owner's decision of 2026-11-25, no consent box): the pack's EU terms = the pin of the pixel with exactly TWO paragraphs replaced (the order
+    record, the right of withdrawal: the 14 days stay), the withdrawal page with exactly seven paragraphs for nine (the lead, the title and blocks of "expiry",
+    the three of "online"), none of them naming the checkbox; the pinned pack of this work holds the same texts."""
+    ok = True
+    for d, n_add, n_rem in (("terms", 2, 2), ("withdrawal", 7, 9)):
+        now = _norm(PACK["docs"][l][d]["text"]).split("\n\n")
+        was = _norm(EU_PIXEL["pack"]["docs"][l][d]["text"]).split("\n\n")
+        add, rem = [p for p in now if p not in was], [p for p in was if p not in now]
+        ok = ok and len(now) - len(was) == n_add - n_rem and (len(add), len(rem)) == (n_add, n_rem) and _norm(PACK["docs"][l][d]["text"]) == _norm(EU_NOW["pack"]["docs"][l][d]["text"])
+    return ok and pay.CONSENT_TEXT[l] not in PACK["docs"][l]["withdrawal"]["text"] and pay.CONSENT_TEXT[l] in EU_PIXEL["pack"]["docs"][l]["withdrawal"]["text"]
 
 
 seller_en_de = {k: ({l: v[l] for l in LANG2} if isinstance(v, dict) else v) for k, v in PACK["seller"].items()}
@@ -890,7 +948,7 @@ pack_docs_eq = lambda a, b, l, d: (_norm(a[l][d]["text"]) == _norm(b[l][d]["text
                                     and a[l][d]["title"] == b[l][d]["title"])
 eu_pack_same = (
     all(_terms_pack_ok(l) for l in LANG2) and all(_terms_pack_12(l) for l in LANG2) and all(_terms_pack_18(l) for l in LANG2) and all(_terms_pack_28(l) for l in LANG2)
-    and all(_terms_pack_28c(l) for l in LANG2) and all(_pack_1111g(l) for l in LANG2) and all(_pack_1113(l) for l in LANG2) and all(_pack_1121(l) for l in LANG2) and all(_pack_1124(l) for l in LANG8)
+    and all(_terms_pack_28c(l) for l in LANG2) and all(_pack_1111g(l) for l in LANG2) and all(_pack_1113(l) for l in LANG2) and all(_pack_1121(l) for l in LANG2) and all(_pack_1124(l) for l in LANG8) and all(_pack_1125c(l) for l in LANG8)
     and all(pack_docs_eq(EU_HR["pack"]["docs"], EU_BEFORE["pack"]["docs"], l, "withdrawal") for l in LANG2)
     and all(PACK["docs"][l]["terms"]["url"] == EU_BEFORE["pack"]["docs"][l]["terms"]["url"] for l in LANG2)
     and all(pack_docs_eq(PACK["docs"], EU_NOW["pack"]["docs"], l, d) for l in LANG2 for d in ("terms", "withdrawal"))
@@ -911,7 +969,9 @@ check("B3 the built pack's EU texts are the same as before (the date line aside)
       " page by exactly one (_pack_1121); the 1113 step is checked between the pins of the vouchers and of the three languages"
       " - 1124: pinned to eu_block.json, the terms by exactly ONE paragraph replaced in each of the eight languages, the list of prints and prices (the eleven prints"
       " of the offer), the shipping table and the delivery paragraph's times, the withdrawal page word for word (_pack_1124); the 1121 step is checked between the"
-      " two pins before it",
+      " two pins before it - 1125c: pinned to eu_nobox.json; the 1124 step is checked on the pin of the pixel; without the consent box (the owner's decision of"
+      " 2026-11-25) the terms by exactly two paragraphs replaced (the order record, the right of withdrawal) and the withdrawal page by seven paragraphs for nine,"
+      " the checkbox text gone (_pack_1125c)",
       eu_pack_same and "m=" not in json.dumps(PACK["docs"]) and seller_same and PACK["updated"] == EU_NOW["pack"]["updated"],
       (eu_pack_same, seller_same, [_terms_pack_ok(l) for l in LANG2], [_terms_pack_12(l) for l in LANG2], [_terms_pack_18(l) for l in LANG2], [_terms_pack_28(l) for l in LANG2]))
 check("B4 landing copy: eu and lt read the language's own copy object (unchanged)",
@@ -938,11 +998,15 @@ pv = {lang: [next(s for s in e[lang]["sections"] if s["id"] == "preview") for e 
 eu_contract = {l: json.dumps(next(s for s in EU_BASE["terms"][l]["sections"] if s["id"] == "contract"), ensure_ascii=False) for l in LANG2}
 au_contract = {l: json.dumps(next(s for s in T[l]["sections"] if s["id"] == "contract"), ensure_ascii=False) for l in LANG2}
 # 1028: the EU sentence names Croatian too (TERMS28); the AU one still names English and German only
-contract_au = all(eu_contract[l].count(TERMS28[l]["contract"][2][0]) == 1
-                  and eu_contract[l].replace(TERMS28[l]["contract"][2][0], CONTRACT_LANGS[l][0]) == au_contract[l] for l in LANG2)
+# 1125c: the order record of "contract" names no consent any more (B1): the AU section has the new block for the old one
+_rec1125c = {l: doc_diff(EU_NOW["terms"][l], EU_PIXEL["terms"][l])[1]["contract"] for l in LANG2}
+_js = lambda s: json.dumps(s, ensure_ascii=False)[1:-1]
+contract_au = all(eu_contract[l].count(TERMS28[l]["contract"][2][0]) == 1 and eu_contract[l].count(_js(_rec1125c[l][1][0])) == 1
+                  and eu_contract[l].replace(TERMS28[l]["contract"][2][0], CONTRACT_LANGS[l][0]).replace(_js(_rec1125c[l][1][0]), _js(_rec1125c[l][0][0])) == au_contract[l]
+                  for l in LANG2)
 check("C2 AU terms: every other section is the EU one word for word; 'preview' only names the AU complaints title"
       " - 0930: and 'contract' only names English and German as the contract languages (30efee7) - 1028: the EU sentence it replaces names Croatian too"
-      " - 1028c: the EU sections before the prints (the pin of hr)",
+      " - 1028c: the EU sections before the prints (the pin of hr) - 1125c: the order record of 'contract' as the EU one of now (no consent named)",
       shared_same and contract_au and json.dumps(pv["en"][1]).replace("Complaints and defects", "Complaints and faulty files") == json.dumps(pv["en"][0])
       and json.dumps(pv["de"][1], ensure_ascii=False).replace("Reklamationen und Mängel", "Reklamationen und mangelhafte Dateien")
       == json.dumps(pv["de"][0], ensure_ascii=False)
@@ -956,13 +1020,14 @@ au_text = " ".join(b if isinstance(b, str) else json.dumps(b, ensure_ascii=False
 # (fixer, after the legal review: the remedies are the prescribed services text word for word, never more than the ACL)
 check("C4 the ACL remedies as the prescribed services text (major: cancel, refund of the unused portion or compensation; "
       "foreseeable loss; minor: rectified in a reasonable time, else cancel and refund), change of mind, the claim route, "
-      "the non-exclusion clause, a link to the privacy section",
+      "the non-exclusion clause, a link to the privacy section - 1125c: changing one's mind is a reason to cancel within the 14 days (no consent box)",
       all(x in au_text for x in ("For major failures with the service, you are entitled: to cancel your service contract with us",
                                   "a refund for the unused portion, or to compensation for its reduced value",
                                   "any other reasonably foreseeable loss or damage",
                                   "If the failure does not amount to a major failure, you are entitled to have problems with the "
                                   "service rectified in a reasonable time",
-                                  "can't cancel just because you changed your mind",
+                                  # 1125c (the owner's decision of 2026-11-25, no consent box): changing one's mind is a reason to cancel within the 14 days
+                                  "you can also cancel just because you changed your mind, within 14 days and even after you have received your file",
                                   "cannot lawfully be excluded, restricted or modified", "doc:privacy#australia",
                                   "due care and skill", "reasonable time"))
       and "making your file again" not in au_text, au_text[:600])
@@ -995,10 +1060,12 @@ WAU = EDI["au"]["withdrawal"]
 exp_en = next(s for s in WAU["en"]["sections"] if s["id"] == "expiry")
 exp_de = next(s for s in WAU["de"]["sections"] if s["id"] == "expiry")
 boxes = [b for b in exp_en["blocks"] if isinstance(b, dict) and "box" in b]
-check("C9 AU withdrawal page: EU statutory text kept, lead framed as EU law, the AU checkbox in its box, ACL links",
+check("C9 AU withdrawal page: EU statutory text kept, lead framed as EU law, the AU checkbox in its box, ACL links"
+      " - 1125c: no checkbox (the owner's decision of 2026-11-25): the lead says the 14 days stay after the file is received, 'expiry' holds no box",
       "under EU consumer law" in WAU["en"]["lead"] and "doc:terms#australia" in WAU["en"]["lead"]
-      and boxes and boxes[0]["box"] == [au_en]
-      and any(isinstance(b, dict) and b.get("box") == [pay.CONSENT_TEXT_AU["de"]] for b in exp_de["blocks"])
+      and "You may cancel within 14 days and get your money back in full, even after you have received your file." in WAU["en"]["lead"]
+      and "auch wenn Sie Ihre Datei schon erhalten haben" in WAU["de"]["lead"]
+      and not boxes and not any(isinstance(b, dict) and "box" in b for b in exp_de["blocks"]) and au_en not in json.dumps(WAU, ensure_ascii=False)
       and "doc:terms#australia" in json.dumps(exp_en) and "doc:terms#australia" in json.dumps(exp_de, ensure_ascii=False)
       and [s for s in WAU["en"]["sections"] if s["id"] == "right"] == [s for s in EU_BASE["withdrawal"]["en"]["sections"] if s["id"] == "right"],
       WAU["en"]["lead"])
@@ -1064,30 +1131,36 @@ p = H.Fake.creates[-1][0]
 rec = read_json(f"orders/{oA}/order.json")
 check("D2 au checkout: Stripe locale en-GB, aud, the AU submit note; order.json keeps the AU text, its version and fingerprint"
       " - 0930: the version recorded is the current one, 2026-09-30.2 (30efee7), the AU text is unchanged - 1028: the current one is 2026-10-28.1 (the Croatian text), the AU text unchanged"
-      " - 1028b: the current one is 2026-10-28.2 (the US text), the AU text unchanged",
+      " - 1028b: the current one is 2026-10-28.2 (the US text), the AU text unchanged"
+      " - 1125c: no consent box on the AU market (the owner's decision of 2026-11-25): nothing ticked, no consent recorded; order.json and the metadata say how it was"
+      " placed (box none, the time, the terms' date); the note starts making the file after payment and keeps the ACL, without the consent sentence",
       c == 200 and p["locale"] == "en-GB" and p["line_items[0][price_data][currency]"] == "aud"
       and p["custom_text[submit][message]"] == pay.SUBMIT_NOTE_AU["en"] and "Australian Consumer Law" in p["custom_text[submit][message]"]
-      and rec["checkout"]["consent"]["text"] == au_en and rec["checkout"]["consent"]["version"] == CONSENT_NOW
-      and p["metadata[consent_version]"] == CONSENT_NOW, (p.get("locale"), p.get("custom_text[submit][message]"), rec["checkout"]["consent"]))
+      and pay.SUBMIT_NOTE_AU["en"].startswith("We start making your file right after your payment.") and "agree" not in pay.SUBMIT_NOTE_AU["en"]
+      and "consent" not in rec["checkout"] and rec["checkout"]["placed"]["box"] is False and rec["checkout"]["placed"]["terms"] == LEGAL_NOW
+      and "metadata[consent_version]" not in p and p["metadata[box]"] == "none" and p["metadata[terms]"] == LEGAL_NOW, (p.get("locale"), p.get("custom_text[submit][message]"), rec["checkout"]))
 c, j = checkout(oA, kA, 2, "studio_black", "de", market="au")
 p = H.Fake.creates[-1][0]
 rec = read_json(f"orders/{oA}/order.json")
-check("D3 au in German: Stripe de, the German AU note and checkbox text", c == 200 and p["locale"] == "de"
-      and p["custom_text[submit][message]"] == pay.SUBMIT_NOTE_AU["de"] and rec["checkout"]["consent"]["text"] == pay.CONSENT_TEXT_AU["de"],
+check("D3 au in German: Stripe de, the German AU note and checkbox text - 1125c: the German note without the consent sentence, no consent recorded", c == 200 and p["locale"] == "de"
+      and p["custom_text[submit][message]"] == pay.SUBMIT_NOTE_AU["de"] and "zugestimmt" not in pay.SUBMIT_NOTE_AU["de"] and "consent" not in rec["checkout"],
       p.get("custom_text[submit][message]"))
+NOTE1125C = {"en": "We start making your file right after your payment.", "de": "Wir beginnen gleich nach Ihrer Zahlung mit der Erstellung Ihrer Datei."}
 for lang in ("en", "de"):
     c, j = checkout(oA, kA, 2, "studio_black", lang)
     p = H.Fake.creates[-1][0]
     rec = read_json(f"orders/{oA}/order.json")
     # 1125b (the owner's decision of 2026-11-25, less text on Stripe's page): the note above the pay button is the one of before WITHOUT its first two
     # sentences (the digital file, "no print and no frame"); the rest of it, word for word
-    check(f"D4 eu checkout ({lang}): the EU submit note and checkbox text exactly as before - 1125b: the note without its first two sentences", c == 200
-          and p["custom_text[submit][message]"] == PAY0.SUBMIT_NOTE[lang].split(". ", 2)[2] and p["locale"] == lang
-          and rec["checkout"]["consent"]["text"] == PAY0.CONSENT_TEXT[lang], p.get("custom_text[submit][message]"))
+    # 1125c (the owner's decision of 2026-11-25, no consent box): the note says only that making the file starts after payment, and nothing is recorded as ticked
+    check(f"D4 eu checkout ({lang}): the EU submit note and checkbox text exactly as before - 1125b: the note without its first two sentences"
+          f" - 1125c: no consent box: the note is the one sentence that making starts after payment, no consent recorded", c == 200
+          and p["custom_text[submit][message]"] == NOTE1125C[lang] == pay.SUBMIT_NOTE[lang] and p["locale"] == lang
+          and "consent" not in rec["checkout"] and rec["checkout"]["placed"]["box"] is False, p.get("custom_text[submit][message]"))
 c, j = checkout(oA, kA, 2, "studio_black", "en", market="lt")
 rec = read_json(f"orders/{oA}/order.json")
-check("D5 lt checkout: the EU wording (lt reads the EU edition)", c == 200 and rec["checkout"]["consent"]["text"] == PAY0.CONSENT_TEXT["en"]
-      and H.Fake.creates[-1][0]["custom_text[submit][message]"] == PAY0.SUBMIT_NOTE["en"].split(". ", 2)[2])      # 1125b: without its first two sentences
+check("D5 lt checkout: the EU wording (lt reads the EU edition) - 1125c: no consent box, the note of D4", c == 200 and "consent" not in rec["checkout"]
+      and H.Fake.creates[-1][0]["custom_text[submit][message]"] == NOTE1125C["en"])
 check("D6 no Stripe text for au reads as 'no refunds'", not bad_words(json.dumps(pay.SUBMIT_NOTE_AU) + json.dumps(pay.CONSENT_TEXT_AU)))
 
 # ---------------------------------------------------------------------------------------------- E. the AU confirmation
@@ -1095,8 +1168,9 @@ oE, kE, pE, mE = paid_order("au", "en", "sydney@example.com", eyes=2)
 t = mE[0]["text"] if mE else ""
 head = t.split("_" * 64)[0]
 check("E1 AU paid: paid.json market au, the AU consent text recorded; one confirmation, subject with 'invoice'"
-      " - 0930: recorded under the current version 2026-09-30.2 (30efee7), the AU text unchanged - 1028: the current version is 2026-10-28.1 - 1028b: 2026-10-28.2",
-      pE["market"] == "au" and pE["consent"]["text"] == au_en and pE["consent"]["version"] == CONSENT_NOW
+      " - 0930: recorded under the current version 2026-09-30.2 (30efee7), the AU text unchanged - 1028: the current version is 2026-10-28.1 - 1028b: 2026-10-28.2"
+      " - 1125c: no consent box (the owner's decision of 2026-11-25): paid.json holds how the order was placed (box false, the terms' date), no consent",
+      pE["market"] == "au" and "consent" not in pE and pE["placed"]["box"] is False and pE["placed"]["terms"] == LEGAL_NOW
       and len(mE) == 1 and mE[0]["subject"] == f"Your SnapEyes order {oE}: order confirmation and invoice", (pE.get("consent"), [m["subject"] for m in mE]))
 inv = f"Invoice\nInvoice number: {oE}\nInvoice date: "
 check("E2 the invoice: number, date, supplier with company code and address, customer, what was supplied, total A$79, "
@@ -1106,14 +1180,17 @@ check("E2 the invoice: number, date, supplier with company code and address, cus
       and "Payment: paid in full through Stripe on " in head, head[:2500])
 check("E3 never 'Tax invoice' (anywhere in the email, legal texts included), no euro, no VAT sentence before the legal texts",
       not re.search(r"tax invoice", t, re.I) and "€" not in head and "VAT" not in head and "Price: A$79. This is the total price: no GST is charged." in head)
-i_rights, i_cancel = head.find("Your rights in Australia\n" + ACCC), head.find("Cancelling before we start\n")
-check("E4 'Your rights in Australia' opens with the ACCC sentence and links terms#australia (m=au), before 'Cancelling before we start'",
+i_rights, i_cancel = head.find("Your rights in Australia\n" + ACCC), head.find("Cancelling for a change of mind\n")
+check("E4 'Your rights in Australia' opens with the ACCC sentence and links terms#australia (m=au), before 'Cancelling before we start'"
+      " - 1125c: the heading is 'Cancelling for a change of mind' and the paragraph says the 14 days stay after the file is received (the owner's decision of 2026-11-25)",
       0 < i_rights < i_cancel and "https://snapeyes.com/terms?lang=en&m=au#australia" in head
-      and "EU consumer law, with its right of withdrawal, applies to your contract." in head and "get a full refund" in head
-      and "Your right of withdrawal\n" not in head, head[:3000])
-check("E5 the consent quoted is the AU text; the confirmation keeps the ACL",
-      "“" + au_en + "”" in head and "your right of withdrawal under EU consumer law has ended and you can't cancel for a change of mind. "
-      "This doesn't affect your rights under the Australian Consumer Law (see below)." in head)
+      and "EU consumer law, with its right of withdrawal, applies to your contract. We start making your file when you open your order page. "
+      "This does not end your right of withdrawal: you may withdraw from the contract within 14 days of your payment, even after you have received your file, "
+      "and you get back everything you paid." in head
+      and "Cancelling before we start" not in head and "Your right of withdrawal\n" not in head, head[:3000])
+check("E5 the consent quoted is the AU text; the confirmation keeps the ACL - 1125c: no consent box, so no consent section and none named in the intro; the ACL kept",
+      au_en not in head and "Your consent to the immediate start" not in head and "your consent to the immediate start" not in head
+      and "has ended" not in head and "Our services come with guarantees that cannot be excluded under the Australian Consumer Law." in head, head[:3000])
 check("E6 the full AU withdrawal information and AU terms are attached (not the EU ones); the terms link carries m=au",
       ED["en"]["withdrawal"]["text"] in t and ED["en"]["terms"]["text"] in t and PACK["docs"]["en"]["terms"]["text"] not in t
       and "https://snapeyes.com/terms?lang=en&m=au\n" in head)
@@ -1122,8 +1199,9 @@ md = read_json(f"orders/{oE}/mail_delivery.json")
 check("E8 mail_delivery.json sent with the new consent version and the pack date"
       " - 0930: the new version is 2026-09-30.2 (30efee7) - 1005: the pack date is 2026-10-05 (WP12) - 1006: the pack date is 2026-10-06 (WP18) - 1020: the pack date is 2026-10-20 (the counter's privacy paragraphs) - 1028: the version 2026-10-28.1 and the pack date 2026-10-28 (the Croatian texts) - 1028b: the version 2026-10-28.2 (the US text), the same pack date"
       " - 1121: the version and the date of now (LEGAL_NOW: 2026-11-21 since the print paragraphs; 2026-11-13.1 since the three languages)"
-      " - 1124: the date of now is 2026-11-24 (the terms' list of prints and prices), the version as it was", md.get("state") == "sent"
-      and md.get("consent") == CONSENT_NOW and md.get("legal") == LEGAL_NOW, md)
+      " - 1124: the date of now is 2026-11-24 (the terms' list of prints and prices), the version as it was"
+      " - 1125c: the order holds no consent (no box, the owner's decision of 2026-11-25), so none is named; the pack date of now", md.get("state") == "sent"
+      and md.get("consent") is None and md.get("legal") == LEGAL_NOW, md)
 with open(os.path.join(HERE, "sample_au_confirmation_en.txt"), "w", encoding="utf-8") as f:
     f.write(head)
 
@@ -1131,11 +1209,12 @@ oG, kG, pG, mG = paid_order("au", "de", "perth@example.com", eyes=1, style="deep
 t = mG[0]["text"] if mG else ""
 head = t.split("_" * 64)[0]
 check("E9 German AU confirmation: Rechnung, 'Es wurde keine GST berechnet', Gesamtbetrag A$49, the ACCC sentence, "
-      "the German AU consent and texts", len(mG) == 1 and mG[0]["subject"].endswith("Bestellbestätigung und Rechnung")
+      "the German AU consent and texts - 1125c: no consent quoted, 'Widerruf ohne Angabe von Gründen' with the 14 days", len(mG) == 1 and mG[0]["subject"].endswith("Bestellbestätigung und Rechnung")
       and f"Rechnung\nRechnungsnummer: {oG}" in head and "GST: Es wurde keine GST berechnet." in head
       and f"Gesamtbetrag: A${pay.price_list('au')['one_eye_art'] // 100}\n" in head and ACCC in head
-      and "„" + pay.CONSENT_TEXT_AU["de"] + "“" in head and ED["de"]["terms"]["text"] in t and ED["de"]["withdrawal"]["text"] in t
-      and "Widerruf, bevor wir beginnen" in head and not re.search(r"steuerrechnung|tax invoice", t, re.I)
+      and pay.CONSENT_TEXT_AU["de"] not in head and "Ihre Zustimmung zum sofortigen Beginn" not in head and ED["de"]["terms"]["text"] in t and ED["de"]["withdrawal"]["text"] in t
+      and "Widerruf ohne Angabe von Gründen\nFür Ihren Vertrag gilt das EU-Verbraucherrecht mit seinem Widerrufsrecht. " in head and "Ihr Widerrufsrecht erlischt dadurch nicht" in head
+      and "Widerruf, bevor wir beginnen" not in head and not re.search(r"steuerrechnung|tax invoice", t, re.I)
       and not any(d in t for d in DASHES), head[:2500])
 with open(os.path.join(HERE, "sample_au_confirmation_de.txt"), "w", encoding="utf-8") as f:
     f.write(head)
@@ -1145,22 +1224,43 @@ oU, kU, pU, mU = paid_order(None, "en", "dublin@example.com", eyes=2, style="sup
 oD, kD, pD, mD = paid_order("lt", "de", "vilnius@example.com")
 pay.start_clock()
 PAY0.start_clock()
-diffs = []
+# 1125c (the owner's decision of 2026-11-25): an order placed now holds no consent; one placed before holds it and gets its email as before. The consent of such an
+# order, as paid.json kept it: the version, the time, the language and the text of its market
+def old_consent(paid):
+    lang = pay.lang_of((paid.get("spec") or {}).get("lang"))
+    return {"version": CONSENT_NOW, "at": pay.iso(paid.get("paid_at")), "lang": lang, "text": pay.consent_for(pay.paid_market(paid), lang)}
+
+
+def old_paid(paid):
+    return dict({k: v for k, v in paid.items() if k != "placed"}, consent=old_consent(paid))
+
+
+diffs, nobox = [], []
 for o, k, paid in ((oU, kU, pU), (oD, kD, pD)):
-    consent = pay.paid_consent(o, read_json(f"orders/{o}/order.json"), paid)
     for pk in (PACK, PACK_AUTO):
-        a = pay.confirmation_mail(o, paid, k, pk, consent)
-        b = PAY0.confirmation_mail(o, paid, k, pk, consent)
+        a = pay.confirmation_mail(o, old_paid(paid), k, pk, old_consent(paid))
+        b = PAY0.confirmation_mail(o, old_paid(paid), k, pk, old_consent(paid))
         if a != b:
             diffs.append((o, pk is PACK_AUTO))
-check("F1 EU and lt confirmation emails (en, de; order page start and server start) are byte for byte the core's own",
-      not diffs and len(mU) == 1 and len(mD) == 1 and "Invoice" not in mU[0]["text"] and "Australia" not in mU[0]["text"]
-      and mU[0]["subject"] == f"Your SnapEyes order {oU}: order confirmation", diffs)
+        n = pay.confirmation_mail(o, paid, k, pk, pay.paid_consent(o, read_json(f"orders/{o}/order.json"), paid))
+        lang = pay.lang_of(paid["spec"]["lang"])
+        if not (pay.paid_consent(o, read_json(f"orders/{o}/order.json"), paid) is None and old_consent(paid)["text"] not in n[1]
+                and pay.NO_BOX_WITHDRAW[lang][0 if pk is PACK_AUTO else 1] in n[1] and pay.NO_BOX_INTRO[lang] not in n[1]):
+            nobox.append((o, pk is PACK_AUTO))
+check("F1 EU and lt confirmation emails (en, de; order page start and server start) are byte for byte the core's own"
+      " - 1125c: for an order that holds a consent (placed before the owner's decision of 2026-11-25); an order placed now holds none, and its email quotes none,"
+      " names none in its intro and says the 14 days stay (pay.NO_BOX_WITHDRAW)",
+      not diffs and not nobox and len(mU) == 1 and len(mD) == 1 and "Invoice" not in mU[0]["text"] and "Australia" not in mU[0]["text"]
+      and mU[0]["subject"] == f"Your SnapEyes order {oU}: order confirmation", (diffs, nobox))
 a = pay.confirmation_mail(oE, pE, kE, PACK_AUTO, pay.paid_consent(oE, read_json(f"orders/{oE}/order.json"), pE))
-check("F2 the AU email with the server start: same invoice and rights, the 'right after this email' wording",
-      "so that right usually ends within a few moments" in a[1] and "Invoice number: " + oE in a[1] and ACCC in a[1])
+a_old = pay.confirmation_mail(oE, old_paid(pE), kE, PACK_AUTO, old_consent(pE))
+check("F2 the AU email with the server start: same invoice and rights, the 'right after this email' wording"
+      " - 1125c: no consent box: the server starts right after this email and the 14 days stay; an AU order that holds a consent: the wording of before",
+      "We start making your file right after this email has been sent. This does not end your right of withdrawal" in a[1]
+      and "Invoice number: " + oE in a[1] and ACCC in a[1]
+      and "so that right usually ends within a few moments" in a_old[1] and "“" + au_en + "”" in a_old[1] and ACCC in a_old[1])
 try:
-    PAY0.confirmation_mail(oE, pE, kE, PACK, pay.paid_consent(oE, read_json(f"orders/{oE}/order.json"), pE))
+    PAY0.confirmation_mail(oE, old_paid(pE), kE, PACK, old_consent(pE))
     old_au = True
 except Exception:
     old_au = False
@@ -1248,12 +1348,15 @@ check("H1 consent_text: the AU text for au at the new version; none for au at th
       and pay.consent_text("2026-09-30.1", "en", "au") == au_en and pay.consent_text("2026-09-29.1", "en", "au") is None
       and pay.consent_text("2026-09-29.1", "de") == PAY0.CONSENT_TEXT["de"] and pay.consent_text("2026-09-30.1", "en", "lt") == PAY0.CONSENT_TEXT["en"]
       and pay.consent_text("2026-09-30.1", "en") == pay.consent_for("eu", "en") and pay.consent_for("au", "de") == pay.CONSENT_TEXT_AU["de"])
-bare = dict(pE, consent={k: v for k, v in pE["consent"].items() if k != "text"})
+# 1125c: orders placed now hold no consent (no box, the owner's decision of 2026-11-25): an order that holds one (placed before) is read as before
+bare = dict(old_paid(pE), consent={k: v for k, v in old_consent(pE).items() if k != "text"})
 recE = read_json(f"orders/{oE}/order.json")
 recE_nocons = dict(recE, checkout=dict(recE["checkout"], consent={}))
-check("H2 paid_consent without a stored text: the AU text of its version for an AU order, the EU text for an EU one",
+check("H2 paid_consent without a stored text: the AU text of its version for an AU order, the EU text for an EU one"
+      " - 1125c: for orders that hold a consent (placed before 2026-11-25); one placed without the box has none",
       pay.paid_consent(oE, recE_nocons, bare)["text"] == au_en
-      and pay.paid_consent(oU, {}, dict(pU, consent={k: v for k, v in pU["consent"].items() if k != "text"}))["text"] == PAY0.CONSENT_TEXT["en"])
+      and pay.paid_consent(oU, {}, dict(old_paid(pU), consent={k: v for k, v in old_consent(pU).items() if k != "text"}))["text"] == PAY0.CONSENT_TEXT["en"]
+      and pay.paid_consent(oE, recE, pE) is None and pay.paid_consent(oU, read_json(f"orders/{oU}/order.json"), pU) is None)
 check("H3 paid_market: paid.json's, else its spec's, else eu", pay.paid_market(pE) == "au" and pay.paid_market({"spec": {"market": "lt"}}) == "lt"
       and pay.paid_market({}) == "eu" and pay.paid_market(None) == "eu" and pay.paid_market({"market": "zz"}) == "eu")
 
@@ -1291,12 +1394,20 @@ a_au, b_au = (W.receipt_mail(stGs[0], PACK), W0.receipt_mail(stGs[0], PACK)) if 
 check("I3 receipt_mail: EU statement byte for byte as before; AU statement = before plus one paragraph",
       same_eu and a_au and a_au[0] == b_au[0] and len(a_au[1]) > len(b_au[1]) and "Australian Consumer Law" in a_au[1]
       and "Australian Consumer Law" not in b_au[1], (same_eu, a_au and a_au[1][:300]))
-# a lapsed statement because making began (English AU order)
+# a lapsed statement because making began (English AU order). 1125c: only for an order that holds the consent (placed before the owner's decision of
+# 2026-11-25: its paid.json is written as such an order's was); an order placed now without the box keeps its 14 days after making began
 oM, kM, pM, mM = paid_order("au", "en", "adelaide@example.com")
+write_json(f"orders/{oM}/paid.json", old_paid(pM))
 store.put(f"orders/{oM}/making.json", store.json_bytes({"t": int(time.time())}), "application/json", upsert=True)
 c, j, rM = withdraw_now(oM, kM, "adelaide@example.com")
-check("I4 making began on an AU order: lapsed, the receipt keeps 'statutory rights' and adds the ACL line, never 'no refunds'",
-      c == 200 and (j.get("withdrawal") or {}).get("state") == "lapsed" and len(rM) == 1
+oN, kN, pN, mN = paid_order("au", "en", "darwin@example.com")
+store.put(f"orders/{oN}/making.json", store.json_bytes({"t": int(time.time())}), "application/json", upsert=True)
+cN, jN, rN = withdraw_now(oN, kN, "darwin@example.com")
+check("I4 making began on an AU order: lapsed, the receipt keeps 'statutory rights' and adds the ACL line, never 'no refunds'"
+      " - 1125c: for an order that holds the consent; one placed without the box (the owner's decision of 2026-11-25) is withdrawn (within_period), refund in AUD",
+      cN == 200 and (jN.get("withdrawal") or {}).get("state") == "withdrawn" and (jN.get("withdrawal") or {}).get("reason") == "within_period"
+      and (jN.get("withdrawal") or {}).get("currency") == "AUD" and len(rN) == 1
+      and c == 200 and (j.get("withdrawal") or {}).get("state") == "lapsed" and len(rM) == 1
       and "Your rights under the Australian Consumer Law are not affected" in rM[0]["text"]
       and "Your statutory rights for a defective file are not affected." in rM[0]["text"] and not bad_words(rM[0]["text"]),
       (c, j, rM[0]["text"][:1500] if rM else None))
@@ -1319,17 +1430,18 @@ check("K0 the /try buy card renders (react-dom/server through Vite) for au en/de
 if BC:
     card = {k: (re.sub(r"<[^>]+>", " ", v["html"]), re.sub(r"<[^>]+>", " ", v["noServer"]), v["html"]) for k, v in BC.items()}
     A39 = "A$" + str(pay.price_list("au")["one_eye_studio_black"] // 100)
-    check("K1 au: the server's AU checkbox text (en, de), the line links terms#australia (m=au), A$ price",
-          "SERVER AU EN" in card["au_en"][0] and "SERVER AU DE" in card["au_de"][0] and "SERVER EU" not in card["au_en"][0] + card["au_de"][0]
+    # 1125c (the owner's decision of 2026-11-25): no consent box but on the US market, so neither the server's text nor the site's own one is shown for au, eu and lt
+    check("K1 au: the server's AU checkbox text (en, de), the line links terms#australia (m=au), A$ price - 1125c: no checkbox at all",
+          'data-testid="waiver"' not in card["au_en"][2] + card["au_de"][2] and "SERVER AU" not in card["au_en"][0] + card["au_de"][0]
+          and "SERVER EU" not in card["au_en"][0] + card["au_de"][0]
           and "/terms?lang=en&amp;m=au#australia" in card["au_en"][2] and "/terms?lang=de&amp;m=au#australia" in card["au_de"][2]
           and A39 in card["au_en"][0] and "€" not in card["au_en"][0], card["au_en"][0][:600])
-    check("K2 au without a server text: the site's own AU checkbox (the same words the server records)",
-          pay.CONSENT_TEXT_AU["en"].replace("'", "&#x27;") in card["au_en"][1] or pay.CONSENT_TEXT_AU["en"] in card["au_en"][1],
-          card["au_en"][1][:800])
-    check("K3 eu and lt: the EU checkbox text and line as before (no Australia), euro prices",
-          "SERVER EU EN" in card["eu_en"][0] and "SERVER EU DE" in card["lt_de"][0] and "australia" not in card["eu_en"][2]
-          and "australia" not in card["lt_de"][2] and "€" in card["eu_en"][0]
-          and PAY0.CONSENT_TEXT["de"] in card["lt_de"][1], card["eu_en"][0][:400])
+    check("K2 au without a server text: the site's own AU checkbox (the same words the server records) - 1125c: no checkbox, no checkbox text",
+          pay.CONSENT_TEXT_AU["en"].replace("'", "&#x27;") not in card["au_en"][1] and pay.CONSENT_TEXT_AU["en"] not in card["au_en"][1], card["au_en"][1][:800])
+    check("K3 eu and lt: the EU checkbox text and line as before (no Australia), euro prices - 1125c: no checkbox, no checkbox text",
+          'data-testid="waiver"' not in card["eu_en"][2] + card["lt_de"][2] and "SERVER EU" not in card["eu_en"][0] + card["lt_de"][0]
+          and "australia" not in card["eu_en"][2] and "australia" not in card["lt_de"][2] and "€" in card["eu_en"][0]
+          and PAY0.CONSENT_TEXT["de"] not in card["lt_de"][1], card["eu_en"][0][:400])
 
 # ---------------------------------------------------------------------------------------------- U. the US market (1028b)
 us_en = pay.CONSENT_TEXT_US["en"]
@@ -1392,9 +1504,11 @@ c, j = checkout(oH, kH, 1, "studio_black", "hr", market="hr")
 pH = H.Fake.creates[-1][0]
 recH = read_json(f"orders/{oH}/order.json")
 cK, jK = checkout(oH, kH, 1, "studio_black", "en", market="uk")
-check("U8 hr checkout: euros at the euro price, the Croatian EU checkbox and note, market hr in the metadata; uk is refused (priced, not selectable)",
+check("U8 hr checkout: euros at the euro price, the Croatian EU checkbox and note, market hr in the metadata; uk is refused (priced, not selectable)"
+      " - 1125c: no consent box on the Croatian market either (the owner's decision of 2026-11-25): no consent recorded, the US market alone keeps its box (U7)",
       c == 200 and pH["line_items[0][price_data][currency]"] == "eur" and pH["line_items[0][price_data][unit_amount]"] == str(pay.price_list("eu")["one_eye_studio_black"])
-      and pH["metadata[market]"] == "hr" and recH["checkout"]["consent"]["text"] == pay.CONSENT_TEXT["hr"] and pH["custom_text[submit][message]"] == pay.SUBMIT_NOTE["hr"]
+      and pH["metadata[market]"] == "hr" and "consent" not in recH["checkout"] and recH["checkout"]["placed"]["box"] is False
+      and pH["custom_text[submit][message]"] == pay.SUBMIT_NOTE["hr"]
       and cK == 400 and "uk" not in pay.SELECTABLE and pay.MARKETS["uk"]["selectable"] == 0, (c, j, cK, jK))
 oS, kS, pS, mS = paid_order("us", "en", "boston@example.com", eyes=2)
 tS = mS[0]["text"] if mS else ""

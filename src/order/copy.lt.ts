@@ -136,6 +136,7 @@ export const lt: OrderCopy = {
   withdraw: {
     heading: 'Atsisakyti sutarties',
     lead: 'Užsakymo metu sutikote, kad Jūsų failą pradėtume kurti iš karto. Kol dar nepradėjome, šios sutarties galite atsisakyti čia. Kai tik kūrimas pradėtas, Jūsų teisė atsisakyti sutarties baigiasi.',
+    leadOpen: 'Šios sutarties čia galite atsisakyti per 14 dienų nuo užsakymo, net jei jau gavote savo failą, ir atgausite visus sumokėtus pinigus.',
     acl: 'Tai teisė atsisakyti sutarties pagal ES vartotojų teisės aktus, kai apsigalvojate. Ji nedaro įtakos Jūsų teisėms pagal Australijos vartotojų įstatymą (Australian Consumer Law): jei Jūsų failas turi trūkumų arba neatitinka aprašymo, parašykite mums nurodydami užsakymo numerį.',
     us: 'Tai teisė atsisakyti sutarties pagal ES vartotojų teisės aktus, kai apsigalvojate. Ji nedaro įtakos Jūsų teisėms, jei failas turi trūkumų: jei Jūsų failas turi trūkumų arba neatitinka aprašymo, parašykite mums nurodydami užsakymo numerį.',
     info: 'Teisė atsisakyti sutarties',

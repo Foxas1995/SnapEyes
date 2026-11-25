@@ -46,9 +46,7 @@ CONSENT_TEXT_LV = ("Es skaidri piekrītu, ka SnapEyes sāk veidot manu digitālo
 
 # Stripe shows this right above its pay button, the click that makes the order binding: so the statutory words of
 # Art. 8(2) Directive 2011/83/EU in Latvian („pasūtījums ar pienākumu maksāt”) stand at that click too.
-SUBMIT_NOTE_LV = ("Jūs piekritāt, ka sākam uzreiz "
-                  "un ka jūsu atteikuma tiesības beidzas, tiklīdz esam sākuši. Nospiežot maksāšanas pogu, jūs veicat "
-                  "pasūtījumu ar pienākumu maksāt.")
+SUBMIT_NOTE_LV = ("Jūsu failu sākam veidot uzreiz pēc maksājuma. Nospiežot maksāšanas pogu, jūs veicat pasūtījumu ar pienākumu maksāt.")
 
 ITEM_DESC_LV = "Digitāls fails, JPEG, 4096 px."
 
@@ -199,7 +197,7 @@ def confirmation_lv(*, order, spec, n, layout, price, paid_at, consent_at, conse
     blocks = [
         ("p", GREETING_LV),
         ("p", "Paldies par pasūtījumu. Šis e-pasts apstiprina jūsu līgumu ar mums. Lūdzu, saglabājiet to: tajā ir jūsu "
-              "pasūtījums, jūsu piekrišana sākt uzreiz, informācija par atteikuma tiesībām ar atteikuma veidlapas "
+              "pasūtījums, informācija par atteikuma tiesībām ar atteikuma veidlapas "
               "paraugu un mūsu pārdošanas noteikumi."),
         ("h", "Jūsu pasūtījuma lapa"),
         ("link", link),

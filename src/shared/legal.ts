@@ -3,9 +3,11 @@
 //
 // Not reviewed by a lawyer. Every sentence here must stay true: if the checkout changes (for example it no longer
 // starts the file right after payment), change the wording here and on the withdrawal page together.
-// The right of withdrawal ends when MAKING the file begins (making.json, api/_lib/withdraw.py _began), which is what
-// the checkbox below says; the withdrawal page, the terms and the landing FAQ say the same ("once we have started
-// making your file", "sobald wir mit der Erstellung Ihrer Datei begonnen haben"), and that making starts only after
+// Since 2026-11-25 (the owner's decision, "varnelę išimti visai") the buy card shows the checkbox only on the US market
+// (consentBox): every other order keeps the 14-day right of withdrawal even once its file was made, and the withdrawal
+// page, the terms and the landing FAQ say so. For an order that holds the consent (the US market, and orders placed
+// before), the right ends when MAKING the file begins (making.json, api/_lib/withdraw.py _began), which is what
+// the checkbox below says, and making starts only after
 // the order confirmation email, on the order page (never through the withdrawal link, withdrawFunctionHref or the
 // email's own withdrawal link). When nothing was made, it ends with the 14-day period (withdraw.py period_end: the day
 // of payment is not counted). If the server ever moves either moment (for example to the first download), change all
@@ -56,6 +58,13 @@ export const LEGAL_UPDATED = '2026-11-25';
  *  editions apart (src/legal/plain.ts), with links that carry m=au / m=hu / m=us. */
 export type LegalEdition = 'eu' | 'au' | 'hu' | 'us';
 export const EDITION_MARKETS: Readonly<Record<Exclude<LegalEdition, 'eu'>, Market>> = { au: 'au', hu: 'hu', us: 'us' };
+/** Does the checkout of this market show the consent box (and the server ask for its tick)? Only the US market since 2026-11-25 (the owner's decision:
+ *  "varnelę išimti visai"; its box also holds the consent to the use of the eye photos). Every other market buys without a box and keeps the 14-day
+ *  right of withdrawal (api/_lib/pay.py consent_box). */
+export function consentBox(m: Market = currentMarket()): boolean {
+  return legalEdition(m) === 'us';
+}
+
 export function legalEdition(m: Market = currentMarket()): LegalEdition {
   return m === EDITION_MARKETS.au ? 'au' : m === EDITION_MARKETS.hu ? 'hu' : m === EDITION_MARKETS.us ? 'us' : 'eu';
 }

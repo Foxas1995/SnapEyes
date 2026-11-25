@@ -217,7 +217,7 @@ export async function run(): Promise<Row[]> {
   await runCheckout({ ...base, print: { product: 'acrylic40', country: 'DE' }, printShown: 8399 }, noop, api as never);
   const cb = bodies.find((b) => b.path === '/api/checkout') ?? {};
   check('the checkout request carries the print, its box and the price shown for it (the server only compares it)',
-    JSON.stringify(cb.print) === '{"product":"acrylic40","country":"DE"}' && cb.consent_print === true && cb.print_shown === 8399 && cb.consent_digital === true, JSON.stringify(cb));
+    JSON.stringify(cb.print) === '{"product":"acrylic40","country":"DE"}' && cb.consent_print === true && cb.print_shown === 8399 && !('consent_digital' in cb), JSON.stringify(cb));      // no consent box on this market since 2026-11-25 (the owner's decision); the print box stays
   bodies.length = 0;
   await runCheckout(base, noop, api as never);
   const cb2 = bodies.find((b) => b.path === '/api/checkout') ?? {};

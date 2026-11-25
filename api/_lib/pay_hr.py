@@ -48,9 +48,7 @@ CONSENT_TEXT_HR = ("Izričito pristajem da SnapEyes odmah, prije isteka roka za 
 
 # Stripe shows this right above its pay button, the click that makes the order binding: so the statutory words of
 # Art. 8(2) Directive 2011/83/EU in Croatian („narudžba s obvezom plaćanja“) stand at that click too.
-SUBMIT_NOTE_HR = ("Pristali ste da odmah "
-                  "započnemo i da vaše pravo na jednostrani raskid ugovora prestaje čim započnemo. Klikom na gumb za "
-                  "plaćanje dajete narudžbu s obvezom plaćanja.")
+SUBMIT_NOTE_HR = ("S izradom vaše datoteke počinjemo odmah nakon plaćanja. Klikom na gumb za plaćanje dajete narudžbu s obvezom plaćanja.")
 
 ITEM_DESC_HR = "Digitalna datoteka, JPEG, 4096 px."
 
@@ -201,7 +199,7 @@ def confirmation_hr(*, order, spec, n, layout, price, paid_at, consent_at, conse
     blocks = [
         ("p", GREETING_HR),
         ("p", "Hvala vam na narudžbi. Ova e-poruka potvrđuje vaš ugovor s nama. Molimo sačuvajte je: u njoj su vaša "
-              "narudžba, vaša privola da odmah započnemo, obavijest o pravu na jednostrani raskid ugovora s obrascem za "
+              "narudžba, obavijest o pravu na jednostrani raskid ugovora s obrascem za "
               "jednostrani raskid ugovora te naši uvjeti prodaje."),
         ("h", "Stranica vaše narudžbe"),
         ("link", link),

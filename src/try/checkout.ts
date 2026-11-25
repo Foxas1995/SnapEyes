@@ -9,6 +9,7 @@ import { callApi, isStatus, orderPageUrl, statusPath, type ApiReply, type Checko
 import type { Eye, Layout } from './multi';
 import type { Lang } from './lang';
 import { currentMarket } from '../shared/markets';
+import { consentBox } from '../shared/legal';
 
 /** api/_lib/iris.py TICKET_TTL: a work ticket from /api/analyze is good for 15 minutes. */
 export const TICKET_MS = 900_000;
@@ -312,7 +313,9 @@ async function attemptCheckout(inp: CheckoutInput, start: OrderRef | null, onSte
   onStep({ kind: 'checkout' });
   const r = await api<CheckoutReply>('/api/checkout', {
     body: {
-      order: ref.order, k: ref.k, eyes: n, style: inp.style, layout: inp.layout, names: inp.names, title: '', lang: inp.lang, market: inp.market ?? currentMarket(), consent_digital: true,
+      order: ref.order, k: ref.k, eyes: n, style: inp.style, layout: inp.layout, names: inp.names, title: '', lang: inp.lang, market: inp.market ?? currentMarket(),
+      // the tick of the consent box, only where the market's checkout shows it (the US market; the owner's decision of 2026-11-25)
+      ...(consentBox(inp.market ?? currentMarket()) ? { consent_digital: true } : {}),
       ...(inp.date ? { date: inp.date } : {}),
       ...(inp.familyName ? { family_name: inp.familyName } : {}),
       ...(inp.opts && Object.keys(inp.opts).length ? { opts: inp.opts } : {}),

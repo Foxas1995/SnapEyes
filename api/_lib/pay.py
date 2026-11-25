@@ -173,8 +173,10 @@ PREVIOUS_SESSIONS = 3        # how many of an order's latest Checkout Sessions a
 DRAFT_ORDER_MAX = 30         # uploads one unpaid order may take per day (8 eyes, each retaken a few times)
 
 # The withdrawal waiver (EU consumer law for digital content: the consumer expressly agrees that performance starts
-# before the withdrawal period ends and acknowledges losing the right). /api/checkout refuses without it and
-# records this version, the time and a fingerprint of the text in the order's language. Show exactly this text.
+# before the withdrawal period ends and acknowledges losing the right). Since 2026-11-25 (the owner's decision) only the US
+# market's checkout shows it (consent_box): /api/checkout refuses a US order without it and records this version, the time
+# and a fingerprint of the text in the order's language. The texts of every version stay, for the orders that quote them.
+# Show exactly this text.
 # Version 2026-09-30.1 added the Australian market's text (CONSENT_TEXT_AU); 2026-09-30.2 added the Lithuanian and the
 # Hungarian texts (CONSENT_TEXT "lt" and "hu"); the English, German and Australian texts are the ones of 2026-09-30.1.
 # 2026-10-28.1 added the Croatian text (CONSENT_TEXT "hr", api/_lib/pay_hr.py CONSENT_TEXT_HR); every other text as it was.
@@ -250,21 +252,16 @@ CONSENT_TEXTS_AU = {"2026-09-30.1": CONSENT_TEXT_AU, "2026-09-30.2": CONSENT_TEX
                     "2026-10-28.2": CONSENT_TEXT_AU, "2026-10-28.3": CONSENT_TEXT_AU, CONSENT_VERSION: CONSENT_TEXT_AU}
 CONSENT_TEXTS_US = {"2026-10-28.2": CONSENT_TEXT_US, "2026-10-28.3": CONSENT_TEXT_US, CONSENT_VERSION: CONSENT_TEXT_US}
 SUBMIT_NOTE = {   # shown by Stripe above its Pay button (custom_text.submit); since 2026-11-25 (the owner's decision of 2026-11-25) without the sentences about the file and "no print, no frame"
-    "en": ("You agreed that we start "
-           "right away and that your right of withdrawal ends once we have started."),
-    "de": ("Sie haben "
-           "zugestimmt, dass wir sofort beginnen und Ihr Widerrufsrecht damit erlischt."),
+    "en": "We start making your file right after your payment.",
+    "de": "Wir beginnen gleich nach Ihrer Zahlung mit der Erstellung Ihrer Datei.",
     "lt": pay_lt.SUBMIT_NOTE_LT,
     "hu": pay_hu.SUBMIT_NOTE_HU,
     **{l: tw(l, "SUBMIT_NOTE") for l in TWINS},
 }
 SUBMIT_NOTE_AU = {   # the same for the Australian market: never a "no refunds", the Australian Consumer Law kept
-    "en": ("You agreed that we start "
-           "right away, so you can't cancel for a change of mind once we have started. Your rights under the "
-           "Australian Consumer Law are not affected."),
-    "de": ("Sie haben "
-           "zugestimmt, dass wir sofort beginnen; danach können Sie nicht mehr ohne Angabe von Gründen widerrufen. Ihre "
-           "Rechte nach dem Australian Consumer Law bleiben unberührt."),
+    "en": ("We start making your file right after your payment. Your rights under the Australian Consumer Law are not affected."),
+    "de": ("Wir beginnen gleich nach Ihrer Zahlung mit der Erstellung Ihrer Datei. Ihre Rechte nach dem Australian Consumer Law "
+           "bleiben unberührt."),
 }
 SUBMIT_NOTE_US = {   # the same for the US market: never a "no refunds", the rights for a faulty file kept
     "en": ("You agreed that we start "
@@ -1329,7 +1326,12 @@ def create_session(order, k, spec, amount, consent, expires, exp=None, plan=None
     meta = {"order": order, "key_sha": key_sha(k), "eyes": str(spec["eyes"]), "style": spec["style"],
             "layout": spec["layout"], "names": W.meta_names(spec.get("names")), "title": spec["title"], "lang": lang,
             "market": market, "currency": currency,
-            "amount": str(int(amount)), "consent_version": consent["version"], "consent_at": consent["at"]}
+            "amount": str(int(amount))}
+    if isinstance(consent, dict) and consent.get("version"):
+        meta.update(consent_version=consent["version"], consent_at=consent["at"])
+    else:
+        # no consent box (consent_box, the owner's decision of 2026-11-25): the plain fact of how the order was placed
+        meta.update(box="none", placed_at=pay_iso_now(), terms=legal_day())
     # what the order carries beyond the old keys (WP12): the date line and the options that apply (each one short string; an empty value is left out below)
     meta.update(date=W.date_clean(spec.get("date")), opts=W.meta_opts(spec.get("opts")))
     if isinstance(plan, dict):
@@ -1564,6 +1566,26 @@ def consent_record(meta, rec, sess, lang):
             "text_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest()[:16] if text else None}
 
 
+def placed_without_box(paid):
+    """Was this order placed without the consent box (paid.placed, the owner's decision of 2026-11-25)? Then nothing is to be confirmed, and the
+    right of withdrawal does not end when making begins."""
+    return isinstance(paid, dict) and isinstance(paid.get("placed"), dict) and paid["placed"].get("box") is False
+
+
+def pay_iso_now():
+    return iso(time.time())
+
+
+def legal_day():
+    """The date of the legal texts in force (the pack's "updated"), or "" when it cannot be read now."""
+    try:
+        p = legal_pack(quick=True)
+    except Exception:  # noqa
+        p = None
+    v = p.get("updated") if isinstance(p, dict) else None
+    return v if isinstance(v, str) else ""
+
+
 def paid_consent(order, rec, paid):
     """The consent a paid order's confirmation quotes ({version, at, lang, text}), or None when none is recorded
     (then the waiver cannot be confirmed, and the right of withdrawal would not end)."""
@@ -1635,7 +1657,9 @@ def record_paid(order, rec, sess, source, event_id=None):
             "currency": str(sess.get("currency") or "").lower(), "market": market, "livemode": bool(sess.get("livemode")),
             "email": email.strip() if email else None, "paid_at": now, "paid_iso": iso(now),
             "source": source, "event_id": event_id if isinstance(event_id, str) else None, "spec": spec,
-            "consent": consent_record(meta, rec, sess, spec["lang"])}
+            **({"consent": consent_record(meta, rec, sess, spec["lang"])} if meta.get("consent_version") else
+               {"placed": {"at": meta.get("placed_at") if isinstance(meta.get("placed_at"), str) else iso(now),
+                           "terms": meta.get("terms") if isinstance(meta.get("terms"), str) else None, "lang": spec["lang"], "box": False}})}
     camp = counter.parse(meta.get("src")) or counter.parse(((rec.get("checkout") or {}) if isinstance(rec, dict) else {}).get("camp"))
     if camp:
         paid["camp"] = counter.pack(camp)          # the campaign code of the advertisement the customer came from (the metadata the server wrote, else the order record's)
@@ -2132,6 +2156,74 @@ def render_mail(blocks, lang, title):
 
 
 # ----------------------------------------------------------------------------- the order confirmation
+# ----------------------------------------------------------------------------- no consent box (the owner's decision of 2026-11-25)
+# The buy card asks for no express consent to the immediate start any more ("varnelę išimti visai", the owner's decision of 2026-11-25, taken knowing that without it
+# the buyer of digital content keeps the 14-day right of withdrawal, Art. 16(m) and 14(4)(b) of Directive 2011/83/EU). Only the US market keeps
+# its box (CONSENT_TEXT_US: it also holds the consent to the use of the eye photos). An order without the box records a plain fact instead of a
+# consent (checkout.placed and paid.placed: {at, lang, terms (the legal texts' date), box: false}); its confirmation email quotes no consent and
+# says that the right of withdrawal lasts the 14 days (no_box_mail); api/_lib/withdraw.py lets making that began not end it. Old orders that hold a
+# consent keep it and are read exactly as before (paid_consent).
+def consent_box(market):
+    """Does the checkout of this market show a consent box (and require its tick)? The US market only."""
+    return us_market(market)
+
+
+NO_BOX_WITHDRAW = {   # the confirmation's withdrawal paragraph of an order placed without the box: (the server starts after the email, the order page starts)
+    "en": ("We start making your file right after this email has been sent. This does not end your right of withdrawal: you may withdraw from the contract within 14 days of your payment, even after you have received your file, and you get back everything you paid. You can withdraw with the button “Withdraw from contract here” on the withdrawal page of your order:",
+           "We start making your file when you open your order page. This does not end your right of withdrawal: you may withdraw from the contract within 14 days of your payment, even after you have received your file, and you get back everything you paid. You can withdraw with the button “Withdraw from contract here” on the withdrawal page of your order:"),
+    "de": ("Wir beginnen direkt nach dem Versand dieser E-Mail mit der Erstellung Ihrer Datei. Ihr Widerrufsrecht erlischt dadurch nicht: Sie können den Vertrag binnen 14 Tagen ab Ihrer Zahlung widerrufen, auch wenn Sie Ihre Datei schon erhalten haben, und erhalten alles zurück, was Sie bezahlt haben. Sie können mit der Schaltfläche „Vertrag hier widerrufen“ auf der Widerrufsseite Ihrer Bestellung widerrufen:",
+           "Wir beginnen mit der Erstellung Ihrer Datei, sobald Sie Ihre Bestellseite öffnen. Ihr Widerrufsrecht erlischt dadurch nicht: Sie können den Vertrag binnen 14 Tagen ab Ihrer Zahlung widerrufen, auch wenn Sie Ihre Datei schon erhalten haben, und erhalten alles zurück, was Sie bezahlt haben. Sie können mit der Schaltfläche „Vertrag hier widerrufen“ auf der Widerrufsseite Ihrer Bestellung widerrufen:"),
+    "lt": ("Jūsų failą pradedame kurti iš karto po šio el. laiško išsiuntimo. Tai nepanaikina Jūsų teisės atsisakyti sutarties: sutarties galite atsisakyti per 14 dienų nuo apmokėjimo, net jei jau gavote savo failą, ir atgausite visus sumokėtus pinigus. Sutarties galite atsisakyti mygtuku „Atsisakyti sutarties čia“ savo užsakymo sutarties atsisakymo puslapyje:",
+           "Jūsų failą pradedame kurti, kai atidarote savo užsakymo puslapį. Tai nepanaikina Jūsų teisės atsisakyti sutarties: sutarties galite atsisakyti per 14 dienų nuo apmokėjimo, net jei jau gavote savo failą, ir atgausite visus sumokėtus pinigus. Sutarties galite atsisakyti mygtuku „Atsisakyti sutarties čia“ savo užsakymo sutarties atsisakymo puslapyje:"),
+    "hu": ("A fájlod elkészítését közvetlenül ennek az e-mailnek az elküldése után megkezdjük. Ez nem szünteti meg az elállási jogodat: a fizetésedtől számított 14 napon belül elállhatsz a szerződéstől, akkor is, ha a fájlt már megkaptad, és a teljes kifizetett összeget visszatérítjük. A rendelésed elállási oldalán, az „Elállás a szerződéstől” gombbal állhatsz el:",
+           "A fájlod elkészítését akkor kezdjük meg, amikor megnyitod a rendelési oldaladat. Ez nem szünteti meg az elállási jogodat: a fizetésedtől számított 14 napon belül elállhatsz a szerződéstől, akkor is, ha a fájlt már megkaptad, és a teljes kifizetett összeget visszatérítjük. A rendelésed elállási oldalán, az „Elállás a szerződéstől” gombbal állhatsz el:"),
+    "hr": ("Vašu datoteku počinjemo izrađivati odmah nakon slanja ove e-poruke. Time vaše pravo na jednostrani raskid ugovora ne prestaje: ugovor možete jednostrano raskinuti u roku od 14 dana od plaćanja, čak i nakon što ste primili datoteku, i vraćamo vam sve što ste platili. Ugovor možete jednostrano raskinuti gumbom „Raskid ugovora“ na stranici za raskid svoje narudžbe:",
+           "Vašu datoteku počinjemo izrađivati kada otvorite stranicu svoje narudžbe. Time vaše pravo na jednostrani raskid ugovora ne prestaje: ugovor možete jednostrano raskinuti u roku od 14 dana od plaćanja, čak i nakon što ste primili datoteku, i vraćamo vam sve što ste platili. Ugovor možete jednostrano raskinuti gumbom „Raskid ugovora“ na stranici za raskid svoje narudžbe:"),
+    "fi": ("Alamme tehdä tiedostoasi heti, kun tämä viesti on lähetetty. Tämä ei päätä peruuttamisoikeuttasi: voit peruuttaa sopimuksen 14 päivän kuluessa maksustasi, vaikka olisit jo saanut tiedostosi, ja saat takaisin kaiken maksamasi. Voit peruuttaa sopimuksen painikkeella ”Peruuta sopimus tästä” tilauksesi peruuttamissivulla:",
+           "Alamme tehdä tiedostoasi, kun avaat tilaussivusi. Tämä ei päätä peruuttamisoikeuttasi: voit peruuttaa sopimuksen 14 päivän kuluessa maksustasi, vaikka olisit jo saanut tiedostosi, ja saat takaisin kaiken maksamasi. Voit peruuttaa sopimuksen painikkeella ”Peruuta sopimus tästä” tilauksesi peruuttamissivulla:"),
+    "et": ("Hakkame sinu faili valmistama kohe pärast selle e-kirja saatmist. See ei lõpeta sinu taganemisõigust: saad lepingust taganeda 14 päeva jooksul pärast makset, isegi kui oled oma faili juba kätte saanud, ja saad tagasi kogu makstud summa. Lepingust saad taganeda nupuga „Taganen lepingust“ oma tellimuse taganemislehel:",
+           "Hakkame sinu faili valmistama, kui avad oma tellimuse lehe. See ei lõpeta sinu taganemisõigust: saad lepingust taganeda 14 päeva jooksul pärast makset, isegi kui oled oma faili juba kätte saanud, ja saad tagasi kogu makstud summa. Lepingust saad taganeda nupuga „Taganen lepingust“ oma tellimuse taganemislehel:"),
+    "lv": ("Jūsu failu sākam veidot uzreiz pēc šī e-pasta nosūtīšanas. Tas nebeidz jūsu atteikuma tiesības: no līguma varat atteikties 14 dienu laikā pēc samaksas, pat ja fails jau ir jūsu rīcībā, un jūs saņemat atpakaļ visu samaksāto. No līguma varat atteikties ar pogu „Atteikties no līguma” sava pasūtījuma atteikuma lapā:",
+           "Jūsu failu sākam veidot, kad atverat savu pasūtījuma lapu. Tas nebeidz jūsu atteikuma tiesības: no līguma varat atteikties 14 dienu laikā pēc samaksas, pat ja fails jau ir jūsu rīcībā, un jūs saņemat atpakaļ visu samaksāto. No līguma varat atteikties ar pogu „Atteikties no līguma” sava pasūtījuma atteikuma lapā:"),
+}
+NO_BOX_INTRO = {"en": "your consent to the immediate start, ", "de": "Ihre Zustimmung zum sofortigen Beginn, "}   # the intro of the English and German email lists it
+
+
+NO_BOX_AU = {   # the Australian email (en, de): its heading "Cancelling before we start" renamed, the paragraph framed as EU law as before
+    "en": (("h", "Cancelling before we start"), ("h", "Cancelling for a change of mind"), "EU consumer law, with its right of withdrawal, applies to your contract. "),
+    "de": (("h", "Widerruf, bevor wir beginnen"), ("h", "Widerruf ohne Angabe von Gründen"), "Für Ihren Vertrag gilt das EU-Verbraucherrecht mit seinem Widerrufsrecht. "),
+}
+
+
+def no_box_mail(blocks, lang, auto, wlink):
+    """The confirmation's blocks for an order placed without the consent box: the consent section (its heading, the line about the ticked box, the
+    quote and the confirming line: the first heading followed by a paragraph, a quote and a paragraph; the section of a print has its own quote
+    after two paragraphs) taken out, the withdrawal paragraph (the paragraph just before the order's withdrawal link) replaced by NO_BOX_WITHDRAW,
+    and the intro of the English and German email without the consent. In the Australian email the heading of that paragraph is renamed and the
+    paragraph keeps its EU law framing. Each block it changes must be there (ValueError otherwise)."""
+    blocks = list(blocks)
+    q = next((i for i in range(len(blocks) - 3) if blocks[i][0] == "h" and blocks[i + 1][0] == "p" and blocks[i + 2][0] == "quote"
+              and blocks[i + 3][0] == "p"), None)
+    if q is None:
+        raise ValueError("the consent blocks moved")
+    del blocks[q:q + 4]
+    w = next((i for i, b in enumerate(blocks) if b[0] == "link" and b[1] == wlink), None)
+    if w is None or w < 1 or blocks[w - 1][0] != "p" or blocks[w - 2][0] != "h":
+        raise ValueError("the withdrawal blocks moved")
+    l = lang_of(lang)
+    pair = NO_BOX_WITHDRAW[l]
+    text = pair[0] if auto else pair[1]
+    au = NO_BOX_AU.get(l)
+    if au and blocks[w - 2] == au[0]:
+        blocks[w - 2] = au[1]
+        text = au[2] + text
+    blocks[w - 1] = ("p", text)
+    old = NO_BOX_INTRO.get(l)
+    if old:
+        blocks = [("p", b[1].replace(old, "")) if b[0] == "p" and old in b[1] else b for b in blocks]
+    return blocks
+
+
 def confirmation_mail(order, paid, k, pack, consent):
     """The order confirmation (subject, text, html) in the order's language: the contract on a durable medium.
     Sent before anything is made (confirmation()). It holds the order page link, the seller, what was bought, the
@@ -2163,6 +2255,9 @@ def confirmation_mail(order, paid, k, pack, consent):
         raise PayError(f"order {order}: the legal pack has no texts for the {market} market")
     wd, terms = docs["withdrawal"], docs["terms"]
     layout = catalogue.layout_name(lang, spec.get("layout"))
+    box = consent is not None       # None: placed without the consent box (placed_without_box): the blocks are built as usual, then no_box_mail
+    if not box:
+        consent = {"at": (paid.get("placed") or {}).get("at") or paid.get("paid_iso"), "text": ""}
     if lang in ("lt", "hu") or lang in TWINS:
         # Lithuanian, Hungarian, Croatian, Finnish, Estonian and Latvian (api/_lib/pay_lt.py, pay_hu.py and the twins): block for block the English email, then the same legal
         # texts. None is an Australian or a US market's language, so no invoice and no "Your rights in Australia" or
@@ -2188,6 +2283,8 @@ def confirmation_mail(order, paid, k, pack, consent):
                                                      terms_url=terms["url"], updated_day=pack["updated"],
                                                      seller=seller_lines(lang, pack))
         from . import prints
+        if not box:
+            blocks = no_box_mail(blocks, lang, auto, wlink)
         blocks = prints.amend_confirmation(list(blocks), lang, paid) + [("rule",), ("doc", wd["text"]), ("rule",), ("doc", terms["text"])]
         text, html_body = render_mail(blocks, lang, subject)
         return subject, text, html_body
@@ -2301,6 +2398,8 @@ def confirmation_mail(order, paid, k, pack, consent):
         subject, blocks = _australian(blocks, order, paid, pack, lang, auto, terms["url"])
     elif us_market(market):
         subject, blocks = _american(blocks, order, paid, pack, lang, auto, terms["url"])
+    if not box:
+        blocks = no_box_mail(blocks, lang, auto, wlink)
     blocks += [("rule",), ("doc", wd["text"]), ("rule",), ("doc", terms["text"])]
     text, html_body = render_mail(blocks, lang, subject)
     return subject, text, html_body
@@ -2620,7 +2719,7 @@ def deliver_mail(order, rec, paid, idem_suffix=""):
     if withdrawn(order):
         return "withdrawn"
     consent = paid_consent(order, rec, paid)
-    if consent is None:
+    if consent is None and not placed_without_box(paid):
         log(f"order {order}: confirmation email NOT sent, no consent is recorded for this order")
         return "no_consent"
     pack = legal_pack()
@@ -2639,7 +2738,7 @@ def deliver_mail(order, rec, paid, idem_suffix=""):
     auto = server_starts(pack)          # what this email says: the server starts right after it, or the order page
     res = send_mail(paid["email"], subject, text, f"snapeyes-delivery-{order}{idem_suffix}", html_body)
     _mark(path, "retry" if res == "transient" else ("sent" if res == "sent" else "failed"), result=res,
-          legal=pack.get("updated"), consent=consent.get("version"), making="server" if auto else "page")
+          legal=pack.get("updated"), consent=consent.get("version") if consent else None, making="server" if auto else "page")
     log(f"order {order}: confirmation email {res}")
     if res == "sent":
         _after_confirmation(order, auto)   # the precondition for making is met (api/_lib/maker.py)

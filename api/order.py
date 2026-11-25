@@ -521,6 +521,8 @@ def _paid_reply(order, paid, made, delivery, review, released, url=None, preview
     out = {"ok": True, "order": order, "state": state, "lang": spec.get("lang"), "count": n, "style": spec.get("style"),
            "layout": spec.get("layout"), "names": pay.names_text(spec), "title": spec.get("title"),
            "amount": paid.get("amount_total"), "currency": pay.currency_of(paid.get("currency")).upper(),
+           # whether the order holds a consent to the immediate start (orders before 2026-11-25 and the US market): the withdrawal form's lead follows it
+           "consent": isinstance(paid.get("consent"), dict) and isinstance(paid["consent"].get("version"), str),
            "market": paid.get("market") or spec.get("market") or pay.DEFAULT_MARKET,
            "eyes": [{"eye": i, "made": bool(made[i - 1])} for i in range(1, n + 1)]}
     if state == "pending":

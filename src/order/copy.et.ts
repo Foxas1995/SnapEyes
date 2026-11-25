@@ -144,6 +144,7 @@ export const et: OrderCopy = {
   withdraw: {
     heading: 'Lepingust taganemine',
     lead: 'Tellimisel nõustusid, et hakkame sinu faili kohe valmistama. Kuni me ei ole alustanud, saad sellest lepingust siin taganeda. Kui valmistamine on alanud, on sinu taganemisõigus lõppenud.',
+    leadOpen: 'Sellest lepingust saad siin taganeda 14 päeva jooksul pärast tellimust, isegi kui oled oma faili juba kätte saanud, ja saad tagasi kogu makstud summa.',
     acl: 'See on ELi tarbijaõigusest tulenev taganemisõigus juhuks, kui muudad meelt. See ei mõjuta sinu õigusi Austraalia tarbijaõiguse (Australian Consumer Law) alusel: kui sinu fail on vigane või ei vasta kirjeldusele, kirjuta meile ja lisa oma tellimuse number.',
     us: 'See on ELi tarbijaõigusest tulenev taganemisõigus juhuks, kui muudad meelt. See ei mõjuta sinu õigusi juhul, kui fail on vigane: kui sinu fail on vigane või ei vasta kirjeldusele, kirjuta meile ja lisa oma tellimuse number.',
     info: 'Taganemisõigus',

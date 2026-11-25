@@ -28,12 +28,11 @@
 // Not reviewed by a lawyer.
 import type { LegalDoc } from '../types';
 import { CONTACT_EMAIL, contactLine, formLine } from '../facts';
-import { CHECKOUT_LEGAL, WITHDRAWAL_ONLINE, withdrawFunctionAddress, withdrawFunctionHref } from '../../shared/legal';
+import { WITHDRAWAL_ONLINE, withdrawFunctionAddress, withdrawFunctionHref } from '../../shared/legal';
 
 const formLineHr = formLine('hr');
 const contactLineHr = contactLine('hr');
 const WITHDRAWAL_ONLINE_HR = WITHDRAWAL_ONLINE.hr;
-const CHECKOUT_LEGAL_HR = CHECKOUT_LEGAL.hr;
 const withdrawFunctionHrefHr = () => withdrawFunctionHref('hr');
 const withdrawFunctionAddressHr = () => withdrawFunctionAddress('hr');
 
@@ -42,9 +41,9 @@ const W = WITHDRAWAL_ONLINE_HR;
 export const hr: LegalDoc = {
   title: 'Pravo na jednostrani raskid ugovora',
   description:
-    'Informacije o pravu na jednostrani raskid ugovora za digitalne datoteke SnapEyes: pravo na jednostrani raskid u roku od 14 dana, kada ranije prestaje i primjerak obrasca o jednostranom raskidu.',
+    'Informacije o pravu na jednostrani raskid ugovora za digitalne datoteke SnapEyes: pravo na jednostrani raskid u roku od 14 dana i primjerak obrasca o jednostranom raskidu.',
   lead:
-    'Potrošači u EU-u imaju pravo na jednostrani raskid ugovora sklopljenog putem interneta. Kod digitalne datoteke kao što je naša to pravo prestaje ranije, čim uz vaš pristanak počnemo izrađivati vašu datoteku. Ovdje su sve informacije.',
+    'Potrošači u EU-u imaju pravo na jednostrani raskid ugovora sklopljenog putem interneta u roku od 14 dana. Ugovor o svojoj narudžbi možete jednostrano raskinuti u roku od 14 dana i dobiti natrag sav novac, čak i nakon što ste primili svoju datoteku. Ovdje su sve informacije.',
   sections: [
     {
       id: 'right',
@@ -65,22 +64,20 @@ export const hr: LegalDoc = {
     },
     {
       id: 'expiry',
-      title: 'Kada pravo na jednostrani raskid prestaje ranije',
+      title: 'Koliko traje pravo na jednostrani raskid',
       blocks: [
-        '**Vaše pravo na jednostrani raskid ugovora prestaje ranije**, čim započnemo s ispunjenjem ugovora, odnosno čim počnemo izrađivati vašu datoteku, ako su ispunjena tri uvjeta: (1) izričito ste pristali da s ispunjenjem ugovora započnemo prije isteka roka za jednostrani raskid, (2) potvrdili ste da ste upoznati s time da tako gubite pravo na jednostrani raskid ugovora čim započnemo i (3) mi smo vam to potvrdili na trajnom mediju (to činimo u e-poruci s potvrdom narudžbe, koja se šalje prije nego što započnemo). To proizlazi iz članka 86. stavka 1. točke 13. Zakona o zaštiti potrošača i članka 16. točke (m) Direktive 2011/83/EU.',
-        'Prije plaćanja taj pristanak dajete označavanjem ovog polja:',
-        { box: [CHECKOUT_LEGAL_HR.withdrawalConsent], label: 'Polje za označavanje pri narudžbi' },
-        'U praksi vaše pravo na jednostrani raskid ugovora stoga prestaje u trenutku kada počnemo izrađivati vašu datoteku. Počinjemo tek nakon što je poslana e-poruka s potvrdom narudžbe, obično u roku od minute nakon plaćanja, dok je vaša stranica narudžbe otvorena: stranica za plaćanje vodi vas izravno onamo. Ako do tada niste na svojoj stranici narudžbe, počinjemo kada je ponovno otvorite putem poveznice na stranicu narudžbe iz te e-poruke. Poveznica za raskid u istoj e-poruci otvara mrežnu funkciju za jednostrani raskid vaše narudžbe, a da ništa ne pokreće. Od trenutka kada započnemo, vaše pravo na jednostrani raskid je prestalo, čak i dok se vaša datoteka još izrađuje ili čeka našu provjeru kvalitete. Ako još nismo počeli izrađivati vašu datoteku, vaše pravo na jednostrani raskid prestaje istekom roka od 14 dana za jednostrani raskid: dan vašeg plaćanja ne računa se, a ako posljednji dan roka pada u subotu, nedjelju ili na državni praznik, rok istječe na kraju sljedećeg radnog dana. To ne utječe na vaša zakonska prava ako je datoteka neispravna: pogledajte odjeljak [Prigovori i nedostaci](doc:terms#defects) naših općih uvjeta prodaje.',
+        'Vašu datoteku počinjemo izrađivati odmah nakon vašeg plaćanja i isporučujemo je na vašu stranicu narudžbe. **Time vaše pravo na jednostrani raskid ugovora ne prestaje:** ugovor možete jednostrano raskinuti u roku od 14 dana od dana sklapanja ugovora, čak i dok se vaša datoteka još izrađuje ili nakon što ste je primili, i vraćamo vam sve što ste platili (pogledajte [Učinci jednostranog raskida ugovora](#effects)).',
+        'Rok od 14 dana za jednostrani raskid: dan vašeg plaćanja ne računa se, a ako posljednji dan roka pada u subotu, nedjelju ili na državni praznik, rok istječe na kraju sljedećeg radnog dana. To ne utječe na vaša zakonska prava ako je datoteka neispravna: pogledajte odjeljak [Prigovori i nedostaci](doc:terms#defects) naših općih uvjeta prodaje.',
       ],
     },
     {
       id: 'online',
       title: 'Jednostrani raskid putem interneta',
       blocks: [
-        `Dok traje vaše pravo na jednostrani raskid, ugovor u bilo kojem trenutku možete raskinuti putem interneta, funkcijom [„${W.button}“](${withdrawFunctionHrefHr()}). Nalazi se na dnu naše početne stranice i naših stranica s pravnim informacijama, na vašoj stranici narudžbe i iza poveznice za raskid u e-poruci s potvrdom narudžbe. Ta poveznica otvara funkciju za vašu narudžbu, a da ništa ne pokreće. Samo otvaranje vaše stranice narudžbe, naprotiv, pokreće izradu vaše datoteke čim je poslana e-poruka s potvrdom narudžbe, a time prestaje vaše pravo na jednostrani raskid (pogledajte [Kada pravo na jednostrani raskid prestaje ranije](#expiry)).`,
+        `Dok traje vaše pravo na jednostrani raskid, ugovor u bilo kojem trenutku možete raskinuti putem interneta, funkcijom [„${W.button}“](${withdrawFunctionHrefHr()}). Nalazi se na dnu naše početne stranice i naših stranica s pravnim informacijama, na vašoj stranici narudžbe i iza poveznice za raskid u e-poruci s potvrdom narudžbe. Ta poveznica otvara funkciju za vašu narudžbu, a da ništa ne pokreće.`,
         `Kako to funkcionira: upišite svoje ime, broj narudžbe (već je upisan ako dolazite sa svoje stranice narudžbe ili putem poveznice za raskid) i adresu e-pošte za potvrdu primitka, a zatim pošaljite svoju izjavu o raskidu gumbom „${W.confirm}“. Ako dolazite bez neke od tih poveznica, navedite adresu e-pošte koju ste naveli pri plaćanju, kako bismo mogli pronaći vašu narudžbu. Ako se podaci ne podudaraju ni s jednom našom narudžbom, stranica će vam to reći; vašu izjavu ipak čuvamo, ručno je provjeravamo i e-poštom vam šaljemo potvrdu primitka. Kako bismo spriječili zlouporabu naših e-poruka, broj potvrda primitka je ograničen: za izjave koje se ne podudaraju ni s jednom našom narudžbom, na dvije dnevno i četiri mjesečno na istu adresu; za jednu narudžbu, na ukupno tri na adrese različite od one koja je navedena pri plaćanju (daljnje se šalju na adresu koju ste naveli pri plaćanju); a za ponovljenu izjavu o narudžbi na koju smo već odgovorili, na jednu dnevno za tu narudžbu i pet dnevno za sve narudžbe zajedno. Ako stranica ne može primiti vašu izjavu, primjerice zbog tehničke pogreške ili zato što stiže neuobičajeno mnogo izjava, reći će vam to: tada nam izjavu o raskidu pošaljite e-poštom; e-poruka vrijedi jednako.`,
-        'Što se zatim događa: vašu izjavu bilježimo s datumom i vremenom kada nam je stigla. Ako je vaša narudžba plaćena, još nismo počeli izrađivati vašu datoteku i rok od 14 dana za jednostrani raskid nije istekao, vaš raskid proizvodi učinak: zaustavljamo vašu narudžbu, tako da se ništa ne izrađuje, i vraćamo vam novac kako je opisano u odjeljku [Učinci jednostranog raskida ugovora](#effects). Ako se vaše plaćanje još obrađivalo kada ste raskinuli ugovor, također se ništa ne izrađuje, a ako plaćanje stigne do nas, vraćamo ga u cijelosti. Bez odgađanja e-poštom vam šaljemo potvrdu primitka sa sadržajem vašeg raskida te njegovim datumom i vremenom.',
-        'Ako smo uz vaš pristanak već počeli izrađivati vašu datoteku ili je rok od 14 dana za jednostrani raskid istekao, vaše je pravo na jednostrani raskid već prestalo (pogledajte [Kada pravo na jednostrani raskid prestaje ranije](#expiry)): stranica i potvrda primitka to će vam reći, a vašu izjavu svejedno osobno pregledavamo. Ako vaša narudžba nikada nije plaćena, nema ugovora koji biste mogli raskinuti: stranica će vam to reći i ništa nije naplaćeno. To ne utječe na vaša prava ako je datoteka neispravna.',
+        'Što se zatim događa: vašu izjavu bilježimo s datumom i vremenom kada nam je stigla. Ako je vaša narudžba plaćena i rok od 14 dana za jednostrani raskid nije istekao, vaš raskid proizvodi učinak: ako vaša datoteka još nije gotova, zaustavljamo vašu narudžbu, a novac vam vraćamo kako je opisano u odjeljku [Učinci jednostranog raskida ugovora](#effects). Ako se vaše plaćanje još obrađivalo kada ste raskinuli ugovor, ništa se ne izrađuje, a ako plaćanje stigne do nas, vraćamo ga u cijelosti. Bez odgađanja e-poštom vam šaljemo potvrdu primitka sa sadržajem vašeg raskida te njegovim datumom i vremenom.',
+        'Ako je rok od 14 dana za jednostrani raskid istekao, vaše je pravo na jednostrani raskid već prestalo (pogledajte [Koliko traje pravo na jednostrani raskid](#expiry)): stranica i potvrda primitka to će vam reći, a vašu izjavu svejedno osobno pregledavamo. Ako vaša narudžba nikada nije plaćena, nema ugovora koji biste mogli raskinuti: stranica će vam to reći i ništa nije naplaćeno. To ne utječe na vaša prava ako je datoteka neispravna.',
       ],
     },
     {

@@ -7,7 +7,7 @@ import { RetakeButtons } from './StylePicker';
 import { classStyle, styleName } from '../shared/styles';
 import { currencyOf, currentMarket, money, priceMinor, type PriceList } from '../shared/markets';
 import { listFor } from '../shared/pricing';
-import { checkoutLegal, legalEdition, ownConsent } from '../shared/legal';
+import { checkoutLegal, legalEdition, ownConsent, consentBox } from '../shared/legal';
 import { LegalParts } from '../shared/LegalLinks';
 import { Dot } from '../motion/Tick';
 import type { Lang } from '../shared/lang';
@@ -188,7 +188,9 @@ export const BuyCard: React.FC<Props> = (props) => {
   const giftHere = !!p.onGift && giftMarket(market);
   const gift = giftHere ? p.gift ?? null : null;
   const toPay = gift ? Math.max(0, total - gift.value) : total;
-  const blockedBy = p.stale.length ? 'stale' : p.preview !== 'ready' ? p.preview : p.wordsBlocked ? 'words' : !p.waiver ? 'waiver' : null;
+  // the consent box only where the market's checkout still asks it (the US market; the owner's decision of 2026-11-25: no box anywhere else)
+  const box = consentBox(market);
+  const blockedBy = p.stale.length ? 'stale' : p.preview !== 'ready' ? p.preview : p.wordsBlocked ? 'words' : box && !p.waiver ? 'waiver' : null;
   const disabled = p.busy || blockedBy !== null;
   return (
     <section aria-label={T.price.title} data-testid="buy-card" className={CARD}>
@@ -213,11 +215,13 @@ export const BuyCard: React.FC<Props> = (props) => {
         <p data-testid="buy-advisory" className="mt-3 text-xs text-amber-100 bg-amber-950/30 border border-amber-500/40 rounded-xl p-3">{T.picker.advisory(p.advisory, p.eyes.length)}</p>
       )}
 
-      <label className="mt-4 flex items-start gap-3 text-xs leading-relaxed text-zinc-200 bg-white/5 border border-white/10 rounded-xl p-3 cursor-pointer">
-        <input data-testid="waiver" type="checkbox" checked={p.waiver} disabled={p.busy} onChange={(e) => p.onWaiver(e.target.checked)}
-          className="mt-0.5 w-5 h-5 shrink-0 accent-gold" />
-        <span>{waiverText}</span>
-      </label>
+      {box && (
+        <label className="mt-4 flex items-start gap-3 text-xs leading-relaxed text-zinc-200 bg-white/5 border border-white/10 rounded-xl p-3 cursor-pointer">
+          <input data-testid="waiver" type="checkbox" checked={p.waiver} disabled={p.busy} onChange={(e) => p.onWaiver(e.target.checked)}
+            className="mt-0.5 w-5 h-5 shrink-0 accent-gold" />
+          <span>{waiverText}</span>
+        </label>
+      )}
       {giftHere && <GiftField market={market} applied={gift} onApplied={(g) => p.onGift?.(g)} fmt={fmt} busy={p.busy} />}
       <p className="text-[11px] text-zinc-400 mt-2 leading-relaxed"><LegalParts parts={legal.acceptance} lang={lang} /></p>
 

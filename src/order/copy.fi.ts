@@ -143,6 +143,7 @@ export const fi: OrderCopy = {
   withdraw: {
     heading: 'Sopimuksen peruuttaminen',
     lead: 'Tilatessasi hyväksyit, että alamme tehdä tiedostoasi heti. Niin kauan kuin emme ole aloittaneet, voit peruuttaa tämän sopimuksen tässä. Kun tekeminen on alkanut, peruuttamisoikeutesi on päättynyt.',
+    leadOpen: 'Voit peruuttaa tämän sopimuksen tässä 14 päivän kuluessa tilauksestasi, vaikka olisit jo saanut tiedostosi, ja saat takaisin kaiken maksamasi.',
     acl: 'Tämä on EU:n kuluttajalainsäädännön mukainen peruuttamisoikeus siltä varalta, että muutat mielesi. Se ei vaikuta Australian kuluttajalain (Australian Consumer Law) mukaisiin oikeuksiisi: jos tiedostossasi on virhe tai se ei vastaa kuvausta, kirjoita meille ja kerro tilausnumerosi.',
     us: 'Tämä on EU:n kuluttajalainsäädännön mukainen peruuttamisoikeus siltä varalta, että muutat mielesi. Se ei vaikuta oikeuksiisi, jos tiedostossasi on virhe: jos tiedostossasi on virhe tai se ei vastaa kuvausta, kirjoita meille ja kerro tilausnumerosi.',
     info: 'Peruuttamisoikeus',

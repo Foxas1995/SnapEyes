@@ -437,14 +437,17 @@ def _assess_paid(order, rec, paid, now):
         in_order = mail_t is None or began_at is None or mail_t <= began_at + 1
         if consent is not None and mail_sent and in_order:
             return dict(facts, outcome="lapsed", reason="making_began")
-        # making began without the express consent or before the confirmation: the right did not lapse
-        return dict(facts, outcome="withdrawn", reason="began_without_confirmation")
+        if consent is not None or not pay.placed_without_box(paid):
+            # making began without the express consent or before the confirmation: the right did not lapse
+            return dict(facts, outcome="withdrawn", reason="began_without_confirmation")
+        # an order placed without the consent box (the owner's decision of 2026-11-25): making that began never ends the right; the 14 days do (below)
     paid_at = paid.get("paid_at")
     if isinstance(paid_at, (int, float)):
         end, last_day = period_end(paid_at)
         if now >= end:
             return dict(facts, outcome="lapsed", reason="period_over", period_end=end, period_last_day=last_day)
-    return dict(facts, outcome="withdrawn", reason="nothing_made")
+    # within_period: making had begun on an order placed without the consent box, so the right still held
+    return dict(facts, outcome="withdrawn", reason="within_period" if began else "nothing_made")
 
 
 def _assess_unpaid(order, rec):
@@ -1012,8 +1015,10 @@ def _todo(stmt):
             "Nothing is made for the order. If the payment arrives, you get a note to refund it (paid after "
             "withdrawal). Check the order in the Stripe Dashboard.")
     if outcome == "withdrawn":
+        made = ("Making had already begun (an order placed without the consent box keeps its 14 days): nothing more is made for the order."
+                if reason == "within_period" else "Nothing is made for the order.")
         return f"WITHDRAWN, refund {amount}", (
-            f"The withdrawal is effective ({reason}). Nothing is made for the order. REFUND {amount} in the Stripe "
+            f"The withdrawal is effective ({reason}). {made} REFUND {amount} in the Stripe "
             f"Dashboard (Payments, search {stmt.get('payment_intent') or stmt.get('session_id')}, Refund) by "
             f"{pay.iso(stmt.get('refund_by'))} at the latest. The order's images are deleted 14 days after the "
             f"withdrawal; its record and this statement stay.")

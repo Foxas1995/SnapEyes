@@ -133,6 +133,8 @@ export interface OrderStatus {
   names?: string;
   title?: string;
   amount?: number | null;
+  // whether the order holds a consent to the immediate start (orders before 2026-11-25 and the US market): the withdrawal form's lead follows it
+  consent?: boolean;
   // the currency the order was paid (or is priced) in ("EUR", "AUD", "HUF") and its market (src/shared/markets.ts)
   currency?: string;
   market?: string;

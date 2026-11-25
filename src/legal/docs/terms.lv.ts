@@ -1,8 +1,8 @@
 // Pārdošanas noteikumi: the Latvian twin of `en` in src/legal/docs/terms.ts, same section ids and blocks in the same
 // order, the same facts from src/landing/config.ts (through ../facts). Everything the English header says holds here
-// too: no ODR link, no VAT number, no promise the code does not keep, the right of withdrawal ends when making the file
-// begins (or with the 14-day period, counted as withdraw.py period_end counts it), the seller line has no phone (owner
-// decision).
+// too: no ODR link, no VAT number, no promise the code does not keep, the right of withdrawal lasts the 14-day period
+// (counted as withdraw.py period_end counts it; since 2026-11-25, the owner's decision, no consent box: making the file
+// does not end it), the seller line has no phone (owner decision).
 // The law behind the wording is named as the English text names it (Directive 2011/83/EU), in the words of its official
 // Latvian text: "atteikuma tiesības", "atteikuma termiņš", "atteikuma veidlapas paraugs", "pastāvīgs informācijas nesējs":
 //  - Art. 8(2): the order button says "pasūtījums ar pienākumu maksāt" or a similar unambiguous wording. Our button
@@ -90,7 +90,7 @@ export const lv: LegalDoc = {
         `Priekšskatījumi un cenas mūsu vietnē vēl nav saistošs piedāvājums. Pirms maksāšanas varat pārbaudīt savas acis, stilu, izkārtojumu un uzrakstu un izlabot jebkuru ievadi, atgriežoties atpakaļ vai nofotografējot vēlreiz. Pēc tam ar mūsu pogu „${CHECKOUT_LEGAL_LV.continueButton}” atverat mūsu maksājumu pakalpojumu sniedzēja Stripe maksājuma lapu; šī poga vēl neveic pasūtījumu. Šajā lapā ievadāt savu e-pasta adresi un maksājuma datus un varat tos izlabot. Saistošu pasūtījumu ar pienākumu maksāt jūs veicat, kad tur apstiprināt maksājumu ar maksāšanas pogu.`,
         'Līgums ir noslēgts, kad jūsu maksājums ir apstiprināts. Tad atveras jūsu pasūtījuma lapa, un tās saiti kopā ar pasūtījuma apstiprinājumu nosūtām jums e-pastā. Tiklīdz šis e-pasts ir nosūtīts, tur sākam veidot jūsu failu.',
         'Līguma valodas: latviešu, angļu, vācu, lietuviešu, ungāru, horvātu, somu un igauņu.',
-        'Jūsu pasūtījumu glabājam kopā ar līguma datiem: pasūtītais mākslas darbs, cena, datums, jūsu e-pasta adrese un jūsu piekrišana sākt uzreiz. Jūsu pasūtījuma lapa rāda šos datus tik ilgi, kamēr glabājam jūsu pasūtījumu. Atsevišķu šo noteikumu kopiju katram pasūtījumam neglabājam. Tā vietā pasūtījuma apstiprinājuma e-pastā teksta veidā ir jūsu pasūtījuma dati, šie noteikumi un informācija par atteikuma tiesībām ar atteikuma veidlapas paraugu tajā redakcijā, kas bija spēkā pasūtīšanas brīdī: lūdzu, saglabājiet šo e-pastu. Šo lapu arī varat jebkurā laikā saglabāt vai izdrukāt.',
+        'Jūsu pasūtījumu glabājam kopā ar līguma datiem: pasūtītais mākslas darbs, cena, datums un jūsu e-pasta adrese. Jūsu pasūtījuma lapa rāda šos datus tik ilgi, kamēr glabājam jūsu pasūtījumu. Atsevišķu šo noteikumu kopiju katram pasūtījumam neglabājam. Tā vietā pasūtījuma apstiprinājuma e-pastā teksta veidā ir jūsu pasūtījuma dati, šie noteikumi un informācija par atteikuma tiesībām ar atteikuma veidlapas paraugu tajā redakcijā, kas bija spēkā pasūtīšanas brīdī: lūdzu, saglabājiet šo e-pastu. Šo lapu arī varat jebkurā laikā saglabāt vai izdrukāt.',
       ],
     },
     {
@@ -122,7 +122,7 @@ export const lv: LegalDoc = {
       id: 'withdrawal',
       title: 'Atteikuma tiesības',
       blocks: [
-        `Kā patērētājam jums parasti ir 14 dienu atteikuma tiesības. Digitālam failam tās beidzas agrāk: pirms maksāšanas lūdzam jūs piekrist, ka jūsu failu sākam veidot uzreiz, pirms atteikuma termiņa beigām, un apliecināt, ka zināt, ka zaudējat atteikuma tiesības, tiklīdz esam sākuši. Tāpēc tās beidzas, tiklīdz esam sākuši veidot jūsu failu (līguma izpilde); sākam tikai pēc tam, kad ir nosūtīts pasūtījuma apstiprinājuma e-pasts, parasti minūtes laikā pēc samaksas, kamēr ir atvērta jūsu pasūtījuma lapa. Tas attiecas arī uz laiku, kamēr fails vēl tiek veidots vai gaida mūsu kvalitātes pārbaudi. Ja neesam sākuši, tās beidzas, kad beidzas 14 dienu atteikuma termiņš: jūsu samaksas diena netiek ieskaitīta, un, ja termiņa pēdējā diena ir sestdiena, svētdiena vai svētku diena, termiņš beidzas nākamās darba dienas beigās. Kamēr jūsu atteikuma tiesības ir spēkā, no līguma varat atteikties pa e-pastu, pa pastu vai tiešsaistē ar pogu „${WITHDRAWAL_ONLINE_LV.button}”; atteikuma saite pasūtījuma apstiprinājuma e-pastā atver šo funkciju jūsu pasūtījumam, nesākot veidot jūsu failu. Pilna informācija, tiešsaistes funkcija un atteikuma veidlapas paraugs ir lapā [Atteikuma tiesības](doc:withdrawal).`,
+        `Kā patērētājam jums ir 14 dienu atteikuma tiesības: 14 dienu laikā varat atteikties no līguma, neminot iemeslu. Jūsu failu sākam veidot uzreiz pēc samaksas un piegādājam to jūsu pasūtījuma lapā; tas nebeidz jūsu atteikuma tiesības. Ja atsakāties 14 dienu laikā, jūs saņemat atpakaļ visu samaksāto, pat ja fails jau ir jūsu rīcībā. Jūsu samaksas diena netiek ieskaitīta, un, ja termiņa pēdējā diena ir sestdiena, svētdiena vai svētku diena, termiņš beidzas nākamās darba dienas beigās. No līguma varat atteikties pa e-pastu, pa pastu vai tiešsaistē ar pogu „${WITHDRAWAL_ONLINE_LV.button}”; atteikuma saite pasūtījuma apstiprinājuma e-pastā atver šo funkciju jūsu pasūtījumam. Pilna informācija, tiešsaistes funkcija un atteikuma veidlapas paraugs ir lapā [Atteikuma tiesības](doc:withdrawal).`,
       ],
     },
     {

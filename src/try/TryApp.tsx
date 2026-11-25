@@ -38,7 +38,7 @@ import { count, note as noteCounter, withCamp } from '../shared/counter';
 import { track } from '../shared/metaPixel';
 import { noteFeedback } from '../shared/feedback';
 import { readCatalogue } from '../shared/catalogue';
-import { CHECKOUT_LEGAL, LEGAL_DOCS, LEGAL_LABELS, legalHref } from '../shared/legal';
+import { CHECKOUT_LEGAL, LEGAL_DOCS, LEGAL_LABELS, consentBox, legalHref } from '../shared/legal';
 import { currencyOf, currentMarket, money, priceMinor, serverPrices, withMarket } from '../shared/markets';
 import { STYLES as REGISTRY, isStyle } from '../shared/styles';
 import { BrandPicture } from '../shared/BrandLogo';
@@ -900,7 +900,7 @@ export const TryApp: React.FC = () => {
 
   const onBuy = async () => {
     const list = eyesRef.current;
-    if (buyingRef.current || !list.length || list.some((e) => e.sample) || !waiver || !ordering?.open || !style || !art || wordProblems.length || buying.kind !== 'normal') return;
+    if (buyingRef.current || !list.length || list.some((e) => e.sample) || (consentBox(currentMarket()) && !waiver) || !ordering?.open || !style || !art || wordProblems.length || buying.kind !== 'normal') return;
     buyingRef.current = true;
     count('buy', T.lang, currentMarket(), { eyes: list.length, style });       // the buy button was pressed (anonymous counter)
     setNotice(null);

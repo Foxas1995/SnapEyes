@@ -844,6 +844,8 @@ def a_order(body, who):
             "lab": order.startswith("lab-"), "paid": is_paid, "count": n_eyes,
             "email": paid.get("email") if is_paid else None,
             "consent": (paid or {}).get("consent") if is_paid else None,
+            # how an order without the consent box was placed ({at, lang, terms, box: false}; the owner's decision of 2026-11-25)
+            "placed": (paid or {}).get("placed") if is_paid and isinstance((paid or {}).get("placed"), dict) else None,
             "files": [{"path": rel(p), "url": urls.get(p)} for p in files],
             "records": {rel(p): r for p, r in recs.items()},
             "eyes": eyes, "artworks": arts, "payments": payments, "refunds": refunds, "log": admin_log,
@@ -1069,7 +1071,8 @@ def act_resend_confirmation(body, who):
         # the customer lost it: the same confirmation once more (a new message; the "sent" mark stays as it was)
         k = _key(order, rec)
         consent = pay.paid_consent(order, rec, paid)
-        if consent is None:
+        # an order placed without the consent box (the owner's decision of 2026-11-25) has nothing to quote: its confirmation is sent without it
+        if consent is None and not pay.placed_without_box(paid):
             raise store.Answer(409, "no_consent", "No consent is recorded for this order, so there is no confirmation "
                                "to send.", False)
         pack = pay.legal_pack()

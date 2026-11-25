@@ -142,6 +142,7 @@ export const hr: OrderCopy = {
   withdraw: {
     heading: 'Jednostrani raskid ugovora',
     lead: 'Pri narudžbi ste pristali da odmah počnemo izrađivati vašu datoteku. Dok još nismo počeli, ovaj ugovor ovdje možete jednostrano raskinuti. Čim izrada započne, vaše pravo na jednostrani raskid ugovora prestaje.',
+    leadOpen: 'Ovaj ugovor ovdje možete jednostrano raskinuti u roku od 14 dana od narudžbe, čak i nakon što ste primili datoteku, i vraćamo vam sve što ste platili.',
     acl: 'Ovo je pravo na jednostrani raskid ugovora prema potrošačkom pravu EU-a, za slučaj da se predomislite. Ono ne utječe na vaša prava prema australskom zakonu o zaštiti potrošača (Australian Consumer Law): ako je vaša datoteka neispravna ili ne odgovara opisu, pišite nam i navedite broj narudžbe.',
     us: 'Ovo je pravo na jednostrani raskid ugovora prema potrošačkom pravu EU-a, za slučaj da se predomislite. Ono ne utječe na vaša prava ako je datoteka neispravna: ako je vaša datoteka neispravna ili ne odgovara opisu, pišite nam i navedite broj narudžbe.',
     info: 'Pravo na jednostrani raskid ugovora',

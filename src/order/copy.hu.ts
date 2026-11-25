@@ -134,6 +134,7 @@ export const hu: OrderCopy = {
   withdraw: {
     heading: 'Elállás a szerződéstől',
     lead: 'A rendeléskor hozzájárultál, hogy azonnal megkezdjük a fájlod elkészítését. Amíg nem kezdtük el, itt elállhatsz ettől a szerződéstől. Amint az elkészítés megkezdődik, az elállási jogod megszűnik.',
+    leadOpen: 'A rendelésedtől számított 14 napon belül itt elállhatsz ettől a szerződéstől, akkor is, ha a fájlt már megkaptad, és a teljes kifizetett összeget visszatérítjük.',
     acl: 'Ez az uniós fogyasztóvédelmi jog szerinti elállási jog, amellyel akkor állhatsz el a szerződéstől, ha meggondolod magad. Az ausztrál fogyasztóvédelmi törvény (Australian Consumer Law) szerinti jogaidat ez nem érinti: ha a fájlod hibás, vagy nem felel meg a leírásnak, írj nekünk a rendelésszámoddal.',
     us: 'Ez az uniós fogyasztóvédelmi jog szerinti elállási jog, amellyel akkor állhatsz el a szerződéstől, ha meggondolod magad. A hibás fájl esetén fennálló jogaidat ez nem érinti: ha a fájlod hibás, vagy nem felel meg a leírásnak, írj nekünk a rendelésszámoddal.',
     info: 'Elállási tájékoztató',

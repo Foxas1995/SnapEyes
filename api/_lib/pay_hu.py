@@ -38,9 +38,7 @@ CONSENT_TEXT_HU = ("Kifejezetten hozzájárulok ahhoz, hogy a SnapEyes még az e
 
 # Stripe shows this right above its pay button, the click that makes the order binding: so the decree's own words
 # (45/2014. Korm. rendelet 15. § (2): „fizetési kötelezettséggel járó megrendelés”) stand at that click too.
-SUBMIT_NOTE_HU = ("Hozzájárultál, hogy "
-                  "azonnal elkezdjük, és tudomásul vetted, hogy a kezdéssel megszűnik az elállási jogod. A fizetési "
-                  "gombbal fizetési kötelezettséggel járó megrendelést adsz le.")
+SUBMIT_NOTE_HU = ("A fájlodat rögtön a fizetés után elkezdjük elkészíteni. A fizetési gombbal fizetési kötelezettséggel járó megrendelést adsz le.")
 
 ITEM_DESC_HU = "Digitális fájl, JPEG, 4096 px."
 
@@ -170,7 +168,7 @@ def confirmation_hu(*, order, spec, n, layout, price, paid_at, consent_at, conse
     blocks = [
         ("p", GREETING_HU),
         ("p", "Köszönjük a rendelésedet. Ez az e-mail visszaigazolja a velünk kötött szerződésedet. Kérjük, őrizd meg: "
-              "benne van a rendelésed, az azonnali kezdéshez adott hozzájárulásod, az elállási tájékoztató az "
+              "benne van a rendelésed, az elállási tájékoztató az "
               "elállásinyilatkozat-mintával, valamint az ÁSZF."),
         ("h", "A rendelési oldalad"),
         ("link", link),

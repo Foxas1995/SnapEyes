@@ -250,8 +250,9 @@ def withdraw_now(order, k, email, lang="en", **kw):
 store.put(f"orders/{oI}/making.json", store.json_bytes({"t": int(time.time())}), "application/json", upsert=True)
 c, j = withdraw_now(oI, kI, "melbourne@example.com")
 w = j.get("withdrawal") or {}
-check("E1 a lapsed statement on an AU order: the answer names market au", c == 200 and w.get("state") == "lapsed"
-      and w.get("market") == "au", (c, j))
+# 2026-11-25 (the owner's decision): no consent box on the Australian market, so making that began does not end the right: the statement is effective
+check("E1 a statement on an AU order after making began (no consent box since 2026-11-25: withdrawn within the 14 days): the answer names market au",
+      c == 200 and w.get("state") == "withdrawn" and w.get("reason") == "within_period" and w.get("market") == "au", (c, j))
 c, j = withdraw_now(oE, kE, "dublin@example.com")
 w = j.get("withdrawal") or {}
 check("E2 an effective withdrawal on an EU order: market eu, amount and currency as before",

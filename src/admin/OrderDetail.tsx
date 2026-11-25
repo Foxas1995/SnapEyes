@@ -219,9 +219,11 @@ export const OrderDetailPage: React.FC<{ call: Call; order: string }> = ({ call,
               <h3 className="text-sm font-bold">Sutikimas ir laiškai</h3>
               {d.consent?.text ? (
                 <blockquote className="border-l-2 border-[#f5c542]/60 pl-3 text-sm text-white/85 break-words">{d.consent.text}</blockquote>
+              ) : d.placed?.box === false ? (
+                <Notice tone="info">Užsakyta be sutikimo varnelės (Tavo sprendimas, 2026-11-25): teisė atsisakyti galioja 14 dienų, net ir gavus failą.</Notice>
               ) : <Notice tone="warn">Sutikimas neužfiksuotas.</Notice>}
               <Rows rows={[
-                ['Sutikimo laikas', d.consent?.at ? isoTime(d.consent.at) : '-'],
+                ['Sutikimo laikas', d.consent?.at ? isoTime(d.consent.at) : d.placed?.at ? `be varnelės, užsakyta ${isoTime(d.placed.at)}` : '-'],
                 ['Teksto versija', `${d.consent?.version || '-'} (${d.consent?.lang || '-'})`],
                 ['Patvirtinimo laiškas', d.records['mail_delivery.json'] ? `${s(mail.state)}${s(mail.result) ? `, ${RESULT_LT[s(mail.result)] || s(mail.result)}` : ''}, ${isoTime(mail.t)}${mail.by === 'owner' ? ' (pažymėjai ranka)' : ''}` : 'dar nesiųstas'],
                 ['Laiškai „paruošta“', d.log.filter((l) => l.action === 'release' || l.action === 'resend_ready').map((l) => `${fmtTime(l.t)} ${actionLt(l.action)} ${l.ok ? 'ok' : 'nepavyko'}`).join('; ') || '-'],

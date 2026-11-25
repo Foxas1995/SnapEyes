@@ -622,14 +622,14 @@
       {
         "id": "withdraw",
         "q": "Vai varu atteikties no pasūtījuma?",
-        "a": "Jūsu failu sākam veidot, tiklīdz ir nosūtīts pasūtījuma apstiprinājuma e-pasts, parasti minūtes laikā pēc samaksas. Pirms maksāšanas jūs piekrītat, ka sākam uzreiz, tāpēc 14 dienu atteikuma tiesības beidzas, tiklīdz esam sākuši veidot jūsu failu. Līdz tam varat atteikties pa e-pastu vai tiešsaistē ar pogu „Atteikties no līguma” šīs lapas apakšā vai izmantojot atteikuma saiti pasūtījuma apstiprinājuma e-pastā. Ja jūsu fails ir ar trūkumiem vai skaidri atšķiras no priekšskatījuma, ko apstiprinājāt, rakstiet mums: izveidosim to vēlreiz vai atmaksāsim naudu. Sīkāka informācija ir mūsu pārdošanas noteikumos un informācijā par atteikuma tiesībām, uz kuriem ved saites šīs lapas apakšā."
+        "a": "Jūsu failu sākam veidot, tiklīdz ir nosūtīts pasūtījuma apstiprinājuma e-pasts, parasti minūtes laikā pēc samaksas. Jums tomēr ir 14 dienu atteikuma tiesības: varat atteikties 14 dienu laikā pēc pasūtījuma, pat ja fails jau ir jūsu rīcībā, un jūs saņemat atpakaļ visu samaksāto. Varat atteikties pa e-pastu vai tiešsaistē ar pogu „Atteikties no līguma” šīs lapas apakšā vai izmantojot atteikuma saiti pasūtījuma apstiprinājuma e-pastā. Ja jūsu fails ir ar trūkumiem vai skaidri atšķiras no priekšskatījuma, ko apstiprinājāt, rakstiet mums: izveidosim to vēlreiz vai atmaksāsim naudu. Sīkāka informācija ir mūsu pārdošanas noteikumos un informācijā par atteikuma tiesībām, uz kuriem ved saites šīs lapas apakšā."
       },
       {
         "id": "order",
         "q": "Kad varu pasūtīt?",
         "a": "Pasūtījumus sāksim pieņemt drīz. Līdz tam ir pieejams bezmaksas priekšskatījums. Lai pasūtītu, jums vajag tikai e-pasta adresi.",
         "qOpen": "Kā pasūtīt?",
-        "aOpen": "Uzreiz pēc bezmaksas priekšskatījuma, tajā pašā lapā: izvēlieties stilu, atzīmējiet rūtiņu par digitālo failu un turpiniet uz Stripe maksājuma lapu, kur samaksājat. Jūsu pasūtījuma lapa atveras uzreiz, un tās saite atnāk e-pastā. Jums vajag tikai e-pasta adresi."
+        "aOpen": "Uzreiz pēc bezmaksas priekšskatījuma, tajā pašā lapā: izvēlieties stilu un turpiniet uz Stripe maksājuma lapu, kur samaksājat. Jūsu pasūtījuma lapa atveras uzreiz, un tās saite atnāk e-pastā. Jums vajag tikai e-pasta adresi."
       },
       {
         "id": "pets",
@@ -645,7 +645,7 @@
     },
     "withdraw": {
       "q": "Vai varu atcelt pasūtījumu?",
-      "a": "Jūsu failu sākam veidot, tiklīdz ir nosūtīts pasūtījuma apstiprinājuma e-pasts, parasti minūtes laikā pēc samaksas. Pirms maksāšanas jūs piekrītat, ka sākam uzreiz, tāpēc 14 dienu atteikuma tiesības saskaņā ar ES patērētāju tiesībām, kas attiecas uz jūsu pasūtījumu, beidzas, tiklīdz esam sākuši veidot jūsu failu. Līdz tam varat pasūtījumu atcelt pa e-pastu vai tiešsaistē ar pogu „Atteikties no līguma” šīs lapas apakšā vai izmantojot atteikuma saiti pasūtījuma apstiprinājuma e-pastā, un mēs atmaksāsim visu summu. Tas attiecas tikai uz gadījumu, kad pārdomājat: mūsu pakalpojumiem ir garantijas, kuras saskaņā ar Austrālijas patērētāju tiesību likumu (Australian Consumer Law) nevar izslēgt, tāpēc, ja jūsu fails ir ar trūkumiem vai skaidri atšķiras no priekšskatījuma, ko apstiprinājāt, rakstiet mums. Sīkāka informācija ir mūsu pārdošanas noteikumos (Jūsu tiesības Austrālijā) un informācijā par atteikuma tiesībām, uz kuriem ved saites šīs lapas apakšā."
+      "a": "Jūsu failu sākam veidot, tiklīdz ir nosūtīts pasūtījuma apstiprinājuma e-pasts, parasti minūtes laikā pēc samaksas. Tas neizbeidz 14 dienu atteikuma tiesības saskaņā ar ES patērētāju tiesībām, kas attiecas uz jūsu pasūtījumu: 14 dienu laikā, arī pēc faila saņemšanas, varat pasūtījumu atcelt pa e-pastu vai tiešsaistē ar pogu „Atteikties no līguma” šīs lapas apakšā vai izmantojot atteikuma saiti pasūtījuma apstiprinājuma e-pastā, un mēs atmaksāsim visu summu. Tas attiecas tikai uz gadījumu, kad pārdomājat: mūsu pakalpojumiem ir garantijas, kuras saskaņā ar Austrālijas patērētāju tiesību likumu (Australian Consumer Law) nevar izslēgt, tāpēc, ja jūsu fails ir ar trūkumiem vai skaidri atšķiras no priekšskatījuma, ko apstiprinājāt, rakstiet mums. Sīkāka informācija ir mūsu pārdošanas noteikumos (Jūsu tiesības Austrālijā) un informācijā par atteikuma tiesībām, uz kuriem ved saites šīs lapas apakšā."
     }
   },
   "final": {

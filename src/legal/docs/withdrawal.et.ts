@@ -27,12 +27,11 @@
 // Not reviewed by a lawyer.
 import type { LegalDoc } from '../types';
 import { CONTACT_EMAIL, contactLine, formLine } from '../facts';
-import { CHECKOUT_LEGAL, WITHDRAWAL_ONLINE, withdrawFunctionAddress, withdrawFunctionHref } from '../../shared/legal';
+import { WITHDRAWAL_ONLINE, withdrawFunctionAddress, withdrawFunctionHref } from '../../shared/legal';
 
 const formLineEt = formLine('et');
 const contactLineEt = contactLine('et');
 const WITHDRAWAL_ONLINE_ET = WITHDRAWAL_ONLINE.et;
-const CHECKOUT_LEGAL_ET = CHECKOUT_LEGAL.et;
 const withdrawFunctionHrefEt = () => withdrawFunctionHref('et');
 const withdrawFunctionAddressEt = () => withdrawFunctionAddress('et');
 
@@ -41,9 +40,9 @@ const W = WITHDRAWAL_ONLINE_ET;
 export const et: LegalDoc = {
   title: 'Taganemisõigus',
   description:
-    'Taganemisõiguse teave SnapEyesi digitaalsete failide kohta: 14-päevane taganemisõigus, millal see varem lõpeb, ja taganemisavalduse tüüpvorm.',
+    'Taganemisõiguse teave SnapEyesi digitaalsete failide kohta: 14-päevane taganemisõigus ja taganemisavalduse tüüpvorm.',
   lead:
-    'ELi tarbijatel on veebis tehtud ostude puhul taganemisõigus. Sellise digitaalse faili puhul nagu meie oma lõpeb see varem: niipea, kui hakkame teie nõusolekul teie faili valmistama. Siin on kogu teave.',
+    'ELi tarbijatel on veebis tehtud ostude puhul 14-päevane taganemisõigus. Võite oma tellimusest taganeda 14 päeva jooksul ja saada kogu raha tagasi, isegi kui olete oma faili juba kätte saanud. Siin on kogu teave.',
   sections: [
     {
       id: 'right',
@@ -64,22 +63,20 @@ export const et: LegalDoc = {
     },
     {
       id: 'expiry',
-      title: 'Millal taganemisõigus varem lõpeb',
+      title: 'Kui kaua taganemisõigus kehtib',
       blocks: [
-        '**Teie taganemisõigus lõpeb varem**, niipea kui oleme alustanud lepingu täitmist, see tähendab niipea, kui oleme hakanud teie faili valmistama, kui (1) andsite sõnaselge nõusoleku, et alustame täitmist enne taganemistähtaja lõppu, (2) kinnitasite, et olete teadlik, et kaotate sellega oma taganemisõiguse, kui oleme alustanud, ja (3) oleme seda teile kinnitanud püsival andmekandjal (teeme seda tellimuse kinnituskirjas, mis saadetakse välja enne alustamist). See tuleneb direktiivi 2011/83/EL artikli 16 punktist m (Eestis võlaõigusseaduse § 53 lõike 4 punkt 7¹).',
-        'Enne maksmist annate selle nõusoleku, märkides selle kasti:',
-        { box: [CHECKOUT_LEGAL_ET.withdrawalConsent], label: 'Märkeruut tellimisel' },
-        'Praktikas lõpeb teie taganemisõigus seega hetkel, mil hakkame teie faili valmistama. Alustame alles pärast seda, kui tellimuse kinnituskiri on välja saadetud, tavaliselt minuti jooksul pärast makset, kui teie tellimuse leht on avatud: makseleht viib teid otse sinna. Kui te selleks ajaks oma tellimuse lehel ei ole, alustame siis, kui avate selle uuesti selles e-kirjas oleva tellimuse lehe lingi kaudu. Samas e-kirjas olev taganemislink avab teie tellimuse veebipõhise taganemisfunktsiooni, ilma et midagi käivitataks. Alates hetkest, mil alustame, on teie taganemisõigus lõppenud, isegi kui teie faili alles valmistatakse või see ootab meie kvaliteedikontrolli. Kui me ei ole teie faili valmistamist alustanud, lõpeb teie taganemisõigus 14-päevase taganemistähtaja möödumisel: makse tegemise päeva ei arvestata ning kui tähtaja viimane päev on laupäev, pühapäev või riigipüha, lõpeb tähtaeg järgmise tööpäeva lõpus. See ei mõjuta teie seadusest tulenevaid õigusi puudusega faili korral: vt meie müügitingimuste jaotist [Kaebused ja puudused](doc:terms#defects).',
+        'Hakkame teie faili valmistama kohe pärast teie makset ja toimetame selle teie tellimuse lehele. **See ei lõpeta teie taganemisõigust:** võite taganeda 14 päeva jooksul alates lepingu sõlmimisest, ka siis, kui teie faili alles valmistatakse või kui olete selle juba kätte saanud, ning saate tagasi kogu makstud summa (vt [Lepingust taganemise tagajärjed](#effects)).',
+        '14-päevase taganemistähtaja arvestamine: makse tegemise päeva ei arvestata ning kui tähtaja viimane päev on laupäev, pühapäev või riigipüha, lõpeb tähtaeg järgmise tööpäeva lõpus. See ei mõjuta teie seadusest tulenevaid õigusi puudusega faili korral: vt meie müügitingimuste jaotist [Kaebused ja puudused](doc:terms#defects).',
       ],
     },
     {
       id: 'online',
       title: 'Taganemine veebis',
       blocks: [
-        `Seni, kuni teie taganemisõigus kehtib, saate igal ajal taganeda veebis funktsiooniga [„${W.button}“](${withdrawFunctionHrefEt()}). Leiate selle meie avalehe ja õigusliku teabe lehtede jalusest, oma tellimuse lehelt ning tellimuse kinnituskirjas oleva taganemislingi tagant. See link avab funktsiooni teie tellimuse jaoks, ilma et midagi käivitataks. Tellimuse lehe enda avamine käivitab aga teie faili valmistamise, kui tellimuse kinnituskiri on välja saadetud, ja sellega lõpeb teie taganemisõigus (vt [Millal taganemisõigus varem lõpeb](#expiry)).`,
+        `Seni, kuni teie taganemisõigus kehtib, saate igal ajal taganeda veebis funktsiooniga [„${W.button}“](${withdrawFunctionHrefEt()}). Leiate selle meie avalehe ja õigusliku teabe lehtede jalusest, oma tellimuse lehelt ning tellimuse kinnituskirjas oleva taganemislingi tagant. See link avab funktsiooni teie tellimuse jaoks, ilma et midagi käivitataks.`,
         `Kuidas see toimib: sisestage oma nimi, tellimuse number (see on juba täidetud, kui tulete oma tellimuse lehelt või taganemislingi kaudu) ja e-posti aadress kättesaamise kinnituse jaoks ning saatke seejärel oma taganemisavaldus nupuga „${W.confirm}“. Kui tulete ilma kummagi lingita, märkige palun e-posti aadress, millega maksite, et saaksime teie tellimuse üles leida. Kui andmed ei vasta ühelegi meie tellimusele, ütleb leht teile seda; säilitame teie avalduse siiski, kontrollime seda käsitsi ja saadame teile e-kirjaga kättesaamise kinnituse. Meie e-kirjade kuritarvitamise vältimiseks on kättesaamise kinnituste arv piiratud: avalduste puhul, mis ei vasta ühelegi meie tellimusele, kahe kinnitusega päevas ja nelja kinnitusega kuus samale aadressile; ühe tellimuse puhul kokku kolme kinnitusega aadressidele, mis erinevad maksmisel kasutatud aadressist (järgmised saadetakse aadressile, millega maksite); ning korduva avalduse puhul tellimuse kohta, millele oleme juba vastanud, ühe kinnitusega päevas selle tellimuse kohta ja viie kinnitusega päevas kõigi tellimuste kohta kokku. Kui leht ei saa teie avaldust vastu võtta, näiteks tehnilise rikke tõttu või seetõttu, et avaldusi saabub ebatavaliselt palju, ütleb leht teile seda: saatke meile siis palun oma taganemisavaldus e-kirjaga; e-kiri kehtib samamoodi.`,
-        'Mis edasi saab: salvestame teie avalduse koos kuupäeva ja kellaajaga, mil see meieni jõudis. Kui teie tellimuse eest on makstud, me ei ole teie faili valmistamist alustanud ja 14-päevane taganemistähtaeg ei ole möödunud, jõustub teie taganemine: peatame teie tellimuse, nii et midagi ei valmistata, ja tagastame teile raha, nagu on kirjeldatud jaotises [Lepingust taganemise tagajärjed](#effects). Kui teie makse oli taganemise ajal veel töötlemisel, ei valmistata samuti midagi, ja kui makse meieni jõuab, tagastame selle täies ulatuses. Saadame teile viivitamata e-kirjaga kättesaamise kinnituse, mis sisaldab teie taganemisavalduse sisu ning selle kuupäeva ja kellaaega.',
-        'Kui olime teie nõusolekul teie faili valmistamist juba alustanud või 14-päevane taganemistähtaeg oli möödunud, oli teie taganemisõigus juba lõppenud (vt [Millal taganemisõigus varem lõpeb](#expiry)): leht ja kättesaamise kinnitus ütlevad teile seda ning me vaatame teie avalduse siiski isiklikult üle. Kui teie tellimuse eest ei ole kunagi makstud, ei ole lepingut, millest taganeda: leht ütleb teile seda ja raha ei ole võetud. See ei mõjuta teie õigusi puudusega faili korral.',
+        'Mis edasi saab: salvestame teie avalduse koos kuupäeva ja kellaajaga, mil see meieni jõudis. Kui teie tellimuse eest on makstud ja 14-päevane taganemistähtaeg ei ole möödunud, jõustub teie taganemine: peatame teie tellimuse, kui teie fail ei ole veel valmis, ja tagastame teile raha, nagu on kirjeldatud jaotises [Lepingust taganemise tagajärjed](#effects). Kui teie makse oli taganemise ajal veel töötlemisel, ei valmistata midagi, ja kui makse meieni jõuab, tagastame selle täies ulatuses. Saadame teile viivitamata e-kirjaga kättesaamise kinnituse, mis sisaldab teie taganemisavalduse sisu ning selle kuupäeva ja kellaaega.',
+        'Kui 14-päevane taganemistähtaeg oli möödunud, oli teie taganemisõigus juba lõppenud (vt [Kui kaua taganemisõigus kehtib](#expiry)): leht ja kättesaamise kinnitus ütlevad teile seda ning me vaatame teie avalduse siiski isiklikult üle. Kui teie tellimuse eest ei ole kunagi makstud, ei ole lepingut, millest taganeda: leht ütleb teile seda ja raha ei ole võetud. See ei mõjuta teie õigusi puudusega faili korral.',
       ],
     },
     {

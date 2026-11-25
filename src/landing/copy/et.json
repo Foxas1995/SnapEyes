@@ -622,14 +622,14 @@
       {
         "id": "withdraw",
         "q": "Kas ma saan tellimusest taganeda?",
-        "a": "Hakkame sinu faili valmistama kohe, kui tellimuse kinnituskiri on välja saadetud, tavaliselt minuti jooksul pärast makset. Enne maksmist nõustud, et alustame kohe, seega lõpeb 14-päevane taganemisõigus siis, kui oleme sinu faili valmistamist alustanud. Seni saad lepingust taganeda e-kirjaga või veebis nupuga „Taganen lepingust“, mille leiad selle lehe jalusest või tellimuse kinnituskirjas olevalt taganemislingilt. Kui sinu fail on puudusega või erineb selgelt sinu heakskiidetud eelvaatest, kirjuta meile: valmistame selle uuesti või tagastame sulle raha. Üksikasjad on meie müügitingimustes ja taganemisõiguse teabes, mille lingid on selle lehe jaluses."
+        "a": "Hakkame sinu faili valmistama kohe, kui tellimuse kinnituskiri on välja saadetud, tavaliselt minuti jooksul pärast makset. Sul on siiski 14-päevane taganemisõigus: võid taganeda 14 päeva jooksul pärast tellimust, isegi kui oled oma faili juba kätte saanud, ja saad tagasi kogu makstud summa. Lepingust saad taganeda e-kirjaga või veebis nupuga „Taganen lepingust“, mille leiad selle lehe jalusest või tellimuse kinnituskirjas olevalt taganemislingilt. Kui sinu fail on puudusega või erineb selgelt sinu heakskiidetud eelvaatest, kirjuta meile: valmistame selle uuesti või tagastame sulle raha. Üksikasjad on meie müügitingimustes ja taganemisõiguse teabes, mille lingid on selle lehe jaluses."
       },
       {
         "id": "order",
         "q": "Millal ma saan tellida?",
         "a": "Tellimine avaneb peagi. Seni on saadaval tasuta eelvaade. Tellimiseks on vaja ainult e-posti aadressi.",
         "qOpen": "Kuidas ma tellin?",
-        "aOpen": "Kohe pärast tasuta eelvaadet, samal lehel: vali stiil, märgi digitaalse faili kohta käiv kast ja jätka Stripe’i makselehele, kus maksad. Sinu tellimuse leht avaneb kohe ja selle link saabub e-kirjaga. Vaja on ainult e-posti aadressi."
+        "aOpen": "Kohe pärast tasuta eelvaadet, samal lehel: vali stiil ja jätka Stripe’i makselehele, kus maksad. Sinu tellimuse leht avaneb kohe ja selle link saabub e-kirjaga. Vaja on ainult e-posti aadressi."
       },
       {
         "id": "pets",
@@ -645,7 +645,7 @@
     },
     "withdraw": {
       "q": "Kas ma saan tellimuse tühistada?",
-      "a": "Hakkame sinu faili valmistama kohe, kui tellimuse kinnituskiri on välja saadetud, tavaliselt minuti jooksul pärast makset. Enne maksmist nõustud, et alustame kohe, seega lõpeb sinu tellimusele kohalduv ELi tarbijaõigusest tulenev 14-päevane taganemisõigus siis, kui oleme sinu faili valmistamist alustanud. Seni saad tellimuse tühistada e-kirjaga või veebis nupuga „Taganen lepingust“, mille leiad selle lehe jalusest või tellimuse kinnituskirjas olevalt taganemislingilt, ja me tagastame sulle kogu summa. See puudutab ainult meelemuutust: meie teenustega kaasnevad garantiid, mida Austraalia tarbijaõiguse (Australian Consumer Law) alusel ei saa välistada, seega kui sinu fail on vigane või erineb selgelt sinu heakskiidetud eelvaatest, kirjuta meile. Üksikasjad on meie müügitingimustes (Sinu õigused Austraalias) ja taganemisõiguse teabes, mille lingid on selle lehe jaluses."
+      "a": "Hakkame sinu faili valmistama kohe, kui tellimuse kinnituskiri on välja saadetud, tavaliselt minuti jooksul pärast makset. See ei lõpeta sinu tellimusele kohalduvat ELi tarbijaõigusest tulenevat 14-päevast taganemisõigust: 14 päeva jooksul, ka pärast faili kättesaamist, saad tellimuse tühistada e-kirjaga või veebis nupuga „Taganen lepingust“, mille leiad selle lehe jalusest või tellimuse kinnituskirjas olevalt taganemislingilt, ja me tagastame sulle kogu summa. See puudutab ainult meelemuutust: meie teenustega kaasnevad garantiid, mida Austraalia tarbijaõiguse (Australian Consumer Law) alusel ei saa välistada, seega kui sinu fail on vigane või erineb selgelt sinu heakskiidetud eelvaatest, kirjuta meile. Üksikasjad on meie müügitingimustes (Sinu õigused Austraalias) ja taganemisõiguse teabes, mille lingid on selle lehe jaluses."
     }
   },
   "final": {

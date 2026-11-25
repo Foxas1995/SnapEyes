@@ -1,8 +1,8 @@
 // Müügitingimused: the Estonian twin of `en` in src/legal/docs/terms.ts, same section ids and blocks in the same
 // order, the same facts from src/landing/config.ts (through ../facts). Everything the English header says holds here
-// too: no ODR link, no VAT number, no promise the code does not keep, the right of withdrawal ends when making the file
-// begins (or with the 14-day period, counted as withdraw.py period_end counts it), the seller line has no phone (owner
-// decision).
+// too: no ODR link, no VAT number, no promise the code does not keep, the right of withdrawal lasts the 14-day period
+// (counted as withdraw.py period_end counts it; since 2026-11-25, the owner's decision, no consent box: making the file
+// does not end it), the seller line has no phone (owner decision).
 // Estonian law behind the wording (Võlaõigusseadus, VÕS, read 2026-11-13 from riigiteataja.ee; it and the Estonian text
 // of Directive 2011/83/EU call the right of withdrawal "taganemisõigus", so these terms do too):
 //  - § 62¹ lg 3: the order button says „tellimus koos maksekohustusega“ or a similar unambiguous wording. Our button
@@ -89,7 +89,7 @@ export const et: LegalDoc = {
         `Eelvaated ja hinnad meie veebilehel ei ole veel siduv pakkumine. Enne maksmist saate oma silmad, stiili, paigutuse ja teksti üle kontrollida ning parandada mis tahes sisestust, minnes tagasi või pildistades uuesti. Seejärel avate meie nupuga „${CHECKOUT_LEGAL_ET.continueButton}“ meie makseteenuse pakkuja Stripe’i makselehe; see nupp ei esita veel tellimust. Sellel lehel sisestate oma e-posti aadressi ja makseandmed ning saate neid parandada. Maksekohustusega tellimuse esitate siis, kui kinnitate seal makse maksenupuga.`,
         'Leping on sõlmitud, kui teie makse on kinnitatud. Seejärel avaneb teie tellimuse leht ja me saadame teile selle lingi e-kirjaga koos tellimuse kinnitusega. Niipea kui see e-kiri on välja saadetud, hakkame seal teie faili valmistama.',
         'Lepingu keeled: eesti, inglise, saksa, leedu, ungari, horvaadi, soome ja läti.',
-        'Säilitame teie tellimuse koos lepingu andmetega: tellitud kunstiteos, hind, kuupäev, teie e-posti aadress ja teie nõusolek kohe alustada. Teie tellimuse leht näitab neid andmeid seni, kuni me teie tellimust säilitame. Me ei säilita iga tellimuse kohta nende tingimuste eraldi koopiat. Selle asemel sisaldab tellimuse kinnituskiri tekstina teie tellimuse andmeid, neid tingimusi ja taganemisõiguse teavet koos taganemisavalduse tüüpvormiga, tellimise ajal kehtinud versioonis: palun hoidke see e-kiri alles. Samuti võite selle lehe igal ajal salvestada või välja trükkida.',
+        'Säilitame teie tellimuse koos lepingu andmetega: tellitud kunstiteos, hind, kuupäev ja teie e-posti aadress. Teie tellimuse leht näitab neid andmeid seni, kuni me teie tellimust säilitame. Me ei säilita iga tellimuse kohta nende tingimuste eraldi koopiat. Selle asemel sisaldab tellimuse kinnituskiri tekstina teie tellimuse andmeid, neid tingimusi ja taganemisõiguse teavet koos taganemisavalduse tüüpvormiga, tellimise ajal kehtinud versioonis: palun hoidke see e-kiri alles. Samuti võite selle lehe igal ajal salvestada või välja trükkida.',
       ],
     },
     {
@@ -121,7 +121,7 @@ export const et: LegalDoc = {
       id: 'withdrawal',
       title: 'Taganemisõigus',
       blocks: [
-        `Tarbijana on teil üldjuhul 14-päevane taganemisõigus. Digitaalse faili puhul lõpeb see varem: enne maksmist palume teil nõustuda, et hakkame teie faili valmistama kohe, enne taganemistähtaja lõppu, ja kinnitada, et olete teadlik, et kaotate oma taganemisõiguse, kui oleme alustanud. Seega lõpeb see niipea, kui oleme hakanud teie faili valmistama (lepingu täitmine); alustame alles pärast seda, kui tellimuse kinnituskiri on välja saadetud, tavaliselt minuti jooksul pärast makset, kui teie tellimuse leht on avatud. See kehtib ka siis, kui faili alles valmistatakse või see ootab meie kvaliteedikontrolli. Kui me ei ole alustanud, lõpeb see 14-päevase taganemistähtaja möödumisel: makse tegemise päeva ei arvestata ning kui tähtaja viimane päev on laupäev, pühapäev või riigipüha, lõpeb tähtaeg järgmise tööpäeva lõpus. Seni, kuni teie taganemisõigus kehtib, saate taganeda e-kirjaga, postiga või veebis nupuga „${WITHDRAWAL_ONLINE_ET.button}“; tellimuse kinnituskirjas olev taganemislink avab selle teie tellimuse jaoks, ilma et teie faili valmistamine algaks. Kogu teave, veebipõhine funktsioon ja taganemisavalduse tüüpvorm on lehel [Taganemisõigus](doc:withdrawal).`,
+        `Tarbijana on teil 14-päevane taganemisõigus: võite lepingust taganeda 14 päeva jooksul põhjust avaldamata. Hakkame teie faili valmistama kohe pärast teie makset ja toimetame selle teie tellimuse lehele; see ei lõpeta teie taganemisõigust. Kui taganete 14 päeva jooksul, saate tagasi kogu makstud summa, isegi kui olete oma faili juba kätte saanud. Makse tegemise päeva ei arvestata ning kui tähtaja viimane päev on laupäev, pühapäev või riigipüha, lõpeb tähtaeg järgmise tööpäeva lõpus. Saate taganeda e-kirjaga, postiga või veebis nupuga „${WITHDRAWAL_ONLINE_ET.button}“; tellimuse kinnituskirjas olev taganemislink avab selle teie tellimuse jaoks. Kogu teave, veebipõhine funktsioon ja taganemisavalduse tüüpvorm on lehel [Taganemisõigus](doc:withdrawal).`,
       ],
     },
     {

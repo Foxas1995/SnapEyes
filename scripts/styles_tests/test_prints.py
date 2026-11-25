@@ -475,9 +475,11 @@ check("order.json keeps the print with the print box the customer ticked (consen
       and cp["consent"]["text"] == PR.PRINT_CONSENT_TEXT["lt"] and len(cp["consent"]["text_sha256"]) == 16, cp)
 check("the reply names the print and the total Stripe charges (the artwork, the print, its shipping)",
       j.get("print") == {"product": "acrylic60", "country": "DE", "price": 12900, "ship": 699} and j.get("total") == j["amount"] + 12900 + 699, j)
-check("the withdrawal waiver of the file is unchanged and recorded as before (its text is the version's)",
-      (rec["checkout"]["consent"]["text"] == pay.CONSENT_TEXT["lt"]) and pay.consent_text("2026-10-28.2", "en") == pay.CONSENT_TEXT["en"]
-      and pay.consent_text("2026-10-28.3", "en", "us") == pay.CONSENT_TEXT_US["en"], rec["checkout"]["consent"])
+# 2026-11-25 (the owner's decision): no consent box for the file but on the US market; the print box stays (a print made to order, another legal role)
+check("the file has no consent box on this market since 2026-11-25 (the owner's decision): no waiver recorded, the plain fact of how the order was placed instead; "
+      "the texts of the versions before are still read",
+      "consent" not in rec["checkout"] and rec["checkout"]["placed"]["box"] is False and pay.consent_text("2026-10-28.2", "en") == pay.CONSENT_TEXT["en"]
+      and pay.consent_text("2026-10-28.3", "en", "us") == pay.CONSENT_TEXT_US["en"], rec["checkout"])
 # 2026-11-13: the same checkout in Finnish, Estonian and Latvian (a poster to the language's own country): Stripe's line, shipping and notes and the recorded print box
 # are that language's, under the current consent version (the variables of the Lithuanian order above are used further down and stay untouched)
 PAYDUTY = {"fi": "maksuvelvollisuus", "et": "maksekohustusega", "lv": "pienākumu maksāt"}
@@ -489,7 +491,8 @@ for l_, cc_ in (("fi", "FI"), ("et", "EE"), ("lv", "LV")):
     cp_l = ((rj(f"orders/{o_l}/order.json").get("checkout") or {}).get("print") or {}) if c_l == 200 else {}
     rec_l = (rj(f"orders/{o_l}/order.json").get("checkout") or {}) if c_l == 200 else {}
     check(f"... and a checkout with a print in {l_} (a poster to {cc_}): the line item's name and description, the shipping label and the address note with the country's name, and the "
-          f"note above the pay button with the binding order sentence are in {l_}; order.json keeps the {l_} print box and the {l_} waiver under consent version 2026-11-13.1",
+          f"note above the pay button with the binding order sentence are in {l_}; order.json keeps the {l_} print box under consent version 2026-11-13.1 and, the file "
+          f"having no consent box since 2026-11-25 (the owner's decision), no waiver",
           c_l == 200 and p_l.get("line_items[1][price_data][product_data][name]") == PR.product_name("poster50", l_) and p_l.get("line_items[1][price_data][unit_amount]") == "3500"
           and p_l.get("line_items[1][price_data][product_data][description]") == PR.ITEM_DESC_PRINT[l_]
           and p_l.get("shipping_address_collection[allowed_countries][0]") == cc_ and p_l.get("shipping_options[0][shipping_rate_data][fixed_amount][amount]") == str(ship_l)
@@ -499,7 +502,7 @@ for l_, cc_ in (("fi", "FI"), ("et", "EE"), ("lv", "LV")):
           and PR.SUBMIT_NOTE_PRINT[l_] not in [PR.SUBMIT_NOTE_PRINT[x] for x in PR.LANGS if x != l_] and PR.ITEM_DESC_PRINT[l_] not in [PR.ITEM_DESC_PRINT[x] for x in PR.LANGS if x != l_]
           and cp_l.get("product") == "poster50" and cp_l.get("country") == cc_ and cp_l.get("consent", {}).get("version") == "2026-11-13.1" and cp_l["consent"]["lang"] == l_
           and cp_l["consent"]["text"] == PR.PRINT_CONSENT_TEXT[l_] and cp_l["consent"]["text_sha256"] == hashlib.sha256(PR.PRINT_CONSENT_TEXT[l_].encode("utf-8")).hexdigest()[:16]
-          and rec_l.get("consent", {}).get("text") == pay.CONSENT_TEXT[l_] and rec_l["consent"]["version"] == "2026-11-13.1"
+          and "consent" not in rec_l and rec_l.get("placed", {}).get("box") is False
           and j_l.get("print") == {"product": "poster50", "country": cc_, "price": 3500, "ship": ship_l},
           (c_l, j_l, {k_: v for k_, v in p_l.items() if "line_items[1]" in k_ or k_.startswith(("custom_text", "shipping_options[0][shipping_rate_data][display"))}, cp_l))
 

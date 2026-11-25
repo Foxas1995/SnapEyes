@@ -27,12 +27,11 @@
 // Not reviewed by a lawyer.
 import type { LegalDoc } from '../types';
 import { CONTACT_EMAIL, contactLine, formLine } from '../facts';
-import { CHECKOUT_LEGAL, WITHDRAWAL_ONLINE, withdrawFunctionAddress, withdrawFunctionHref } from '../../shared/legal';
+import { WITHDRAWAL_ONLINE, withdrawFunctionAddress, withdrawFunctionHref } from '../../shared/legal';
 
 const formLineLv = formLine('lv');
 const contactLineLv = contactLine('lv');
 const WITHDRAWAL_ONLINE_LV = WITHDRAWAL_ONLINE.lv;
-const CHECKOUT_LEGAL_LV = CHECKOUT_LEGAL.lv;
 const withdrawFunctionHrefLv = () => withdrawFunctionHref('lv');
 const withdrawFunctionAddressLv = () => withdrawFunctionAddress('lv');
 
@@ -41,9 +40,9 @@ const W = WITHDRAWAL_ONLINE_LV;
 export const lv: LegalDoc = {
   title: 'Atteikuma tiesības',
   description:
-    'Informācija par atteikuma tiesībām SnapEyes digitālajiem failiem: 14 dienu atteikuma tiesības, kad tās beidzas agrāk, un atteikuma veidlapas paraugs.',
+    'Informācija par atteikuma tiesībām SnapEyes digitālajiem failiem: 14 dienu atteikuma tiesības un atteikuma veidlapas paraugs.',
   lead:
-    'Patērētājiem ES ir atteikuma tiesības, pērkot tiešsaistē. Tādam digitālam failam kā mūsējais tās beidzas agrāk, tiklīdz ar jūsu piekrišanu sākam veidot jūsu failu. Šeit ir visa informācija.',
+    'Patērētājiem ES ir 14 dienu atteikuma tiesības, pērkot tiešsaistē. No pasūtījuma varat atteikties 14 dienu laikā un saņemt atpakaļ visu naudu, pat ja fails jau ir jūsu rīcībā. Šeit ir visa informācija.',
   sections: [
     {
       id: 'right',
@@ -64,22 +63,20 @@ export const lv: LegalDoc = {
     },
     {
       id: 'expiry',
-      title: 'Kad atteikuma tiesības beidzas agrāk',
+      title: 'Cik ilgi ir spēkā atteikuma tiesības',
       blocks: [
-        '**Jūsu atteikuma tiesības beidzas agrāk**, tiklīdz esam sākuši līguma izpildi, proti, tiklīdz esam sākuši veidot jūsu failu, ja (1) jūs skaidri piekritāt, ka sākam izpildi pirms atteikuma termiņa beigām, (2) jūs apliecinājāt, ka tādējādi zaudējat atteikuma tiesības, tiklīdz esam sākuši, un (3) mēs jums to esam apstiprinājuši uz pastāvīga informācijas nesēja (to darām pasūtījuma apstiprinājuma e-pastā, kas tiek nosūtīts, pirms sākam). Tas izriet no Direktīvas 2011/83/ES 16. panta m) punkta.',
-        'Pirms maksāšanas jūs dodat šo piekrišanu, atzīmējot šo rūtiņu:',
-        { box: [CHECKOUT_LEGAL_LV.withdrawalConsent], label: 'Rūtiņa pasūtīšanas brīdī' },
-        'Praksē jūsu atteikuma tiesības tātad beidzas brīdī, kad sākam veidot jūsu failu. Sākam tikai pēc tam, kad ir nosūtīts pasūtījuma apstiprinājuma e-pasts, parasti minūtes laikā pēc samaksas, kamēr ir atvērta jūsu pasūtījuma lapa: maksājuma lapa aizved jūs tieši uz to. Ja tajā brīdī neesat savā pasūtījuma lapā, sākam, kad to atkal atverat ar pasūtījuma lapas saiti no šī e-pasta. Atteikuma saite tajā pašā e-pastā atver jūsu pasūtījuma tiešsaistes atteikuma funkciju, neko nesākot. No brīža, kad sākam, jūsu atteikuma tiesības ir beigušās, pat ja jūsu fails vēl tiek veidots vai gaida mūsu kvalitātes pārbaudi. Ja neesam sākuši veidot jūsu failu, jūsu atteikuma tiesības beidzas, kad beidzas 14 dienu atteikuma termiņš: jūsu samaksas diena netiek ieskaitīta, un, ja termiņa pēdējā diena ir sestdiena, svētdiena vai svētku diena, termiņš beidzas nākamās darba dienas beigās. Tas neietekmē jūsu likumīgās tiesības, ja failam ir trūkumi: skatiet mūsu pārdošanas noteikumu sadaļu [Sūdzības un trūkumi](doc:terms#defects).',
+        'Jūsu failu sākam veidot uzreiz pēc samaksas un piegādājam to jūsu pasūtījuma lapā. **Tas nebeidz jūsu atteikuma tiesības:** no līguma varat atteikties 14 dienu laikā no līguma noslēgšanas dienas, arī tad, kad jūsu fails vēl tiek veidots vai jau ir jūsu rīcībā, un jūs saņemat atpakaļ visu samaksāto (skatiet [Atteikuma radītās sekas](#effects)).',
+        'Kā skaita 14 dienu atteikuma termiņu: jūsu samaksas diena netiek ieskaitīta, un, ja termiņa pēdējā diena ir sestdiena, svētdiena vai svētku diena, termiņš beidzas nākamās darba dienas beigās. Tas neietekmē jūsu likumīgās tiesības, ja failam ir trūkumi: skatiet mūsu pārdošanas noteikumu sadaļu [Sūdzības un trūkumi](doc:terms#defects).',
       ],
     },
     {
       id: 'online',
       title: 'Atteikšanās tiešsaistē',
       blocks: [
-        `Kamēr jūsu atteikuma tiesības ir spēkā, no līguma jebkurā laikā varat atteikties tiešsaistē ar funkciju [„${W.button}”](${withdrawFunctionHrefLv()}). Tā atrodama mūsu sākumlapas un juridiskās informācijas lapu apakšā, jūsu pasūtījuma lapā un aiz atteikuma saites pasūtījuma apstiprinājuma e-pastā. Šī saite atver funkciju jūsu pasūtījumam, neko nesākot. Savukārt pati pasūtījuma lapas atvēršana sāk jūsu faila veidošanu, tiklīdz ir nosūtīts pasūtījuma apstiprinājuma e-pasts, un līdz ar to jūsu atteikuma tiesības beidzas (skatiet [Kad atteikuma tiesības beidzas agrāk](#expiry)).`,
+        `Kamēr jūsu atteikuma tiesības ir spēkā, no līguma jebkurā laikā varat atteikties tiešsaistē ar funkciju [„${W.button}”](${withdrawFunctionHrefLv()}). Tā atrodama mūsu sākumlapas un juridiskās informācijas lapu apakšā, jūsu pasūtījuma lapā un aiz atteikuma saites pasūtījuma apstiprinājuma e-pastā. Šī saite atver funkciju jūsu pasūtījumam, neko nesākot.`,
         `Kā tas notiek: ievadiet savu vārdu un uzvārdu, pasūtījuma numuru (tas jau ir ierakstīts, ja nākat no savas pasūtījuma lapas vai pa atteikuma saiti) un e-pasta adresi apstiprinājumam par saņemšanu, pēc tam nosūtiet savu paziņojumu par atteikumu ar pogu „${W.confirm}”. Ja nākat bez kādas no šīm saitēm, lūdzu, norādiet e-pasta adresi, ar kuru maksājāt, lai mēs varētu atrast jūsu pasūtījumu. Ja dati neatbilst nevienam mūsu pasūtījumam, lapa jums to pateiks; jūsu paziņojumu tomēr saglabājam, pārbaudām paši un nosūtām jums e-pastā apstiprinājumu par saņemšanu. Lai novērstu mūsu e-pastu ļaunprātīgu izmantošanu, apstiprinājumu par saņemšanu skaits ir ierobežots: paziņojumiem, kas neatbilst nevienam mūsu pasūtījumam, līdz diviem dienā un četriem mēnesī uz vienu adresi; vienam pasūtījumam kopā līdz trim uz adresēm, kas nav adrese, ar kuru par to maksāts (turpmākie tiek sūtīti uz adresi, ar kuru maksājāt); un atkārtotam paziņojumam par pasūtījumu, uz kuru jau esam atbildējuši, līdz vienam dienā šim pasūtījumam un pieciem dienā visiem pasūtījumiem kopā. Ja lapa nevar pieņemt jūsu paziņojumu, piemēram, tehniskas kļūmes dēļ vai tāpēc, ka pienāk neparasti daudz paziņojumu, tā jums to pateiks: tad, lūdzu, nosūtiet mums atteikumu pa e-pastu; e-pasts ir tikpat derīgs.`,
-        'Kas notiek pēc tam: jūsu paziņojumu reģistrējam ar datumu un laiku, kad tas mūs sasniedza. Ja jūsu pasūtījums ir apmaksāts, mēs neesam sākuši veidot jūsu failu un 14 dienu atteikuma termiņš nav beidzies, jūsu atteikums stājas spēkā: apturam jūsu pasūtījumu, tāpēc nekas netiek veidots, un atmaksājam naudu, kā aprakstīts sadaļā [Atteikuma radītās sekas](#effects). Ja jūsu maksājums vēl tika apstrādāts, kad atteicāties, arī tad nekas netiek veidots, un, ja maksājums mūs sasniedz, atmaksājam to pilnībā. Bez kavēšanās nosūtām jums e-pastā apstiprinājumu par saņemšanu ar jūsu atteikuma saturu, datumu un laiku.',
-        'Ja ar jūsu piekrišanu jau bijām sākuši veidot jūsu failu vai 14 dienu atteikuma termiņš bija beidzies, jūsu atteikuma tiesības jau bija beigušās (skatiet [Kad atteikuma tiesības beidzas agrāk](#expiry)): lapa un apstiprinājums par saņemšanu jums to pateiks, un jūsu paziņojumu mēs tomēr izskatām personīgi. Ja jūsu pasūtījums nekad nav apmaksāts, nav līguma, no kura atteikties: lapa jums to pateiks, un nekas nav iekasēts. Tas neietekmē jūsu tiesības, ja failam ir trūkumi.',
+        'Kas notiek pēc tam: jūsu paziņojumu reģistrējam ar datumu un laiku, kad tas mūs sasniedza. Ja jūsu pasūtījums ir apmaksāts un 14 dienu atteikuma termiņš nav beidzies, jūsu atteikums stājas spēkā: apturam jūsu pasūtījumu, ja jūsu fails vēl nav pabeigts, un atmaksājam naudu, kā aprakstīts sadaļā [Atteikuma radītās sekas](#effects). Ja jūsu maksājums vēl tika apstrādāts, kad atteicāties, nekas netiek veidots, un, ja maksājums mūs sasniedz, atmaksājam to pilnībā. Bez kavēšanās nosūtām jums e-pastā apstiprinājumu par saņemšanu ar jūsu atteikuma saturu, datumu un laiku.',
+        'Ja 14 dienu atteikuma termiņš bija beidzies, jūsu atteikuma tiesības jau bija beigušās (skatiet [Cik ilgi ir spēkā atteikuma tiesības](#expiry)): lapa un apstiprinājums par saņemšanu jums to pateiks, un jūsu paziņojumu mēs tomēr izskatām personīgi. Ja jūsu pasūtījums nekad nav apmaksāts, nav līguma, no kura atteikties: lapa jums to pateiks, un nekas nav iekasēts. Tas neietekmē jūsu tiesības, ja failam ir trūkumi.',
       ],
     },
     {

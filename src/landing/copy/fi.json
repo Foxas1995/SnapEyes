@@ -622,14 +622,14 @@
       {
         "id": "withdraw",
         "q": "Voinko peruuttaa tilauksen?",
-        "a": "Alamme tehdä tiedostoasi heti, kun tilausvahvistus on lähtenyt sähköpostiisi, yleensä minuutin kuluessa maksustasi. Ennen maksamista hyväksyt, että aloitamme heti, joten 14 päivän peruuttamisoikeus päättyy, kun olemme alkaneet tehdä tiedostoasi. Siihen asti voit peruuttaa sopimuksen sähköpostitse tai verkossa toiminnolla ”Peruuta sopimus tästä”, joka on tämän sivun alaosassa ja tilausvahvistuksesi peruutuslinkin takana. Jos tiedostossasi on virhe tai se poikkeaa selvästi hyväksymästäsi esikatselusta, kirjoita meille: teemme sen uudelleen tai palautamme maksusi. Tarkemmat tiedot ovat myyntiehdoissamme ja peruuttamisoikeutta koskevissa tiedoissa, joiden linkit ovat tämän sivun alaosassa."
+        "a": "Alamme tehdä tiedostoasi heti, kun tilausvahvistus on lähtenyt sähköpostiisi, yleensä minuutin kuluessa maksustasi. Sinulla on silti 14 päivän peruuttamisoikeus: voit peruuttaa sopimuksen 14 päivän kuluessa tilauksestasi, vaikka olisit jo saanut tiedostosi, ja saat takaisin kaiken maksamasi. Voit peruuttaa sopimuksen sähköpostitse tai verkossa toiminnolla ”Peruuta sopimus tästä”, joka on tämän sivun alaosassa ja tilausvahvistuksesi peruutuslinkin takana. Jos tiedostossasi on virhe tai se poikkeaa selvästi hyväksymästäsi esikatselusta, kirjoita meille: teemme sen uudelleen tai palautamme maksusi. Tarkemmat tiedot ovat myyntiehdoissamme ja peruuttamisoikeutta koskevissa tiedoissa, joiden linkit ovat tämän sivun alaosassa."
       },
       {
         "id": "order",
         "q": "Milloin voin tilata?",
         "a": "Tilaaminen avautuu pian. Siihen asti käytössäsi on ilmainen esikatselu. Tilaamiseen tarvitset vain sähköpostiosoitteen.",
         "qOpen": "Miten tilaan?",
-        "aOpen": "Heti ilmaisen esikatselun jälkeen, samalla sivulla: valitse tyyli, rastita digitaalista tiedostoa koskeva ruutu ja siirry Stripen maksusivulle, jossa maksat. Tilaussivusi avautuu heti, ja saat sen linkin sähköpostiisi. Tarvitset vain sähköpostiosoitteen."
+        "aOpen": "Heti ilmaisen esikatselun jälkeen, samalla sivulla: valitse tyyli ja siirry Stripen maksusivulle, jossa maksat. Tilaussivusi avautuu heti, ja saat sen linkin sähköpostiisi. Tarvitset vain sähköpostiosoitteen."
       },
       {
         "id": "pets",
@@ -645,7 +645,7 @@
     },
     "withdraw": {
       "q": "Voinko perua tilauksen?",
-      "a": "Alamme tehdä tiedostoasi heti, kun tilausvahvistus on lähtenyt sähköpostiisi, yleensä minuutin kuluessa maksustasi. Ennen maksamista hyväksyt, että aloitamme heti, joten tilaukseesi sovellettavan EU:n kuluttajalainsäädännön mukainen 14 päivän peruuttamisoikeus päättyy, kun olemme alkaneet tehdä tiedostoasi. Siihen asti voit perua tilauksen sähköpostitse tai verkossa toiminnolla ”Peruuta sopimus tästä”, joka on tämän sivun alaosassa ja tilausvahvistuksesi peruutuslinkin takana, ja palautamme maksusi kokonaan. Tämä koskee vain mielenmuutosta: palveluihimme liittyy takuita, joita ei voi sulkea pois Australian kuluttajalain (Australian Consumer Law) nojalla, joten jos tiedostossasi on virhe tai se poikkeaa selvästi hyväksymästäsi esikatselusta, kirjoita meille. Tarkemmat tiedot ovat myyntiehdoissamme (Oikeutesi Australiassa) ja peruuttamisoikeutta koskevissa tiedoissa, joiden linkit ovat tämän sivun alaosassa."
+      "a": "Alamme tehdä tiedostoasi heti, kun tilausvahvistus on lähtenyt sähköpostiisi, yleensä minuutin kuluessa maksustasi. Tämä ei päätä tilaukseesi sovellettavan EU:n kuluttajalainsäädännön mukaista 14 päivän peruuttamisoikeutta: voit perua tilauksen 14 päivän kuluessa, myös tiedoston saatuasi, sähköpostitse tai verkossa toiminnolla ”Peruuta sopimus tästä”, joka on tämän sivun alaosassa ja tilausvahvistuksesi peruutuslinkin takana, ja palautamme maksusi kokonaan. Tämä koskee vain mielenmuutosta: palveluihimme liittyy takuita, joita ei voi sulkea pois Australian kuluttajalain (Australian Consumer Law) nojalla, joten jos tiedostossasi on virhe tai se poikkeaa selvästi hyväksymästäsi esikatselusta, kirjoita meille. Tarkemmat tiedot ovat myyntiehdoissamme (Oikeutesi Australiassa) ja peruuttamisoikeutta koskevissa tiedoissa, joiden linkit ovat tämän sivun alaosassa."
     }
   },
   "final": {

@@ -134,8 +134,8 @@ export async function run(): Promise<Row[]> {
     state: { kind: 'normal' }, loading: false, advisory: [], wordsBlocked: false, ...o,
   } as never));
   const hb = buy({ advisory: [1] });
-  check('the advisory warning is above the waiver, so it is read before the customer ticks it; the waiver is not ticked for them and the button is shut until they do',
-    hb.indexOf('data-testid="buy-advisory"') > 0 && hb.indexOf('data-testid="buy-advisory"') < hb.indexOf('data-testid="waiver"') && !/data-testid="waiver"[^>]*checked/.test(hb) && /data-testid="buy"[^>]*disabled/.test(hb));
+  check('the advisory warning is above the buy button, so it is read before the customer buys; no consent box (the owner\'s decision of 2026-11-25: no consent box but on the US market)',
+    hb.indexOf('data-testid="buy-advisory"') > 0 && hb.indexOf('data-testid="buy-advisory"') < hb.indexOf('data-testid="buy"') && !has(hb, 'waiver'));
   const hs = buy({ state: { kind: 'soon' } });
   check('a style that opens soon: one line, no price, no waiver, no button, no date', text(hs).includes('This style opens soon. Choose another to order now.') && !has(hs, 'buy') && !has(hs, 'waiver') && !has(hs, 'price') && !/\d{4}|€|\d[,.]\d\d/.test(text(hs).replace('Price for this artwork', '')));
   const hc = buy({ state: { kind: 'countSoon', n: 2 }, eyes: [eyeObj('a'), eyeObj('b')] });
@@ -184,10 +184,10 @@ export async function run(): Promise<Row[]> {
   const hSell = renderToStaticMarkup(createElement(ResultView, rvProps([eyeObj('e1')], mSell)));
   const hSellBuy = buy({ state: buyState({ n: 1, tiles: sellList, selected: mSell.selected }), advisory: [1] });
   // adapted 2026-10-22: Clean Iris and Celestial Gold "stay greyed" with a retake card under the list; they are not shown now, and nothing under the list asks for a retake
-  check('a single eye that fails the lid rule with Powder Burst and Splash live: they warn in one calm line and sell (the warning is above the waiver, the button is there), Clean Iris and Celestial Gold are not shown, no retake card, no e-mail, and the card does not say retake',
+  check('a single eye that fails the lid rule with Powder Burst and Splash live: they warn in one calm line and sell (the warning is above the buy button, which is there; no consent box since 2026-11-25), Clean Iris and Celestial Gold are not shown, no retake card, no e-mail, and the card does not say retake',
     has(hSell, 'recommended') && !text(hSell).includes('Retake eye 1 first') && !has(hSell, 'tile-clean-iris') && !has(hSell, 'retake-state') && !has(hSell, 'manual-route') && has(hSell, 'advisory-note')
     && !/triangle-alert|alert-triangle/.test(hSell.slice(hSell.indexOf('data-testid="advisory-note"'), hSell.indexOf('data-testid="advisory-note"') + 400))
-    && has(hSellBuy, 'buy') && has(hSellBuy, 'waiver') && hSellBuy.indexOf('data-testid="buy-advisory"') > 0 && hSellBuy.indexOf('data-testid="buy-advisory"') < hSellBuy.indexOf('data-testid="waiver"') && !has(hSellBuy, 'buy-retake'));
+    && has(hSellBuy, 'buy') && !has(hSellBuy, 'waiver') && hSellBuy.indexOf('data-testid="buy-advisory"') > 0 && hSellBuy.indexOf('data-testid="buy-advisory"') < hSellBuy.indexOf('data-testid="buy"') && !has(hSellBuy, 'buy-retake'));      // no consent box since 2026-11-25 (the owner's decision)
   // a set that passes: the policy changes nothing for it
   const passList = [tile('solo.powder', { name: 'Powder Burst', slug: 'powder-burst' }), tile('solo.gold', { name: 'Celestial Gold', slug: 'celestial-gold', gate: 'hard' }), { ...singles[3] } as ServerTile];
   const mPass = model(1, passList, [eye(1)], { priceOf: priceOfReal }, 'solo.powder');

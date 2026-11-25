@@ -34,10 +34,11 @@ const AclNote: React.FC<{ C: OrderCopy }> = ({ C }) => {
 };
 
 /** The order page's withdrawal section: what the right is, and the button to the form. */
-export const WithdrawEntry: React.FC<{ C: OrderCopy; lang: Lang; link: OrderLink }> = ({ C, lang, link }) => (
+export const WithdrawEntry: React.FC<{ C: OrderCopy; lang: Lang; link: OrderLink; consent?: boolean }> = ({ C, lang, link, consent = false }) => (
   <section data-testid="withdraw-entry" aria-labelledby="withdraw-entry-h" className={CARD}>
     <h2 id="withdraw-entry-h" className="font-luxury text-lg font-bold">{C.withdraw.heading}</h2>
-    <p className="text-xs text-zinc-400 mt-2 leading-relaxed">{C.withdraw.lead}</p>
+    {/* an order placed without the consent box (the owner's decision of 2026-11-25) keeps the 14 days; one that holds a consent: the lead of before */}
+    <p data-testid="withdraw-lead" className="text-xs text-zinc-400 mt-2 leading-relaxed">{consent ? C.withdraw.lead : C.withdraw.leadOpen}</p>
     <AclNote C={C} />
     <div className="flex flex-wrap items-center gap-x-5 gap-y-3 mt-4">
       <a data-testid="withdraw-open" href={withdrawHref(lang, link)} className={`${PLAIN_BTN} w-full sm:w-auto`}>

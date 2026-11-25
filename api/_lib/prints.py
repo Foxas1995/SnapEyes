@@ -319,32 +319,16 @@ PRINT_CONSENT_TEXT = {
 PRINT_CONSENT_TEXT_1028 = {l: PRINT_CONSENT_TEXT[l] for l in ("en", "de", "lt", "hu", "hr")}
 PRINT_CONSENT_TEXTS = {"2026-10-28.3": PRINT_CONSENT_TEXT_1028, pay.CONSENT_VERSION: PRINT_CONSENT_TEXT}
 
-SUBMIT_NOTE_PRINT = {   # what Stripe shows above its pay button when the order has a print (the order's language; the EU edition only)
-    "en": ("You are buying a digital file (JPEG, 4096 px) and a print of it, shipped to the address above. You agreed that we start the file "
-           "right away and that your right of withdrawal ends once we have started; the print is made to your order and cannot be withdrawn "
-           "from."),
-    "de": ("Sie kaufen eine digitale Datei (JPEG, 4096 px) und einen Druck davon, der an die obige Adresse versandt wird. Sie haben "
-           "zugestimmt, dass wir mit der Datei sofort beginnen und Ihr Widerrufsrecht damit erlischt; der Druck wird nach Ihrer Bestellung "
-           "angefertigt und ist vom Widerruf ausgeschlossen."),
-    "lt": ("Perkate skaitmeninį failą (JPEG, 4096 px) ir jo spaudinį, kuris bus išsiųstas aukščiau nurodytu adresu. Sutikote, kad failą "
-           "pradėtume kurti iš karto ir kad Jūsų teisė atsisakyti sutarties baigsis, kai tik pradėsime; spaudinys gaminamas pagal Jūsų "
-           "užsakymą, todėl jo pirkimo atsisakyti negalima. Paspausdami mokėjimo mygtuką, pateikiate užsakymą su prievole sumokėti."),
-    "hu": ("Digitális fájlt (JPEG, 4096 px) és annak nyomatát vásárolod, amelyet a fenti címre küldünk. Hozzájárultál, hogy a fájlt azonnal "
-           "elkezdjük, és tudomásul vetted, hogy a kezdéssel megszűnik az elállási jogod; a nyomat a megrendelésedre készül, ezért attól nem "
-           "lehet elállni. A fizetési gombbal fizetési kötelezettséggel járó megrendelést adsz le."),
-    "hr": ("Kupujete digitalnu datoteku (JPEG, 4096 px) i njezin ispis, koji šaljemo na gornju adresu. Pristali ste da odmah započnemo s "
-           "datotekom i da vaše pravo na jednostrani raskid ugovora prestaje čim započnemo; ispis se izrađuje po vašoj narudžbi pa za njega "
-           "nema prava na jednostrani raskid. Klikom na gumb za plaćanje dajete narudžbu s obvezom plaćanja."),
-    "fi": ("Ostat digitaalisen tiedoston (JPEG, 4096 px) ja siitä tehdyn tulosteen, joka lähetetään yllä olevaan osoitteeseen. Olet "
-           "hyväksynyt, että aloitamme tiedoston heti ja että peruuttamisoikeutesi päättyy, kun olemme aloittaneet; tuloste tehdään "
-           "tilauksesi mukaan, eikä sen ostoa voi peruuttaa. Maksupainiketta painamalla teet tilauksen, ja tilaukseen liittyy "
-           "maksuvelvollisuus."),
-    "et": ("Ostad digitaalse faili (JPEG, 4096 px) ja sellest trükitud pildi, mis saadetakse ülaltoodud aadressile. Nõustusid, et "
-           "alustame failiga kohe ja et sinu taganemisõigus lõpeb, kui oleme alustanud; trükitud pilt valmistatakse sinu tellimuse "
-           "järgi ja selle ostust ei saa taganeda. Maksenupule vajutades esitad tellimuse koos maksekohustusega."),
-    "lv": ("Jūs pērkat digitālu failu (JPEG, 4096 px) un tā izdruku, ko nosūtām uz augstāk norādīto adresi. Jūs piekritāt, ka failu "
-           "sākam veidot uzreiz un ka jūsu atteikuma tiesības beidzas, tiklīdz esam sākuši; izdruka tiek izgatavota pēc jūsu pasūtījuma, "
-           "un no tās pirkuma atteikties nevar. Nospiežot maksāšanas pogu, jūs veicat pasūtījumu ar pienākumu maksāt."),
+SUBMIT_NOTE_PRINT = {   # what Stripe shows above its pay button when the order has a print (the order's language; the EU edition only).
+    # 2026-11-25 (the owner's decision, no consent box): it no longer says the customer agreed that the right of withdrawal of the file ends; it says the file is started after payment
+    "en": "You are buying a digital file (JPEG, 4096 px) and a print of it, shipped to the address above. We start making the file right after your payment; the print is made to your order and cannot be withdrawn from.",
+    "de": "Sie kaufen eine digitale Datei (JPEG, 4096 px) und einen Druck davon, der an die obige Adresse versandt wird. Wir beginnen gleich nach Ihrer Zahlung mit der Datei; der Druck wird nach Ihrer Bestellung angefertigt und ist vom Widerruf ausgeschlossen.",
+    "lt": "Perkate skaitmeninį failą (JPEG, 4096 px) ir jo spaudinį, kuris bus išsiųstas aukščiau nurodytu adresu. Failą pradedame kurti iškart po apmokėjimo; spaudinys gaminamas pagal Jūsų užsakymą, todėl jo pirkimo atsisakyti negalima. Paspausdami mokėjimo mygtuką, pateikiate užsakymą su prievole sumokėti.",
+    "hu": "Digitális fájlt (JPEG, 4096 px) és annak nyomatát vásárolod, amelyet a fenti címre küldünk. A fájlt rögtön a fizetés után elkezdjük elkészíteni; a nyomat a megrendelésedre készül, ezért attól nem lehet elállni. A fizetési gombbal fizetési kötelezettséggel járó megrendelést adsz le.",
+    "hr": "Kupujete digitalnu datoteku (JPEG, 4096 px) i njezin ispis, koji šaljemo na gornju adresu. S izradom datoteke počinjemo odmah nakon plaćanja; ispis se izrađuje po vašoj narudžbi pa za njega nema prava na jednostrani raskid. Klikom na gumb za plaćanje dajete narudžbu s obvezom plaćanja.",
+    "fi": "Ostat digitaalisen tiedoston (JPEG, 4096 px) ja siitä tehdyn tulosteen, joka lähetetään yllä olevaan osoitteeseen. Aloitamme tiedoston tekemisen heti maksun jälkeen; tuloste tehdään tilauksesi mukaan, eikä sen ostoa voi peruuttaa. Maksupainiketta painamalla teet tilauksen, ja tilaukseen liittyy maksuvelvollisuus.",
+    "et": "Ostad digitaalse faili (JPEG, 4096 px) ja sellest trükitud pildi, mis saadetakse ülaltoodud aadressile. Alustame faili valmistamist kohe pärast makset; trükitud pilt valmistatakse sinu tellimuse järgi ja selle ostust ei saa taganeda. Maksenupule vajutades esitad tellimuse koos maksekohustusega.",
+    "lv": "Jūs pērkat digitālu failu (JPEG, 4096 px) un tā izdruku, ko nosūtām uz augstāk norādīto adresi. Failu sākam veidot uzreiz pēc maksājuma; izdruka tiek izgatavota pēc jūsu pasūtījuma, un no tās pirkuma atteikties nevar. Nospiežot maksāšanas pogu, jūs veicat pasūtījumu ar pienākumu maksāt.",
 }
 ITEM_DESC_PRINT = {
     "en": "Made to order from your artwork. Shipped tracked from our print partner's workshop in Europe.",

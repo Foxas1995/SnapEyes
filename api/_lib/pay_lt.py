@@ -30,9 +30,7 @@ CONSENT_TEXT_LT = ("Aiškiai sutinku, kad SnapEyes pradėtų kurti mano skaitmen
 # button is the click that makes the order binding, and CK 6.228(8) str. 3 d. asks for "užsakymas su prievole sumokėti"
 # (or an equally clear wording) at that click: the last sentence puts the statutory words right above it (as
 # pay_hu.SUBMIT_NOTE_HU does with the Hungarian decree's). Not part of the consent, so not part of its version.
-SUBMIT_NOTE_LT = ("Sutikote, kad "
-                  "pradėtume iš karto ir kad Jūsų teisė atsisakyti sutarties baigsis, kai tik pradėsime. Paspausdami "
-                  "mokėjimo mygtuką, pateikiate užsakymą su prievole sumokėti.")
+SUBMIT_NOTE_LT = ("Jūsų failą pradedame kurti iškart po apmokėjimo. Paspausdami mokėjimo mygtuką, pateikiate užsakymą su prievole sumokėti.")
 
 # pay.ITEM_DESC["lt"]
 ITEM_DESC_LT = "Skaitmeninis failas, JPEG, 4096 px."
@@ -146,7 +144,7 @@ CONFIRMATION_LT = {
     "payment": "apmokėta per Stripe",
     "hello": "Laba diena,",
     "intro": ("Dėkojame už Jūsų užsakymą. Šis el. laiškas patvirtina su mumis sudarytą sutartį. Išsaugokite jį: jame "
-              "yra Jūsų užsakymas, Jūsų sutikimas, kad pradėtume iš karto, informacija apie teisę atsisakyti sutarties "
+              "yra Jūsų užsakymas, informacija apie teisę atsisakyti sutarties "
               "su pavyzdine sutarties atsisakymo forma ir mūsų pardavimo sąlygos."),
     "h_page": "Jūsų užsakymo puslapis",
     # auto: the server starts right after this email (pay.server_starts(pack)); else the order page starts it

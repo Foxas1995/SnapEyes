@@ -513,10 +513,12 @@ def stripe_form_hash(markets=("eu", "lt", "au", "hu")):
 
 check("the Stripe Checkout Session parameters of the six legacy ids (item name, amount, metadata: 384 combinations) are byte equal to those of 90695da",
       # 2026-11-25 (the owner's decisions): the payment methods of the market's country (payment_method_types) and the shorter product description and
-      # note above the pay button change these parameters on purpose: the pin is the tree with them (the item names, amounts and metadata are as they were)
-      stripe_form_hash() == (384, "c238293cab69cb344b684993"), stripe_form_hash())
+      # note above the pay button change these parameters on purpose: the pin is the tree with them (the item names, amounts and metadata are as they were);
+      # 2026-11-25 (the owner's decision, no consent box): the note above the pay button no longer names a consent (c238293cab69cb344b684993 before)
+      stripe_form_hash() == (384, "412b71f3d9f279ec82668e1a"), stripe_form_hash())
 check("the same parameters for the markets of 2026-10-28 (us, uk, hr: 288 combinations) are byte equal to the pin taken when they were added",
-      stripe_form_hash(("us", "uk", "hr")) == (288, "5d7b975b4a5ba539004f44e4") and sorted(MK.MARKETS) == ["au", "eu", "hr", "hu", "lt", "uk", "us"], stripe_form_hash(("us", "uk", "hr")))
+      # 2026-11-25 (the owner's decision, no consent box): the UK and Croatian notes above the pay button no longer name a consent (5d7b975b4a5ba539004f44e4 before)
+      stripe_form_hash(("us", "uk", "hr")) == (288, "bace8675a1f6894f9510e0c6") and sorted(MK.MARKETS) == ["au", "eu", "hr", "hu", "lt", "uk", "us"], stripe_form_hash(("us", "uk", "hr")))
 ok_specs = [pay.spec_from(dict(SPEC, eyes=str(n), style=i, layout=OLD_LAYOUTS[n][-1]), pay.SELECTABLE) for i in LEGACY for n in range(1, 9)]
 check("spec_from: every legacy id, 1 to 8 eyes and each layout is read at checkout exactly as before",
       len(ok_specs) == 48 and all(s["layout"] == OLD_LAYOUTS[s["eyes"]][-1] and s["style"] in LEGACY for s in ok_specs)

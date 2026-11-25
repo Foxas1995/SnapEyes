@@ -1,8 +1,8 @@
 // Myyntiehdot: the Finnish twin of `en` in src/legal/docs/terms.ts, same section ids and blocks in the same
 // order, the same facts from src/landing/config.ts (through ../facts). Everything the English header says holds here
-// too: no ODR link, no VAT number, no promise the code does not keep, the right of withdrawal ends when making the file
-// begins (or with the 14-day period, counted as withdraw.py period_end counts it), the seller line has no phone (owner
-// decision). Formal "te" (one reader: "olette antanut"), as the Finnish model withdrawal text of the Directive.
+// too: no ODR link, no VAT number, no promise the code does not keep, the right of withdrawal lasts the 14-day period
+// (counted as withdraw.py period_end counts it; since 2026-11-25, the owner's decision, no consent box: making the file
+// does not end it), the seller line has no phone (owner decision). Formal "te" (one reader: "olette antanut"), as the Finnish model withdrawal text of the Directive.
 // The words behind the wording (Directive 2011/83/EU in its official Finnish text; Finland transposes it in
 // kuluttajansuojalaki 38/1978, 6 luku, whose words "peruuttamisoikeus" and "peruuttamisaika" these terms use):
 //  - Art. 8(2): the order button says "tilaukseen liittyy maksuvelvollisuus" or an equally unambiguous wording. Our
@@ -88,7 +88,7 @@ export const fi: LegalDoc = {
         `Verkkosivustomme esikatselut ja hinnat eivät vielä ole sitova tarjous. Ennen maksamista voitte tarkistaa silmänne, tyylin, asettelun ja tekstin ja korjata minkä tahansa tiedon palaamalla takaisin tai ottamalla kuvan uudelleen. Sen jälkeen avaatte painikkeellamme ”${CHECKOUT_LEGAL_FI.continueButton}” maksupalveluntarjoajamme Stripen maksusivun; tämä painike ei vielä tee tilausta. Maksusivulla annatte sähköpostiosoitteenne ja maksutietonne ja voitte korjata niitä. Teette sitovan tilauksen, johon liittyy maksuvelvollisuus, kun vahvistatte siellä maksun maksupainikkeella.`,
         'Sopimus syntyy, kun maksunne on vahvistettu. Silloin tilaussivunne avautuu, ja lähetämme sen linkin sähköpostiinne tilausvahvistuksen mukana. Alamme tehdä tiedostoanne siellä heti, kun tämä sähköposti on lähtenyt.',
         'Sopimuskielet: suomi, englanti, saksa, liettua, unkari, kroatia, viro ja latvia.',
-        'Tallennamme tilauksenne ja sopimuksen tiedot: tilaamanne taideteoksen, hinnan, päivämäärän, sähköpostiosoitteenne ja suostumuksenne välittömään aloittamiseen. Tilaussivunne näyttää nämä tiedot niin kauan kuin säilytämme tilaustanne. Emme säilytä näistä ehdoista erillistä kopiota jokaista tilausta varten. Sen sijaan tilausvahvistuksenne sisältää tekstinä tilauksenne tiedot, nämä ehdot ja tiedot peruuttamisoikeudesta sekä malliperuuttamislomakkeen siinä muodossa, joka oli voimassa tilatessanne: säilyttäkää tuo sähköposti. Voitte myös tallentaa tai tulostaa tämän sivun milloin tahansa.',
+        'Tallennamme tilauksenne ja sopimuksen tiedot: tilaamanne taideteoksen, hinnan, päivämäärän ja sähköpostiosoitteenne. Tilaussivunne näyttää nämä tiedot niin kauan kuin säilytämme tilaustanne. Emme säilytä näistä ehdoista erillistä kopiota jokaista tilausta varten. Sen sijaan tilausvahvistuksenne sisältää tekstinä tilauksenne tiedot, nämä ehdot ja tiedot peruuttamisoikeudesta sekä malliperuuttamislomakkeen siinä muodossa, joka oli voimassa tilatessanne: säilyttäkää tuo sähköposti. Voitte myös tallentaa tai tulostaa tämän sivun milloin tahansa.',
       ],
     },
     {
@@ -120,7 +120,7 @@ export const fi: LegalDoc = {
       id: 'withdrawal',
       title: 'Peruuttamisoikeus',
       blocks: [
-        `Kuluttajana teillä on yleensä 14 päivän peruuttamisoikeus. Digitaalisessa tiedostossa se päättyy aikaisemmin: ennen maksamista pyydämme teitä suostumaan siihen, että alamme tehdä tiedostoanne heti, ennen peruuttamisajan päättymistä, ja vahvistamaan, että tiedätte menettävänne peruuttamisoikeutenne, kun olemme aloittaneet. Se päättyy siis heti, kun olemme alkaneet tehdä tiedostoanne (sopimuksen täyttäminen); aloitamme vasta, kun tilausvahvistus on lähtenyt sähköpostiinne, yleensä minuutin kuluessa maksustanne, kun tilaussivunne on auki. Tämä pätee, vaikka tiedostoa vielä tehtäisiin tai se odottaisi laaduntarkastustamme. Jos emme ole aloittaneet, se päättyy, kun 14 päivän peruuttamisaika on kulunut: maksupäiväänne ei lasketa mukaan, ja jos ajan viimeinen päivä on lauantai, sunnuntai tai yleinen vapaapäivä, aika päättyy seuraavan työpäivän päättyessä. Niin kauan kuin peruuttamisoikeutenne on voimassa, voitte peruuttaa sopimuksen sähköpostitse, postitse tai verkossa painikkeella ”${WITHDRAWAL_ONLINE_FI.button}”; tilausvahvistuksenne peruutuslinkki avaa toiminnon tilaustanne varten aloittamatta tiedostonne tekemistä. Kaikki tiedot, verkkotoiminto ja malliperuuttamislomake ovat sivulla [Peruuttamisoikeus](doc:withdrawal).`,
+        `Kuluttajana teillä on 14 päivän peruuttamisoikeus: voitte peruuttaa sopimuksen 14 päivän kuluessa syytä ilmoittamatta. Alamme tehdä tiedostoanne heti maksunne jälkeen ja toimitamme sen tilaussivullenne; tämä ei päätä peruuttamisoikeuttanne. Jos peruutatte sopimuksen 14 päivän kuluessa, saatte takaisin kaiken maksamanne, vaikka olisitte jo saanut tiedostonne. Maksupäiväänne ei lasketa mukaan, ja jos ajan viimeinen päivä on lauantai, sunnuntai tai yleinen vapaapäivä, aika päättyy seuraavan työpäivän päättyessä. Voitte peruuttaa sopimuksen sähköpostitse, postitse tai verkossa painikkeella ”${WITHDRAWAL_ONLINE_FI.button}”; tilausvahvistuksenne peruutuslinkki avaa sen tilaustanne varten. Kaikki tiedot, verkkotoiminto ja malliperuuttamislomake ovat sivulla [Peruuttamisoikeus](doc:withdrawal).`,
       ],
     },
     {

@@ -622,14 +622,14 @@
       {
         "id": "withdraw",
         "q": "Mogu li odustati od narudžbe?",
-        "a": "Vašu datoteku počinjemo izrađivati čim pošaljemo e-poruku s potvrdom narudžbe, obično u roku od minute nakon plaćanja. Prije plaćanja pristajete da odmah počnemo, pa pravo na jednostrani raskid ugovora u roku od 14 dana prestaje čim počnemo izrađivati vašu datoteku. Do tada ugovor možete raskinuti e-poštom ili online putem funkcije „Raskid ugovora“, u podnožju ove stranice ili putem poveznice za raskid u e-poruci s potvrdom narudžbe. Ako je vaša datoteka neispravna ili se jasno razlikuje od pregleda koji ste odobrili, pišite nam: izradit ćemo je ponovno ili vam vratiti novac. Pojedinosti su u uvjetima prodaje i u obavijesti o pravu na jednostrani raskid ugovora, na koje vode poveznice u podnožju ove stranice."
+        "a": "Vašu datoteku počinjemo izrađivati čim pošaljemo e-poruku s potvrdom narudžbe, obično u roku od minute nakon plaćanja. Pravo na jednostrani raskid ugovora u roku od 14 dana i dalje imate: ugovor možete raskinuti u roku od 14 dana od narudžbe, čak i nakon što ste primili datoteku, i vraćamo vam sve što ste platili. Ugovor možete raskinuti e-poštom ili online putem funkcije „Raskid ugovora“, u podnožju ove stranice ili putem poveznice za raskid u e-poruci s potvrdom narudžbe. Ako je vaša datoteka neispravna ili se jasno razlikuje od pregleda koji ste odobrili, pišite nam: izradit ćemo je ponovno ili vam vratiti novac. Pojedinosti su u uvjetima prodaje i u obavijesti o pravu na jednostrani raskid ugovora, na koje vode poveznice u podnožju ove stranice."
       },
       {
         "id": "order",
         "q": "Kada mogu naručiti?",
         "a": "Naručivanje se otvara uskoro. Do tada je dostupan besplatni pregled. Za narudžbu vam je potrebna samo adresa e-pošte.",
         "qOpen": "Kako naručiti?",
-        "aOpen": "Odmah nakon besplatnog pregleda, na istoj stranici: odaberite stil, označite polje o digitalnoj datoteci i nastavite na Stripeovu stranicu za plaćanje, gdje plaćate. Stranica vaše narudžbe otvara se odmah, a poveznica na nju stiže e-poštom. Potrebna vam je samo adresa e-pošte."
+        "aOpen": "Odmah nakon besplatnog pregleda, na istoj stranici: odaberite stil i nastavite na Stripeovu stranicu za plaćanje, gdje plaćate. Stranica vaše narudžbe otvara se odmah, a poveznica na nju stiže e-poštom. Potrebna vam je samo adresa e-pošte."
       },
       {
         "id": "pets",
@@ -645,7 +645,7 @@
     },
     "withdraw": {
       "q": "Mogu li otkazati narudžbu?",
-      "a": "Vašu datoteku počinjemo izrađivati čim pošaljemo e-poruku s potvrdom narudžbe, obično u roku od minute nakon plaćanja. Prije plaćanja pristajete da odmah počnemo, pa pravo na jednostrani raskid ugovora u roku od 14 dana prema pravu EU-a o zaštiti potrošača, koje se primjenjuje na vašu narudžbu, prestaje čim počnemo izrađivati vašu datoteku. Do tada narudžbu možete otkazati e-poštom ili online putem funkcije „Raskid ugovora“, u podnožju ove stranice ili putem poveznice za raskid u e-poruci s potvrdom narudžbe, i vratit ćemo vam cijeli iznos. To se odnosi samo na predomišljanje: naše usluge imaju jamstva koja se prema australskom zakonu o zaštiti potrošača (Australian Consumer Law) ne mogu isključiti, pa ako je vaša datoteka neispravna ili se jasno razlikuje od pregleda koji ste odobrili, pišite nam. Pojedinosti su u uvjetima prodaje (Vaša prava u Australiji) i u obavijesti o pravu na jednostrani raskid ugovora, na koje vode poveznice u podnožju ove stranice."
+      "a": "Vašu datoteku počinjemo izrađivati čim pošaljemo e-poruku s potvrdom narudžbe, obično u roku od minute nakon plaćanja. Time ne prestaje pravo na jednostrani raskid ugovora u roku od 14 dana prema pravu EU-a o zaštiti potrošača, koje se primjenjuje na vašu narudžbu: u roku od 14 dana, i nakon što ste primili datoteku, narudžbu možete otkazati e-poštom ili online putem funkcije „Raskid ugovora“, u podnožju ove stranice ili putem poveznice za raskid u e-poruci s potvrdom narudžbe, i vratit ćemo vam cijeli iznos. To se odnosi samo na predomišljanje: naše usluge imaju jamstva koja se prema australskom zakonu o zaštiti potrošača (Australian Consumer Law) ne mogu isključiti, pa ako je vaša datoteka neispravna ili se jasno razlikuje od pregleda koji ste odobrili, pišite nam. Pojedinosti su u uvjetima prodaje (Vaša prava u Australiji) i u obavijesti o pravu na jednostrani raskid ugovora, na koje vode poveznice u podnožju ove stranice."
     }
   },
   "final": {

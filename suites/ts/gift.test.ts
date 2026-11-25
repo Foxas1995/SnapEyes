@@ -67,7 +67,7 @@ export async function run(): Promise<Row[]> {
   const base = { eyes: [eye1], style: 'solo.powder', layout: 'single' as never, names: '', lang: 'en' as never, ref: null, market: 'lt', shown: 2497 };
   await runCheckout({ ...base, voucher: 'K7MWQ2XH9PRD' }, noop, api as never);
   const cb = bodies.find((b) => b.path === '/api/checkout') ?? {};
-  check('the checkout request carries the voucher code', cb.voucher === 'K7MWQ2XH9PRD' && cb.consent_digital === true, JSON.stringify(cb));
+  check('the checkout request carries the voucher code, and no tick of a consent box on the Lithuanian market (the owner\'s decision of 2026-11-25: no consent box but on the US market)', cb.voucher === 'K7MWQ2XH9PRD' && !('consent_digital' in cb), JSON.stringify(cb));
   const again = await runCheckout({ ...base, voucher: 'K7MWQ2XH9PRD' }, noop, api as never);
   check('409 voucher_invalid: the checkout ends with the error "voucher" (the page takes the voucher off the card)', again.kind === 'error' && 'code' in again && again.code === 'voucher', JSON.stringify(again));
   bodies.length = 0;

@@ -118,7 +118,9 @@ export async function run(): Promise<Row[]> {
   check('the US disputes name the state consumer protection office and the FTC, and keep the EU route', sectionText(terms, 'disputes').includes('reportfraud.ftc.gov')
     && sectionText(terms, 'disputes').includes('vvtat.lt') && sectionText(terms, 'disputes').includes('the consumer protection law of your state'));
   check('the US withdrawal: cancelling for a change of mind only, framed as EU law, with a link to the US rights', section(terms, 'withdrawal')?.title === 'Cancelling for a change of mind (right of withdrawal)'
-    && sectionText(terms, 'withdrawal').includes('[Your rights in the United States](#united-states)') && sectionText(terms, 'withdrawal') === sectionText(EDITIONS.au.terms.en!, 'withdrawal').replace('[Your rights in Australia](#australia)', '[Your rights in the United States](#united-states)'));
+    && sectionText(terms, 'withdrawal').includes('[Your rights in the United States](#united-states)')
+    // 2026-11-25 (the owner's decision): the US checkout keeps its consent box, so its section still says the right ends once making starts; the Australian one has no box and says the 14 days stay
+    && sectionText(terms, 'withdrawal').includes('we ask you to agree that we start making your file straight away') && sectionText(EDITIONS.au.terms.en!, 'withdrawal').includes('this does not end your right to cancel'));
   const pus = sectionText(privacy, 'united-states');
   const pids = privacy.sections.map((s) => s.id);
   check('the US privacy policy: its own section after the rights section, with the state laws, the retention schedule and no sale for advertising',

@@ -142,6 +142,7 @@ export const lv: OrderCopy = {
   withdraw: {
     heading: 'Atteikšanās no līguma',
     lead: 'Pasūtot jūs piekritāt, ka jūsu failu sākam veidot uzreiz. Kamēr neesam sākuši, šeit varat atteikties no šī līguma. Tiklīdz veidošana ir sākta, jūsu atteikuma tiesības ir beigušās.',
+    leadOpen: 'Šeit varat atteikties no šī līguma 14 dienu laikā pēc pasūtījuma, pat ja fails jau ir jūsu rīcībā, un jūs saņemat atpakaļ visu samaksāto.',
     acl: 'Šīs ir atteikuma tiesības saskaņā ar ES patērētāju tiesībām gadījumam, ja pārdomājat. Tās neietekmē jūsu tiesības saskaņā ar Austrālijas patērētāju tiesību likumu (Australian Consumer Law): ja jūsu fails ir ar trūkumiem vai neatbilst aprakstam, rakstiet mums un norādiet pasūtījuma numuru.',
     us: 'Šīs ir atteikuma tiesības saskaņā ar ES patērētāju tiesībām gadījumam, ja pārdomājat. Tās neietekmē jūsu tiesības, ja fails ir ar trūkumiem: ja jūsu fails ir ar trūkumiem vai neatbilst aprakstam, rakstiet mums un norādiet pasūtījuma numuru.',
     info: 'Atteikuma tiesības',

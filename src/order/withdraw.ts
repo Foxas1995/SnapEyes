@@ -2,8 +2,9 @@
 // 2023/2673, in force since 19 June 2026; § 356a BGB): the customer gives their name, the order and an email address
 // for the receipt, confirms, and the server (api/_lib/withdraw.py, POST /api/order {action: "withdraw"}) records the
 // statement with the time it arrived, stops the order if nothing was made yet and emails the receipt. The server
-// alone decides whether the withdrawal takes effect (the right ends once making has started, see
-// src/legal/docs/withdrawal.ts); this module only sends the statement and reads the answer. No React here.
+// alone decides whether the withdrawal takes effect (for an order that holds the consent the right ends once making has
+// started; one placed without the consent box keeps the 14 days, see src/legal/docs/withdrawal.ts); this module only
+// sends the statement and reads the answer. No React here.
 import { callApi, ORDER_RE, KEY_RE, type ApiReply } from './api';
 import type { Lang } from '../try/lang';
 

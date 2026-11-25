@@ -1,8 +1,8 @@
 // Opći uvjeti prodaje: the Croatian twin of `en` in src/legal/docs/terms.ts, same section ids and blocks in the same
 // order, the same facts from src/landing/config.ts (through ../facts). Everything the English header says holds here
-// too: no ODR link, no VAT number, no promise the code does not keep, the right of withdrawal ends when making the file
-// begins (or with the 14-day period, counted as withdraw.py period_end counts it), the seller line has no phone (owner
-// decision).
+// too: no ODR link, no VAT number, no promise the code does not keep, the right of withdrawal lasts the 14-day period
+// (counted as withdraw.py period_end counts it; since 2026-11-25, the owner's decision, no consent box: making the file
+// does not end it), the seller line has no phone (owner decision).
 // Croatian law behind the wording (Zakon o zaštiti potrošača, NN 19/22, 59/23, 59/26; it calls the right of withdrawal
 // "pravo na jednostrani raskid ugovora", so these terms do too):
 //  - čl. 74. st. 3.: the order button says "narudžba s obvezom plaćanja" or a similar unambiguous wording. Our button
@@ -90,7 +90,7 @@ export const hr: LegalDoc = {
         `Pregledi i cijene na našoj internetskoj stranici još nisu obvezujuća ponuda. Prije plaćanja možete provjeriti svoje oči, stil, raspored i natpis te ispraviti svaki unos tako da se vratite ili ponovno snimite fotografiju. Zatim našim gumbom „${CHECKOUT_LEGAL_HR.continueButton}“ otvarate stranicu za plaćanje našeg pružatelja usluga plaćanja Stripe; taj gumb još ne izvršava narudžbu. Na toj stranici upisujete svoju adresu e-pošte i podatke za plaćanje te ih možete ispraviti. Narudžbu s obvezom plaćanja izvršavate kada ondje potvrdite plaćanje gumbom za plaćanje.`,
         'Ugovor je sklopljen kada je vaše plaćanje potvrđeno. Tada se otvara vaša stranica narudžbe, a njezinu poveznicu šaljemo vam e-poštom zajedno s potvrdom narudžbe. Čim je ta e-poruka poslana, ondje počinjemo izrađivati vašu datoteku.',
         'Jezici ugovora: hrvatski, engleski, njemački, litavski, mađarski, finski, estonski i latvijski.',
-        'Vašu narudžbu pohranjujemo s podacima o ugovoru: naručeno umjetničko djelo, cijena, datum, vaša adresa e-pošte i vaš pristanak da odmah započnemo. Vaša stranica narudžbe prikazuje te podatke sve dok čuvamo vašu narudžbu. Zasebnu kopiju ovih uvjeta za svaku narudžbu ne čuvamo. Umjesto toga, e-poruka s potvrdom narudžbe sadrži, kao tekst, podatke o vašoj narudžbi, ove uvjete i informacije o pravu na jednostrani raskid ugovora s primjerkom obrasca o jednostranom raskidu, u verziji koja je vrijedila kada ste naručili: sačuvajte tu e-poruku. Ovu stranicu također možete u bilo kojem trenutku spremiti ili ispisati.',
+        'Vašu narudžbu pohranjujemo s podacima o ugovoru: naručeno umjetničko djelo, cijena, datum i vaša adresa e-pošte. Vaša stranica narudžbe prikazuje te podatke sve dok čuvamo vašu narudžbu. Zasebnu kopiju ovih uvjeta za svaku narudžbu ne čuvamo. Umjesto toga, e-poruka s potvrdom narudžbe sadrži, kao tekst, podatke o vašoj narudžbi, ove uvjete i informacije o pravu na jednostrani raskid ugovora s primjerkom obrasca o jednostranom raskidu, u verziji koja je vrijedila kada ste naručili: sačuvajte tu e-poruku. Ovu stranicu također možete u bilo kojem trenutku spremiti ili ispisati.',
       ],
     },
     {
@@ -122,7 +122,7 @@ export const hr: LegalDoc = {
       id: 'withdrawal',
       title: 'Pravo na jednostrani raskid ugovora',
       blocks: [
-        `Kao potrošač u pravilu imate pravo na jednostrani raskid ugovora u roku od 14 dana. Kod digitalne datoteke to pravo prestaje ranije: prije plaćanja tražimo od vas da pristanete da s izradom vaše datoteke započnemo odmah, prije isteka roka za jednostrani raskid, i da potvrdite da ste upoznati s time da gubite pravo na jednostrani raskid čim započnemo. Ono stoga prestaje čim počnemo izrađivati vašu datoteku (ispunjenje ugovora); počinjemo tek nakon što je poslana e-poruka s potvrdom narudžbe, obično u roku od minute nakon plaćanja, dok je vaša stranica narudžbe otvorena. To vrijedi i dok se datoteka još izrađuje ili čeka našu provjeru kvalitete. Ako još nismo počeli, ono prestaje istekom roka od 14 dana za jednostrani raskid: dan vašeg plaćanja ne računa se, a ako posljednji dan roka pada u subotu, nedjelju ili na državni praznik, rok istječe na kraju sljedećeg radnog dana. Dok traje vaše pravo na jednostrani raskid, ugovor možete raskinuti e-poštom, poštom ili putem interneta gumbom „${WITHDRAWAL_ONLINE_HR.button}“; poveznica za raskid u e-poruci s potvrdom narudžbe otvara tu funkciju za vašu narudžbu, a da ne pokrene izradu vaše datoteke. Sve informacije, mrežna funkcija i primjerak obrasca o jednostranom raskidu nalaze se na stranici [Pravo na jednostrani raskid ugovora](doc:withdrawal).`,
+        `Kao potrošač imate pravo na jednostrani raskid ugovora u roku od 14 dana: ugovor možete jednostrano raskinuti u roku od 14 dana bez navođenja razloga. Vašu datoteku počinjemo izrađivati odmah nakon vašeg plaćanja i isporučujemo je na vašu stranicu narudžbe; time vaše pravo na jednostrani raskid ne prestaje. Ako ugovor raskinete u roku od 14 dana, vraćamo vam sve što ste platili, čak i ako ste datoteku već primili. Dan vašeg plaćanja ne računa se, a ako posljednji dan roka pada u subotu, nedjelju ili na državni praznik, rok istječe na kraju sljedećeg radnog dana. Ugovor možete raskinuti e-poštom, poštom ili putem interneta gumbom „${WITHDRAWAL_ONLINE_HR.button}“; poveznica za raskid u e-poruci s potvrdom narudžbe otvara tu funkciju za vašu narudžbu. Sve informacije, mrežna funkcija i primjerak obrasca o jednostranom raskidu nalaze se na stranici [Pravo na jednostrani raskid ugovora](doc:withdrawal).`,
       ],
     },
     {
