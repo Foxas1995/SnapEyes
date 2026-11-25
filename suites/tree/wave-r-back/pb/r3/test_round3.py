@@ -110,8 +110,16 @@ def new_checkout(lang="en"):
     return o, k, read_json(f"orders/{o}/order.json")["checkout"]["session_id"]
 
 
-def paid_order(lang="en", email="kunde@example.com"):
+def paid_order(lang="en", email="kunde@example.com", ticked=False):
+    """ticked: an order of before 2026-11-25, whose consent box was ticked (the text of its version kept with the order, no kind recorded); since that day's
+    second decision of the owner the box is shown on the US market alone and every other order is placed under the terms (kind by_terms)."""
     o, k, sid = new_checkout(lang)
+    if ticked:
+        rec = read_json(f"orders/{o}/order.json")
+        rec["checkout"]["consent"] = {"version": pay.CONSENT_VERSION, "at": rec["checkout"]["consent"]["at"], "lang": lang, "text": pay.CONSENT_TEXT[lang]}
+        store.put(f"orders/{o}/order.json", store.json_bytes(rec), "application/json", upsert=True)
+        H.Fake.sessions[sid]["metadata"]["consent_version"] = pay.CONSENT_VERSION
+        H.Fake.sessions[sid]["metadata"].pop("consent_kind", None)
     c, j = hook(H.pay_session(sid, email))
     assert c == 200, (c, j)
     return o, k, sid
@@ -153,7 +161,9 @@ H.Fake.legal = PACK
 # ======================================================================================== F1. the email's withdrawal link
 fresh("store_r3")
 n0 = len(H.Fake.emails)
-oA, kA, _ = paid_order("en", "anna@example.com")
+# F1 to F5: the confirmation of an order whose box was ticked (before 2026-11-25) still carries the withdrawal paragraph and the order's withdrawal link; F5b: an
+# order placed under the terms (every market but the US since that day) carries neither
+oA, kA, _ = paid_order("en", "anna@example.com", ticked=True)
 m = mails_to("anna@example.com", n0)
 t, htm = (m[0]["text"], m[0].get("html") or "") if m else ("", "")
 wl_en = f"https://snapeyes.com/order?o={oA}&k={kA}&withdraw=1&lang=en"
@@ -169,7 +179,7 @@ check("F4 EN: the normal order page link is still there, once, before the withdr
       t.count(f"https://snapeyes.com/order?o={oA}&k={kA}&lang=en") == 1
       and t.find(f"order?o={oA}&k={kA}&lang=en") < t.find(wl_en))
 n0 = len(H.Fake.emails)
-oB, kB, _ = paid_order("de", "berta@example.com")
+oB, kB, _ = paid_order("de", "berta@example.com", ticked=True)
 m = mails_to("berta@example.com", n0)
 t = m[0]["text"] if m else ""
 wl_de = f"https://snapeyes.com/order?o={oB}&k={kB}&withdraw=1&lang=de"
@@ -177,6 +187,16 @@ check("F5 DE confirmation: withdrawal link, Schaltfläche words, Bestellseite st
       and "Schaltfläche „Vertrag hier widerrufen“" in t and "ohne dass wir mit der Erstellung Ihrer Datei beginnen" in t
       and "Sobald Sie diese Seite öffnen, beginnen wir mit der Erstellung" in t
       and t.find("Ihr Widerrufsrecht\n") < t.find(wl_de), t[:3500])
+n0 = len(H.Fake.emails)
+oT, kT, _ = paid_order("en", "tess@example.com")
+mT = mails_to("tess@example.com", n0)
+tT, hT = (mT[0]["text"], mT[0].get("html") or "") if mT else ("", "")
+wl_T = f"https://snapeyes.com/order?o={oT}&k={kT}&withdraw=1&lang=en"
+check("F5b an order placed under the terms (2026-11-25, no box): the confirmation has the order page link once, no withdrawal paragraph, no withdrawal link of the "
+      "order and no quoted consent, in the text and in the html; the terms and the withdrawal information are still there in full",
+      len(mT) == 1 and tT.count(f"https://snapeyes.com/order?o={oT}&k={kT}&lang=en") == 1 and wl_T not in tT and wl_T.replace("&", "&amp;") not in hT
+      and "Your right of withdrawal\n" not in tT.split("_" * 64)[0] and pay.CONSENT_TEXT["en"] not in tT and "you ticked this box" not in tT
+      and PACK["docs"]["en"]["terms"]["text"] in tT and PACK["docs"]["en"]["withdrawal"]["text"] in tT, tT[:3000])
 check("F6 withdraw_url matches the page's withdrawHref query (o, k, withdraw=1, lang)",
       re.search(r"/order\?o=[a-z0-9-]+&k=[a-f0-9]{32}&withdraw=1&lang=(en|de)$", pay.withdraw_url(oA, kA, "en"))
       and pay.withdraw_url(oA, kA, "xx").endswith("&lang=en"))

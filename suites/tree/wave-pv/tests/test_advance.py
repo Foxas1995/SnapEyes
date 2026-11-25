@@ -206,10 +206,12 @@ n0 = len(H.Fake.emails)
 oA, kA, _ = new_order(2, "en", "anna@example.com")
 conf = mails("anna@example.com", "Your SnapEyes order", n0)
 t = conf[0]["text"] if conf else ""
-check("A1 confirmation (texts that say the server starts): 'right after this email', no 'When you open it'",
+# 2026-11-25 (the owner's decision): the rule about refunds is written in the terms and on the withdrawal page alone, so the confirmation carries no withdrawal
+# paragraph, no statutory button words and no withdrawal link any more
+check("A1 confirmation (texts that say the server starts): 'right after this email', no 'When you open it', no withdrawal paragraph or link",
       len(conf) == 1 and "We start making your artwork right after this email has been sent" in t
-      and "When you open it, we start" not in t and "“Withdraw from contract here”" in t
-      and f"/order?o={oA}&k={kA}&withdraw=1&lang=en" in t and not any(d in t for d in DASHES), t[:1800])
+      and "When you open it, we start" not in t and "“Withdraw from contract here”" not in t
+      and f"o={oA}&k={kA}&withdraw=1" not in t and f"/order?o={oA}&k={kA}&lang=en" in t and not any(d in t for d in DASHES), t[:1800])
 check("A2 the confirmation mark says which practice the email described (making: server)",
       (rj(f"orders/{oA}/mail_delivery.json") or {}).get("making") == "server", rj(f"orders/{oA}/mail_delivery.json"))
 done = wait_for(lambda: stopped(oA, "ready"), 40)

@@ -115,8 +115,10 @@ rec1 = read_json(f"orders/{o1}/order.json")
 for key in ("market",):
     rec1["checkout"].pop(key, None)
     rec1["checkout"]["spec"].pop(key, None)
-rec1["checkout"]["consent"] = dict(rec1["checkout"]["consent"], version="2026-09-29.1", text=pay.CONSENT_TEXT["de"])
+# 2026-11-25: today's checkout records a consent of the kind "by_terms" (no box); the old session carried the ticked text of its version and no kind
+rec1["checkout"]["consent"] = {"version": "2026-09-29.1", "at": rec1["checkout"]["consent"]["at"], "lang": "de", "text": pay.CONSENT_TEXT["de"]}
 s1["metadata"]["consent_version"] = "2026-09-29.1"
+s1["metadata"].pop("consent_kind", None)
 store.put(f"orders/{o1}/order.json", store.json_bytes(rec1), "application/json", upsert=True)
 H.pay_session(s1["id"], "alt@example.com")
 n0 = len(H.Fake.emails)
@@ -237,11 +239,13 @@ check("6a tampered bodies: lt 3 eyes = 5497 EUR; au 3 eyes = 10800 AUD; null = e
 c, j = checkout(o6, k6, 3, "studio_black", "en", market="au", eyes_billable=1)
 check("6b eyes stays what the body says (3) even with extra fields: A$108", c == 200 and j["amount"] == 10800, (c, j))
 c, j = checkout(o6, k6, 1, "studio_black", "de", market="au", consent_digital="true")
-check("6c consent_digital must be the JSON true (a string is refused) for au too", c == 400 and j.get("reason") == "consent_required", (c, j))
+# 2026-11-25 (the owner's second decision of that day): the consent box is asked on the US market alone, so au is placed under the terms and the field is not read
+check("6c au has no consent box since 2026-11-25: a string consent_digital is not read and the checkout opens", c == 200 and j.get("market") == "au", (c, j))
 c, j = checkout(o6, k6, 1, "studio_black", "de", market="au")
 rec6 = read_json(f"orders/{o6}/order.json")
-check("6d au in German records the Australian German consent text", c == 200
-      and rec6["checkout"]["consent"]["text"] == pay.CONSENT_TEXT_AU["de"], rec6["checkout"]["consent"])
+check("6d au in German records the plain facts: placed under the terms of that date, no box, no ticked text", c == 200
+      and rec6["checkout"]["consent"] == {"kind": "by_terms", "version": pay.legal_day(), "at": rec6["checkout"]["created"], "lang": "de", "box": False},
+      rec6["checkout"]["consent"])
 
 # ------------------------------------------------------------------ 7. HUF units end to end (a hu session made the way checkout would)
 o7, k7 = new_order(8, "de")

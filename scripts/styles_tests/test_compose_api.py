@@ -774,19 +774,21 @@ check("a batch that was answered 503 busy_retry or that failed before a tile was
 section("6c. a plate the picture needs is not in storage: 503 plate_retry, never a 500 and never a picture without the plate (WP8A review)")
 from _lib.styles import plates as PLATES  # noqa: E402
 EVENTS.clear()
-# Universe Echo on the tall canvas lays a P-UV-DUST accent plate over the lower third: at a 1024 px preview the 2k mip of the 4K file, which the local store of this
-# suite does not hold. The preview used to fail with a bare exception (HTTP 500, "Something went wrong on our side"); the master's first plate fault is 503 plate_retry
+# Universe Echo on the tall canvas laid a P-UV-DUST accent plate over the lower third: at a 1024 px preview the 2k mip of the 4K file, which the local store of this
+# suite does not hold. The preview used to fail with a bare exception (HTTP 500, "Something went wrong on our side"); the master's first plate fault is 503 plate_retry.
+# 2026-11-25: Universe's one look (Lens, engine 14) lays no plate on the tall canvas, so the missing 4K plate is the engine's own fault raised from preview() here
 with Show("solo.universe", stage="live"):
-    e_wall = raised(lambda: comp({"sealed": S1, "style": "solo.universe", "format": "wallpaper"}))
-    e_cv = raised(lambda: comp({"sealed": S1, "style": "solo.universe", "format": "9:19.5"}))
     r_art = comp({"sealed": S1, "style": "solo.universe"})
-    c_pl, j_pl, r_pl = post("/api/compose", {"sealed": S1, "style": "solo.universe", "format": "wallpaper", "lang": "lt"})
+    with mock.patch.object(ST, "preview", side_effect=PLATES.PlateUnavailable("P-UV-DUST__synthetic", "missing", "no such object in storage")):
+        e_wall = raised(lambda: comp({"sealed": S1, "style": "solo.universe", "format": "wallpaper"}))
+        e_cv = raised(lambda: comp({"sealed": S1, "style": "solo.universe", "format": "9:19.5"}))
+        c_pl, j_pl, r_pl = post("/api/compose", {"sealed": S1, "style": "solo.universe", "format": "wallpaper", "lang": "lt"})
 ev_pl = [f for k, f in EVENTS if k == "error" and f.get("reason") == "plate_retry"]
-check("the tall canvas of Echo at a 1024 px preview without its 4K plate is 503 plate_retry (retry true, the master's back-off, the sentence, the style), asked as 'wallpaper' and as the canvas id 9:19.5; "
+check("a tall canvas at a 1024 px preview whose 4K plate is not in storage is 503 plate_retry (retry true, the master's back-off, the sentence, the style), asked as 'wallpaper' and as the canvas id 9:19.5; "
       "the body names no plate",
       all(getattr(e, "status", None) == 503 and e.body["reason"] == "plate_retry" and e.body["retry"] is True and e.body["retry_after"] == SPS.PLATE_RETRY_S
           and e.body["style"] == "solo.universe" and e.body["error"] == CMP.WORDS["plate_retry"]["en"] and "P-UV" not in json.dumps(e.body) for e in (e_wall, e_cv)), (e_wall, e_cv))
-check("the same style on its square canvas needs no 4K plate and is drawn: the fault is the tall canvas's alone, the preview is a real one (1024 px, the canvas named, a picture)",
+check("the same style on its square canvas is drawn: the preview is a real one (1024 px, the canvas named, a picture)",
       r_art["ok"] is True and r_art["canvas"] != "9:19.5" and r_art["width"] == r_art["height"] == 1024 and img_of(r_art).size == (1024, 1024), (r_art.get("canvas"), r_art.get("width"), r_art.get("height")))
 check("over HTTP: 503 with Retry-After of the master's back-off, the sentence in the page's language (Lithuanian here), and an error event with the reason, the status and the style (the owner's admin sees it)",
       c_pl == 503 and j_pl["reason"] == "plate_retry" and j_pl["error"] == CMP.WORDS["plate_retry"]["lt"] and r_pl.headers.get("Retry-After") == str(SPS.PLATE_RETRY_S)

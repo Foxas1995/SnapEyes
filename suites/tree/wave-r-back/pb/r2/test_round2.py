@@ -201,23 +201,25 @@ check("A5 what was bought: eyes, style, layout, names, digital file, no print",
       and "Names on the artwork: Anna & Ben" in t and "no print and no frame are shipped" in t, t[:2500])
 check("A6 final price and no VAT", "Price: €39.97. This is the final price: we are not registered for VAT, so no VAT is "
       "charged." in t, t[:2500])
-check("A7 consent: exact recorded text and time", pay.CONSENT_TEXT["en"] in t and "“" + pay.CONSENT_TEXT["en"] + "”" in t
-      and pay.when_text(paid["consent"]["at"], "en") in t and "you ticked this box" in t, t[:3000])
-check("A8 consent text kept with the order and the payment", rec["checkout"]["consent"]["text"] == pay.CONSENT_TEXT["en"]
-      and paid["consent"]["text"] == pay.CONSENT_TEXT["en"] and paid["consent"]["version"] == pay.CONSENT_VERSION
-      and paid["consent"]["lang"] == "en", (rec["checkout"]["consent"], paid["consent"]))
-check("A9 withdrawal information and model form in full", PACK["docs"]["en"]["withdrawal"]["text"] in t
-      and "Model withdrawal form" in t and "Withdraw from contract here" in t, len(t))
+# 2026-11-25 (the owner's second decision of that day): no consent box but on the US market; the order is placed under the terms of that date, the confirmation
+# quotes no ticked text and carries no withdrawal paragraph, button words or link (the rule is in the terms and the withdrawal page, both still in full at the end)
+BY_TERMS = {"kind": "by_terms", "version": pay.legal_day(), "lang": "en", "box": False}
+check("A7 consent: no box was shown, so no text is quoted and nothing says a box was ticked", pay.CONSENT_TEXT["en"] not in t
+      and "you ticked this box" not in t and "“Withdraw from contract here”" not in t and f"o={oA}&k={kA}&withdraw=1" not in t, t[:3000])
+check("A8 the plain facts kept with the order and the payment: placed under the terms of that date, no box",
+      rec["checkout"]["consent"] == dict(BY_TERMS, at=rec["checkout"]["consent"]["at"])
+      and paid["consent"] == dict(BY_TERMS, at=rec["checkout"]["consent"]["at"]), (rec["checkout"]["consent"], paid["consent"]))
+check("A9 withdrawal information in full", PACK["docs"]["en"]["withdrawal"]["text"] in t, len(t))
 check("A10 terms of sale in full, with their link", PACK["docs"]["en"]["terms"]["text"] in t
       and PACK["docs"]["en"]["terms"]["url"] in t, len(t))
 check("A11 HTML part: same content, escaped, no script", htm.startswith("<!doctype html>") and 'lang="en"' in htm
       and "Anna &amp; Ben" in htm and "<script" not in htm.lower() and f"lang=en" in htm
-      and "Model withdrawal form" in htm, htm[:400])
+      and f"o={oA}&amp;k={kA}&amp;withdraw=1" not in htm and f"o={oA}&k={kA}&withdraw=1" not in htm, htm[:400])
 check("A12 no em/en dashes in either part", not any(d in t or d in htm for d in DASHES))
 check("A13 the owner note is separate and carries no customer link key", all(kA not in x["text"] for x in mails_to("info@snapeyes.com", n0)))
 md = read_json(f"orders/{oA}/mail_delivery.json")
 check("A14 mail_delivery.json: sent, with the legal version and consent version", md["state"] == "sent"
-      and md["legal"] == PACK["updated"] and md["consent"] == pay.CONSENT_VERSION, md)
+      and md["legal"] == PACK["updated"] and md["consent"] == pay.legal_day(), md)
 
 # German
 n0 = len(H.Fake.emails)
@@ -225,10 +227,10 @@ oB, kB, sidB, (c, j) = paid_order("de", "berta@example.com", eyes=1, style="deep
 m = mails_to("berta@example.com", n0)[0]
 t = m["text"]
 check("A15 DE subject", m["subject"] == f"Ihre SnapEyes-Bestellung {oB}: Bestellbestätigung", m["subject"])
-check("A16 DE content: link lang=de, seller, price, no VAT, consent quote, withdraw button, texts",
+check("A16 DE content: link lang=de, seller, price, no VAT, no consent quote and no withdraw button (2026-11-25), texts",
       f"&k={kB}&lang=de" in t and "MB „Portretizuokis“, Unternehmenscode 305605052" in t and "Litauen" in t
       and "Preis: 24,97 €. Das ist der Endpreis: Wir sind nicht umsatzsteuerlich registriert" in t
-      and "„" + pay.CONSENT_TEXT["de"] + "“" in t and "Vertrag hier widerrufen" in t and "Uhr UTC" in t
+      and pay.CONSENT_TEXT["de"] not in t and f"o={oB}&k={kB}&withdraw=1" not in t and "Uhr UTC" in t
       and PACK["docs"]["de"]["withdrawal"]["text"] in t and PACK["docs"]["de"]["terms"]["text"] in t
       and "SnapEyes-Iris-Kunstwerk, 1 Auge, Deep Nebula" in t, t[:3000])
 check("A17 DE HTML lang=de", 'lang="de"' in (m.get("html") or ""))
@@ -245,10 +247,13 @@ check("A18 representative and phone appear when set", "Represented by: Mantas Te
 fresh_pack()
 
 # the legal texts cannot be read: nothing is sent, nothing is made, Stripe retries, the page waits
+# (2026-11-25: the checkout is made while the texts are readable, as on the live site, where no checkout opens without them: it records the date of the
+# terms the order is placed under; the texts fail afterwards, when the payment arrives)
+oD, kD, sidD, _ = paid_order("en", "dora@example.com", send_hook=False)
 H.Fake.legal_fail = 10 ** 6
 pay._LEGAL.update(pack=None, t=0.0)
 n0 = len(H.Fake.emails)
-oD, kD, sidD, (c, j) = paid_order("en", "dora@example.com")
+c, j = hook(H.Fake.sessions[sidD])
 check("A19 legal texts unreadable: webhook 503 mail_retry, no confirmation sent", c == 503 and j.get("reason") == "mail_retry"
       and not mails_to("dora@example.com", n0) and not exists(f"orders/{oD}/mail_delivery.json"), (c, j))
 c, j = status(oD, kD)
@@ -304,11 +309,17 @@ check("A30 no consent recorded: 200, held for review, no confirmation", c == 200
 # the email quotes the text the customer ticked, even after CONSENT_TEXT changed
 old = dict(pay.CONSENT_TEXT)
 oF, kF, sidF, _ = paid_order("en", "fay@example.com", send_hook=False)
+# an order of before 2026-11-25: its box was ticked, the text of its version is kept with the order and no kind is recorded
+recF = read_json(f"orders/{oF}/order.json")
+recF["checkout"]["consent"] = {"version": pay.CONSENT_VERSION, "at": recF["checkout"]["consent"]["at"], "lang": "en", "text": old["en"]}
+write_json(f"orders/{oF}/order.json", recF)
+H.Fake.sessions[sidF]["metadata"]["consent_version"] = pay.CONSENT_VERSION
+H.Fake.sessions[sidF]["metadata"].pop("consent_kind", None)
 pay.CONSENT_TEXT["en"] = "A changed consent text."
 n0 = len(H.Fake.emails)
 c, j = hook(H.Fake.sessions[sidF])
 t = mails_to("fay@example.com", n0)[0]["text"]
-check("A31 the recorded text is quoted, not the current one", old["en"] in t and "A changed consent text." not in t)
+check("A31 an order with a ticked box (before 2026-11-25): the recorded text is quoted, not the current one", old["en"] in t and "A changed consent text." not in t)
 pay.CONSENT_TEXT.update(old)
 
 # ======================================================================================== B. the order's language
@@ -393,8 +404,9 @@ check("C11 lapsed: 200, effective false, reason making_began, times named", c ==
 check("C12 lapsed: order not stopped, make goes on", not exists(f"orders/{oL}/withdrawn.json") and make(oL, kL, 2)[0] == 200)
 rl = [x for x in mails_to("lars@example.com", n0) if x["subject"].startswith("We received your withdrawal")]
 check("C13 lapsed receipt: reason, the three facts, personal look, defect rights", len(rl) == 1
-      and "had therefore already ended" in rl[0]["text"] and "order confirmation email of" in rl[0]["text"]
-      and "we started making your file on" in rl[0]["text"] and "look at your statement personally" in rl[0]["text"]
+      # 2026-11-25: an order placed under the terms: the receipt names when making began and the terms' rule (no ticked box, no confirmation's time)
+      and "had therefore already ended" in rl[0]["text"] and "Under our terms of sale" in rl[0]["text"] and "by paying you agreed" in rl[0]["text"]
+      and "We started making your file on" in rl[0]["text"] and "look at your statement personally" in rl[0]["text"]
       and "defective file" in rl[0]["text"], rl)
 on = [x for x in mails_to("info@snapeyes.com", n0) if "withdrawal for order" in x["subject"]]
 check("C14 owner note asks for a look", len(on) == 1 and "the right had ended, please look" in on[0]["subject"], on)

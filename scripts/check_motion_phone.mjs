@@ -662,10 +662,17 @@ async function checkIdentity() {
     // one row, or more than 8 levels, is still a failure.
     const seam = !d.size && d.n > 0 && d.rows === 1 && d.max <= 8;
     if (seam) note(`identity: ${name}: ${d.n} pixels of one row differ by up to ${d.max} levels: a seam of the raster tiles where the plate falls on the page, not a state of the picture`);
-    expect('identity', !d.size && (d.n === 0 || seam), `${name}: ${d.n} pixels in ${d.rows} rows differ between reduced motion and motion after the scenes (by up to ${d.max} levels${d.size ? ', sizes ' + d.size : ''})`);
+    // The closing band alone carries a blend layer over its picture (css/final.css: a grey in colour dodge, every value times 1.38). A band that was opened by the
+    // scroll is drawn on its own layer, and the blend is then rounded on another path than the one of a band that never moved: single values end one level
+    // (1 of 255) apart, nothing a person can see and no state of the scene (the visual state above is compared exactly, and it is the same). Measured on
+    // 2026-11-25 with the study of the square 60 cm print: 22485 pixels in 86 rows, every one by exactly one level, twice the same count. Two levels or more
+    // anywhere is still a failure, and so is any difference on the plate and on the drawing, which carry no blend.
+    const round = name === '.lp-final' && !d.size && d.n > 0 && d.max <= 1 && A.sig === M.sig;
+    if (round) note(`identity: ${name}: ${d.n} pixels in ${d.rows} rows differ by one level: the rounding of the blend layer over the picture on a band that was opened by the scroll, not a state of the picture`);
+    expect('identity', !d.size && (d.n === 0 || seam || round), `${name}: ${d.n} pixels in ${d.rows} rows differ between reduced motion and motion after the scenes (by up to ${d.max} levels${d.size ? ', sizes ' + d.size : ''})`);
     note(`identity: ${name} ${A.rect[2]} x ${A.rect[3]} px (the band whole, the frames without their 24 px corners) at ${A.abs.toFixed(3)} from the top of the page in both runs: ${d.n} pixels differ`);
   }
-  if (clean('identity')) pass('identity', 'the plate, the closing picture and the drawing: the same visual state and the same pixels (zero tolerance) with the motion off and after the scenes have played, at the same place of the page');
+  if (clean('identity')) pass('identity', 'the plate, the closing picture and the drawing: the same visual state and the same pixels (zero tolerance; one level of rounding under the blend layer of the closing band) with the motion off and after the scenes have played, at the same place of the page');
 }
 
 // ---------------------------------------------------------------------------------------------------- run
