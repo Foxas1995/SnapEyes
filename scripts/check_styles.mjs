@@ -299,8 +299,9 @@ function checkEngine(reg, engine, out) {
       if ('looks' in eng) {
         if (!isObj(eng.looks)) out.push(`${at}: engine.looks must be an object`);
         else for (const [look, s] of Object.entries(eng.looks)) {
-          if (!/^[a-z][a-z0-9_]*$/.test(look) || !CEILINGS.includes(s)) out.push(`${at}: engine.looks["${look}"] must be a look id with a stage of ${CEILINGS.join(', ')}`);
-          else if (RANK[s] > top) out.push(`${at}: the look "${look}" is at stage ${s}, above its style (${STAGES[top]})`);
+          // "retired" (2026-11-25: Universe's Echo and Vortex): never offered, still drawn for a plan made before (api/_lib/catalogue.py retired_look)
+          if (!/^[a-z][a-z0-9_]*$/.test(look) || !(CEILINGS.includes(s) || s === 'retired')) out.push(`${at}: engine.looks["${look}"] must be a look id with a stage of ${CEILINGS.join(', ')} or retired`);
+          else if (s !== 'retired' && RANK[s] > top) out.push(`${at}: the look "${look}" is at stage ${s}, above its style (${STAGES[top]})`);
         }
       }
       if ((eng.module === 'legacy') !== (d.legacy === 1)) out.push(`${at}: the module legacy belongs to the legacy styles, and only to them`);

@@ -1354,8 +1354,10 @@ check("a horizontal bar pupil: the collision family refuses it, so those tiles c
       all(t["why"] == "bar_pupil" and t["image"] is None and t["available"] is False for i, t in bars.items() if CT.engine_for(i, 2)["module"] == "collision")
       and gb["eyes"][0]["pupil"] == "bar" and any(t["available"] for t in gb["tiles"] if CT.engine_for(t["id"], 2)["module"] == "universe"), [(i, t["why"]) for i, t in bars.items()])
 g1 = act("styles_lab", eyes=[eye_b64("green_round")], size=480, styles=["solo.universe", "solo.elements"])
-check("one eye is a group too, and a held style (Elements) is on the sheet; a style with looks is one tile per look (Universe: echo, vortex, deepfield, starfield)",
-      [(t["id"], t["look"]) for t in g1["tiles"]] == [("solo.universe", "echo"), ("solo.universe", "vortex"), ("solo.universe", "deepfield"), ("solo.universe", "starfield"), ("solo.elements", None)]
+check("one eye is a group too, and a held style (Elements) is on the sheet; a style with looks is one tile per look (Universe: lens, and the retired echo and vortex the laboratory still draws, "
+      "deepfield, starfield)",
+      [(t["id"], t["look"]) for t in g1["tiles"]] == [("solo.universe", "lens"), ("solo.universe", "echo"), ("solo.universe", "vortex"), ("solo.universe", "deepfield"), ("solo.universe", "starfield"),
+                                                      ("solo.elements", None)]
       and all(t["available"] and t["image"] for t in g1["tiles"]), [(t["id"], t["look"], t["why"]) for t in g1["tiles"]])
 bad = [dict(eyes=[eye_b64("blue_round")] * 9), dict(eyes=[]), dict(eyes="x"), dict(eyes=[5]), dict(eyes=[eye_b64("blue_round")], size=2048), dict(eyes=[eye_b64("blue_round")], size=True),
        dict(eyes=[eye_b64("blue_round")], styles=["celestial_gold"]), dict(eyes=[eye_b64("blue_round")], styles=["nope"]), dict(eyes=[eye_b64("blue_round")], styles=["solo.gold", "solo.gold"]),

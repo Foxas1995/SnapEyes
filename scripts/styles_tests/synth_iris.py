@@ -100,7 +100,7 @@ def _sample_polar(field, th, rho, rho_max=1.0):
             + field[i1, j0 + 1] * fu * fv)
 
 
-def make(kind="blue", pupil="round", lid=False, lash=False, seed=1, side=1024):
+def make(kind="blue", pupil="round", lid=False, lash=False, seed=1, side=1024, pupil_r=0.27):
     """One synthetic restored iris: RGB uint8 image, side x side, the disc on black."""
     if kind not in PALETTES or pupil not in PUPILS:
         raise ValueError(f"kind is one of {sorted(PALETTES)}, pupil one of {PUPILS}")
@@ -135,9 +135,9 @@ def make(kind="blue", pupil="round", lid=False, lash=False, seed=1, side=1024):
     limb = 1.0 - 0.45 * _smooth01((rho - 0.90) / 0.10)
     col = col * limb[..., None]
 
-    # the pupil: round (r = 0.27), a vertical slit or a horizontal bar, soft edge 0.012
+    # the pupil: round (r = pupil_r, 0.27 unless a test asks for a wide one), a vertical slit or a horizontal bar, soft edge 0.012
     if pupil == "round":
-        e = np.sqrt((X / (0.27 * Ri)) ** 2 + (Y / (0.27 * Ri)) ** 2)
+        e = np.sqrt((X / (pupil_r * Ri)) ** 2 + (Y / (pupil_r * Ri)) ** 2)
     elif pupil == "slit":
         e = np.sqrt((X / (0.085 * Ri)) ** 2 + (Y / (0.42 * Ri)) ** 2)
     else:

@@ -262,7 +262,7 @@ def ceilings(i):
 
 check("every id of the registry is classified here once: 5 live, 10 preview (the light family's five since 2026-10-20, Spiral Galaxy since 2026-10-30), grp.collision, the 12 of the ensemble family at preview (Galaxy Duo, Galaxy Family and Powder Family since 2026-11-02), 5 laboratory (Celestial Gold since 2026-10-27), 6 planned, 6 legacy (45)",
       sorted(LIVE1 + PREVIEW + ENSEMBLE + LAB + PLANNED + ["grp.collision"] + LEGACY) == sorted(CT.ids()) and len(CT.ids()) == 45, sorted(set(CT.ids()) - set(LIVE1 + PREVIEW + ENSEMBLE + LAB + PLANNED + LEGACY)))
-check("singles at live: Clean Iris, Powder Burst, Universe (Echo and Vortex), Splash and Iris Echo are live for one eye (the owner's release-1 singles, Iris Echo in Celestial Gold's place since 2026-10-27)",
+check("singles at live: Clean Iris, Powder Burst, Universe (Lens since 2026-11-25), Splash and Iris Echo are live for one eye (the owner's release-1 singles, Iris Echo in Celestial Gold's place since 2026-10-27)",
       all(CT.ceiling(i, 1) == "live" for i in LIVE1) and [CT.name_of(i) for i in LIVE1] == ["Clean Iris", "Powder Burst", "Universe", "Splash", "Iris Echo"], [CT.ceiling(i, 1) for i in LIVE1])
 check("Family Colours: a live ceiling for three to eight eyes (the Trio opened alone in release 1: 1.6.3; four to eight since 2026-10-27, after their 4K masters were drawn on production)",
       [CT.ceiling("grp.collision", n) for n in range(3, 9)] == ["live"] * 6 and CT.ceiling("grp.collision", 2) is None)
@@ -276,8 +276,9 @@ check("planned ids (the reserved designs, Clean Family and the two pet ids) have
 check("the six legacy ids are RETIRED for 1 to 8 eyes (a ceiling of retired is final), still known and still renderable by the legacy engine",
       all(set(ceilings(i)) == {"retired"} and len(ceilings(i)) == 8 and CT.known(i) and CT.is_legacy(i) and CT.renderable(i, n) for i in LEGACY for n in range(1, 9)), {i: set(ceilings(i)) for i in LEGACY})
 looks = CT.engine_for("solo.universe", 1)["looks"]
-check("Universe: Echo and Vortex are live looks, Deep Field and Starfield stay in the laboratory (a look is never above its style)",
-      looks == {"echo": "live", "vortex": "live", "deepfield": "lab", "starfield": "lab"}, looks)
+check("Universe: Lens is its live look since ENGINE_V 14 (2026-11-25), Echo and Vortex are retired (never offered, drawn for the plans made before), Deep Field and Starfield stay in the "
+      "laboratory (a look is never above its style)",
+      looks == {"lens": "live", "echo": "retired", "vortex": "retired", "deepfield": "lab", "starfield": "lab"}, looks)
 check("no style shown to customers is a heart, a pet or a study: the shown ids are exactly the fifteen of the landing's gate table (6 + 3 + the Family tile + 5 of the ensemble family) and the five of the light "
       "family and the four cosmos looks of the ensemble family that /try shows (2026-10-20: they wait for their landing tile, scripts/check_styles.mjs LANDING_TILE_LATER), and Spiral Galaxy (2026-10-30, the same)",
       sorted(i for i in V3 if any(c in ("preview", "live") for c in ceilings(i))) == sorted(LIVE1 + PREVIEW + ENSEMBLE + ["grp.collision"]) and len(LIVE1 + PREVIEW + ENSEMBLE + ["grp.collision"]) == 28)
@@ -464,25 +465,25 @@ check("restore gives the DEFAULT, not the ceiling: Splash is preview again (only
 # the Universe looks
 act("styles_override", style="solo.universe", eyes=1, tick={"L1": True}, evidence=PASS_L0)
 act("styles_override", style="solo.universe", eyes=1, stage="live", confirm=True)
-check("Universe live: Echo and Vortex are the looks a customer may buy (live), Deep Field and Starfield are never offered; an order for a held look is refused",
-      CT.looks_for("solo.universe", 1) == {"echo": "live", "vortex": "live"} and CT.look_orderable("solo.universe", 1, {"look": "vortex"}) and CT.look_orderable("solo.universe", 1, {})
-      and not CT.look_orderable("solo.universe", 1, {"look": "deepfield"}) and CT.looks_for("solo.universe", 1, admin=True)["deepfield"] == "lab", CT.looks_for("solo.universe", 1))
-# the checkout verifies the plates of the order's OWN plan (plan["plates_needed"]), not the families the health probe expects (A12 triage, finding 1): Echo draws no plate on the square canvas, Vortex one spiral
+check("Universe live: Lens is the one look a customer may buy (live), Echo and Vortex are retired and Deep Field and Starfield never offered; a request that names a retired look is the "
+      "default's (orderable as Lens), an order for a held look is refused",
+      CT.looks_for("solo.universe", 1) == {"lens": "live"} and CT.look_orderable("solo.universe", 1, {"look": "vortex"}) and CT.look_of("solo.universe", 1, {"look": "vortex"}) == "lens"
+      and CT.look_orderable("solo.universe", 1, {}) and not CT.look_orderable("solo.universe", 1, {"look": "deepfield"}) and CT.looks_for("solo.universe", 1, admin=True)["deepfield"] == "lab",
+      CT.looks_for("solo.universe", 1))
+# the checkout verifies the plates of the order's OWN plan (plan["plates_needed"]), not the families the health probe expects (A12 triage, finding 1): Lens draws no plate. Since ENGINE_V 14 a request
+# that still names the retired Vortex (an older page) is planned and drawn as Lens; a plan that names Vortex (made under 13, or made by the master for a paid order without a frozen plan) still needs its spiral
 from _lib.styles import steps as SPS  # noqa: E402
 o, k = new_order(["blue_round"])
-c_echo, j_echo = co(o, k, "solo.universe", 1)
+c_lens, j_lens = co(o, k, "solo.universe", 1)
 o, k = new_order(["blue_round"])
 c_vor0, j_vor0 = co(o, k, "solo.universe", 1, opts={"look": "vortex"})
 d_vor = rj(f"orders/{o}/draft/eye_1.json")
 plan_vor = SPS.make_plan({"style": "solo.universe", "layout": "single", "eyes": 1, "opts": {"look": "vortex"}}, [{"eye_id": d_vor["eye_id"], "profile": d_vor["profile"]}])
 need_vor = plan_vor.get("plates_needed") or []
-for x in need_vor:
-    store.put(x["path"], b"plate", "image/png", upsert=True)
-c_vor1, j_vor1 = co(o, k, "solo.universe", 1, opts={"look": "vortex"})
-check("Universe live: an Echo checkout needs no plate (accepted with none of its families in storage), a Vortex checkout is refused 409 plates until the ONE spiral plate of its plan is stored and then accepted "
-      "(the plan's plates_needed, not the families of the health probe; Starfield's MILKY plates play no part)",
-      c_echo == 200 and c_vor0 == 409 and j_vor0.get("why") == "plates" and len(need_vor) == 1 and need_vor[0]["family"] == "P-DN-SPIRAL" and c_vor1 == 200
-      and not any(store.exists(PL.storage_path(i)) for i in PL.storage_ids(["P-UV-MILKY"])), (c_echo, c_vor0, j_vor0, c_vor1, need_vor))
+check("Universe live: a Lens checkout needs no plate (accepted with none of the families in storage); an older page's request for Vortex is accepted as Lens with no plate (the retired look is "
+      "left out of the options, the paid plan is Lens); a plan that does name Vortex still needs the ONE spiral plate of its plan (Starfield's MILKY plates play no part)",
+      c_lens == 200 and c_vor0 == 200 and j_vor0.get("plan8") and len(need_vor) == 1 and need_vor[0]["family"] == "P-DN-SPIRAL" and plan_vor["design_used"] == "vortex"
+      and not any(store.exists(PL.storage_path(i)) for i in PL.storage_ids(["P-UV-MILKY"])), (c_lens, c_vor0, j_vor0, need_vor))
 act("styles_override", style="solo.universe", eyes=1, stage="preview", confirm=True)
 # the rollback
 r = act("styles_override", style="solo.clean", eyes=1, stage="preview", confirm=True, reason="rolled back", reason_kind="quality", in_flight="finish")

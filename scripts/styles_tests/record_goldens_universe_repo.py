@@ -10,6 +10,7 @@ every pick takes, which no scratch code has, so the new goldens can only be reco
     set SNAPEYES_CALIB=<the folder of the calibration restorations>       (only for --real)
     python scripts/styles_tests/record_goldens_universe_repo.py [--sizes 512 1024 2048 4096] [--looks echo vortex ...] [--only KEYPART ...] [--fresh]
     python scripts/styles_tests/record_goldens_universe_repo.py --real
+    python scripts/styles_tests/record_goldens_universe_repo.py --lens          (the Lens look, ENGINE_V 14: data/lens_goldens.json)
 
 It runs universe_cases.cases() on synthetic irises (synth_iris) through api/_lib/styles/universe.render (the seed made from the eyes' ids, which the Iris class
 defaults to the first 16 hex digits of the sha256 of the bytes it was made from, and the default seed key of the look) and writes data/universe_goldens.json: the
@@ -125,6 +126,26 @@ def record_real():
     print(f"recorded {len(out['cases'])} real-eye cases")
 
 
+def record_lens():
+    """The Lens look's goldens (universe_cases.lens_cases(): ENGINE_V 14, 2026-11-25), on this repository's code, into data/lens_goldens.json. Like the others they pin the
+    engine UNDER the iris finish switch the suite sets (C.IRIS_FINISH False): Lens draws from the grade without the finish either way."""
+    C.IRIS_FINISH = False
+    fixtures = UC.lens_fixtures(SI)
+    out = {"cases": {}}
+    t_all = time.time()
+    for i, c in enumerate(UC.lens_cases(), 1):
+        t0 = time.time()
+        rec = UC.render_case(render, C.Iris, fixtures, c)
+        out["cases"][c["key"]] = rec
+        print(f"[{i}] {c['key']:56s} {rec['sha'][:12]}  {time.time() - t0:6.1f} s  {json.dumps(rec['facts'].get('lens'))}", flush=True)
+    out["about"] = ("SHA-256 of the RGB bytes of universe_cases.lens_cases() rendered on api/_lib/styles/universe (the Lens look, lens.py, ENGINE_V 14, 2026-11-25), synthetic irises "
+                    "of synth_iris, the seed from the eyes' ids and the look's default seed key; recorded on this repository's code (no scratch prototype has the look).")
+    out["machine"] = machine()
+    out["fixtures"] = {n: hashlib.sha256(fixtures[n]).hexdigest() for n in fixtures}
+    write(os.path.join(DATA, "lens_goldens.json"), out)
+    print(f"recorded {len(out['cases'])} Lens cases in {time.time() - t_all:.0f} s")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--sizes", type=int, nargs="*", default=[512, 1024, 2048, 4096])
@@ -132,10 +153,13 @@ def main():
     ap.add_argument("--only", nargs="*", default=None, help="record only the cases whose key contains one of these texts")
     ap.add_argument("--real", action="store_true", help="record the real calibration eyes instead (data/universe_goldens_real.json: hashes only)")
     ap.add_argument("--fresh", action="store_true", help="start from an empty file (the default merges into the existing one)")
+    ap.add_argument("--lens", action="store_true", help="record the Lens look's cases instead (data/lens_goldens.json)")
     a = ap.parse_args()
     try:
         if a.real:
             return record_real()
+        if a.lens:
+            return record_lens()
         fixtures = {n: SI.png_bytes(n) for n in UC.FIXTURE_BASE}
         dst = os.path.join(DATA, "universe_goldens.json")
         out = {"cases": {}}

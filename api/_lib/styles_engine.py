@@ -9,8 +9,9 @@ Fields of an entry (all are required):
                            2026-10-20; ensemble: the pairs and families of whole irises, 2026-10-20). catalogue.engine_built tells whether
                            a module is in the repository: a style whose module is not built is never routed to, whatever its stage says
                    design  the engine's own key for the look
-                   looks   {look: stage}: looks inside one style (Universe: echo, vortex, deepfield, starfield); a look never
-                           has a higher stage than its style
+                   looks   {look: stage}: looks inside one style (Universe: lens, deepfield, starfield); a look never
+                           has a higher stage than its style. "retired" (Universe's echo and vortex since 2026-11-25): never offered,
+                           a request that names it draws the style's design; the engine still draws it for a plan made before (a paid order)
                    clean   1 for the clean variant (no matter around the iris)
   design_by_eyes  {"3": "trio", "4-8": "family"}: another design of the same module for an eye range ({} when one design serves all)
   canvases       canvas ratios the engine can draw, the default first; the PAID file is the default canvas at 4096 px on its long
@@ -47,7 +48,7 @@ ENGINE = {
         "wave": "R2"
     },
     "solo.universe": {
-        "engine": {"module": "universe", "design": "echo", "looks": {"echo": "live", "vortex": "live", "deepfield": "lab", "starfield": "lab"}},
+        "engine": {"module": "universe", "design": "lens", "looks": {"lens": "live", "echo": "retired", "vortex": "retired", "deepfield": "lab", "starfield": "lab"}},
         "design_by_eyes": {},
         "canvases": ["1:1", "4:5", "9:19.5"],
         "gate_rules": "fill",

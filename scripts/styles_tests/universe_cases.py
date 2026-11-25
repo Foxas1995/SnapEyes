@@ -96,6 +96,40 @@ def cases():
     return out
 
 
+# Universe's Lens look (lens.py, ENGINE_V 14, 2026-11-25): not the scratch prototype's, so not in cases() (whose keys both recordings share); its own goldens are
+# recorded on this repository's code (record_goldens_universe_repo.py --lens -> data/lens_goldens.json) and replayed by section 10 of test_goldens_universe.py
+LENS_EYES = ("blue_round", "dark_brown_round", "grey_round", "amber_slit", "dark_brown_bar", "blue_lid", "grey_lash")
+LENS_WIDE = {"blue_wide": dict(kind="blue", pupil="round", seed=31, pupil_r=0.50)}     # a pupil half the iris (a phone in dim light): the remap's case
+
+
+def lens_fixtures(SI):
+    """{eye name: PNG bytes} of the Lens cases (synth_iris given as SI): the standard fixtures and the wide pupil."""
+    out = {n: SI.png_bytes(n) for n in LENS_EYES}
+    out.update({n: SI.png_bytes_of(**kw) for n, kw in LENS_WIDE.items()})
+    return out
+
+
+def lens_cases():
+    """The ordered list of the Lens cases: the three colour classes at 512 and 1024 px, a 4096 px master, the other canvases, the words, a slit and a bar pupil, a
+    lid and a lash fan (the lid fill), and the laboratory's switches (the pupil remap off, no lid fill)."""
+    out = []
+    for size in SIZES:
+        for eye in EYES:
+            out.append(_c("lens", [eye], "1:1", size))
+    out.append(_c("lens", ["blue_round"], "1:1", 4096))
+    out.append(_c("lens", ["grey_round"], "4:5", 512))
+    out.append(_c("lens", ["blue_round"], "9:19.5", 512))
+    out.append(_c("lens", ["blue_round"], "1:1", 512, names=TEXT["names"][:1], date=TEXT["date"]))
+    out.append(_c("lens", ["grey_round"], "1:1", 512, names=["Gabriel" + chr(0x117)]))
+    for eye in ("amber_slit", "dark_brown_bar", "blue_lid", "grey_lash"):
+        out.append(_c("lens", [eye], "1:1", 512))
+    out.append(_c("lens", ["blue_wide"], "1:1", 512))
+    out.append(_c("lens", ["blue_wide"], "1:1", 1024))
+    out.append(_c("lens", ["blue_wide"], "1:1", 512, opts={"lens_remap": False}, tag="noremap"))
+    out.append(_c("lens", ["blue_lid"], "1:1", 512, opts={"lens_lids": False}, tag="nolids"))
+    return out
+
+
 # the owner's own restorations of the calibration set (never committed: SNAPEYES_CALIB names their folder; only the hashes of the pictures are): one of
 # each colour class and a second plain one, every look at 1024 px, a pair and a trio at 512 px: the real-eye goldens (G-real), reported as LOCAL lines
 REAL_EYES = ("own215120", "drv_d01", "drv_w06", "drv_d02")
@@ -146,6 +180,8 @@ def facts_of(scene):
     out["notches"] = info.get("notches")
     out["text"] = [list(t) for t in info.get("text", [])]
     out["eye_geometry"] = [[round(float(e.cx), 3), round(float(e.cy), 3), round(float(e.R), 3), e.fill_mode, round(float(e.k_s), 4)] for e in scene.eyes]
+    if isinstance(info.get("lens"), dict):                # the Lens look's own facts (the pupil measured and drawn, the remap, the lids): only its cases carry them
+        out["lens"] = info["lens"]
     return json.loads(json.dumps(_round(out), sort_keys=True))
 
 

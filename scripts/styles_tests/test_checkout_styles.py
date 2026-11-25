@@ -284,7 +284,7 @@ with Show("solo.universe", "duo.kiss_collision", "grp.collision", "solo.gold", s
           and CT.style_label("solo.universe", 1, {}) == "Universe, Echo" and CT.style_label("solo.gold", 1, {}) == "Celestial Gold"
           and CT.style_label("supernova", 1, {"look": "vortex"}) == "Supernova" and CT.style_label("nothing", 1) == "nothing", "")
     CT.ENGINE["solo.universe"]["engine"]["looks"] = saved_looks
-check("the look names are English in every language, each a proper name", CT.LOOK_NAMES == {"echo": "Echo", "vortex": "Vortex", "deepfield": "Deep Field", "starfield": "Starfield"}, CT.LOOK_NAMES)
+check("the look names are English in every language, each a proper name", CT.LOOK_NAMES == {"echo": "Echo", "vortex": "Vortex", "deepfield": "Deep Field", "starfield": "Starfield", "lens": "Lens"}, CT.LOOK_NAMES)
 
 # ============================================================================================ 3. spec_from
 section("3. spec_from: legacy as before, the strict reading of a new order for a style of the v3 engine, the 409, the lenient reading of every old form")

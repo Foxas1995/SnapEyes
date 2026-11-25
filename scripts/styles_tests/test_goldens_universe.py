@@ -163,7 +163,7 @@ section("1. the family in the repository")
 UNIVERSE_STYLES = [i for i in CT.ids() if CT.ENGINE[i]["engine"] and CT.ENGINE[i]["engine"].get("module") == "universe"]
 check("the family has its modules (the entry, the layout, the fill and the engine, the compositor, the looks, the matter, the plates), the restoration gate is the foundation's gate.py (rule fill) "
       "and the pupil its pupil.py, and the style catalogue sees the family built",
-      FAMILY_FILES == ["__init__.py", "common.py", "comp.py", "engine.py", "fill.py", "flakes.py", "grains.py", "layout.py", "looks.py", "matter.py", "plate_looks.py", "plates.py"]
+      FAMILY_FILES == ["__init__.py", "common.py", "comp.py", "engine.py", "fill.py", "flakes.py", "grains.py", "layout.py", "lens.py", "looks.py", "matter.py", "plate_looks.py", "plates.py"]
       and CT.engine_built("universe") and ST.family("universe").__name__ == "_lib.styles.universe" and sorted(UNIVERSE_STYLES) == ["duo.universe", "grp.universe", "solo.universe"]
       and not any(f.startswith(("uni_gate", "uni_pupil")) for f in FAMILY_FILES) and hasattr(GT, "gate") and hasattr(PUP, "analyse"), (FAMILY_FILES, UNIVERSE_STYLES))
 mods = [os.path.join(FAMILY, f) for f in FAMILY_FILES]
@@ -197,10 +197,10 @@ check("importing a module reads no file of its own, opens no socket and writes n
 check("no module of the family catches Exception around a plate (the prototype drew a picture without it: a silent substitution after payment): no 'except Exception' in looks.py, plate_looks.py "
       "or plates.py", not re.search(r"except Exception", read(os.path.join(FAMILY, "looks.py")) + read(os.path.join(FAMILY, "plate_looks.py")) + read(os.path.join(FAMILY, "plates.py"))))
 LOOKS_REG = {i: CT.engine_for(i, CT.eyes_range(i)[0])["looks"] for i in UNIVERSE_STYLES}
-check("the registry's three universe styles and the family agree: the solo style names the four looks of the family (and no other), the pair and the group name none (Echo only), the designs are echo; "
-      "the canvases are the layout's own (the prototype's aspect table)",
-      set(LOOKS_REG["solo.universe"]) == set(U.LOOKS) and len(LOOKS_REG["solo.universe"]) == 4 and not LOOKS_REG["duo.universe"] and not LOOKS_REG["grp.universe"]
-      and all(CT.ENGINE[i]["engine"]["design"] == "echo" for i in UNIVERSE_STYLES)
+check("the registry's three universe styles and the family agree: the solo style names the five looks of the family (the prototype's four and Lens, ENGINE_V 14) and no other, the pair and the group "
+      "name none (Echo only); the solo design is lens, the pair's and the group's echo; the canvases are the layout's own (the prototype's aspect table)",
+      set(LOOKS_REG["solo.universe"]) == set(U.ALL_LOOKS) and len(LOOKS_REG["solo.universe"]) == 5 and not LOOKS_REG["duo.universe"] and not LOOKS_REG["grp.universe"]
+      and CT.ENGINE["solo.universe"]["engine"]["design"] == "lens" and all(CT.ENGINE[i]["engine"]["design"] == "echo" for i in ("duo.universe", "grp.universe"))
       and set(CT.ENGINE["solo.universe"]["canvases"]) <= set(LO.ASP) and set(CT.ENGINE["duo.universe"]["canvases"]) <= set(LO.ASP)
       and set(CT.ENGINE["grp.universe"]["canvases"]) <= set(LO.ASP) and CT.ENGINE["solo.universe"]["canvases"] == ["1:1", "4:5", "9:19.5"] and CT.ENGINE["duo.universe"]["canvases"][0] == "3:2",
       (LOOKS_REG, {i: CT.ENGINE[i]["canvases"] for i in UNIVERSE_STYLES}))
@@ -210,19 +210,21 @@ check("the gate of every universe style is hard with the fill rule (WP3's gate.p
 check("the fill is cut from a graded copy of the eye of 1024 px for one or two eyes and 768 px for groups (the soft-by-design fill, decision 25), and the coarse factor of the soft content is 1 up "
       "to 1536 px, 2 up to 2304 and 3 above", __import__("_lib.styles.universe.common", fromlist=["x"]).FILL_SD == 1024
       and __import__("_lib.styles.universe.common", fromlist=["x"]).GROUP_FILL_SD == 768, "")
-check("every cost row the family needs exists: a preview row and a master row for Echo (1 to 6 eyes) and for each of the three looks of one eye",
+check("every cost row the family needs exists: a preview row and a master row for Echo (1 to 6 eyes) and for each of the four other looks of one eye (Lens, Vortex, Deep Field, Starfield)",
       all(CO.known("universe.echo", n) and n in CO.PREVIEW["universe.echo"] for n in range(1, 7))
-      and all(CO.known(f"universe.{lk}", 1) and 1 in CO.PREVIEW[f"universe.{lk}"] for lk in ("vortex", "deepfield", "starfield")))
+      and all(CO.known(f"universe.{lk}", 1) and 1 in CO.PREVIEW[f"universe.{lk}"] for lk in ("lens", "vortex", "deepfield", "starfield")))
 # WP18 (the catalogue switch): this check said that no stage was raised (every universe style and every look in the laboratory). The cutover raised the one-eye style to a
 # live ceiling with Echo and Vortex live and Deep Field and Starfield in the laboratory; the pair and the group stay in the laboratory; the registry's EFFECTIVE_DEFAULT holds
 # the one-eye style at preview until the owner's tick.
-check("the stages are the cutover's: the one-eye Universe has a live ceiling with Echo and Vortex live and Deep Field and Starfield in the laboratory, the pair and the group stay in the "
-      "laboratory; the default holds Universe at preview, so a customer can preview it and order nothing, and the admin can look at all three",
+check("the stages are the cutover's with ENGINE_V 14's one look: the one-eye Universe has a live ceiling with Lens live, Echo and Vortex retired (never offered, drawn only for a plan made "
+      "before) and Deep Field and Starfield in the laboratory, the pair and the group stay in the laboratory; the default holds Universe at preview, so a customer can preview it and order nothing, "
+      "and the admin can look at all three",
       CT.ceiling("solo.universe", 1) == "live" and CT.stage_with("solo.universe", 1, None) == "preview" and not CT.orderable("solo.universe", 1, strict=False) and CT.previewable("solo.universe", 1)
       and all(CT.ceiling(i, n) == "lab" and not CT.orderable(i, n, strict=False) and not CT.previewable(i, n) for i, n in (("duo.universe", 2), ("grp.universe", 4)))
       and all(CT.previewable(i, n, admin=True) for i, n in (("solo.universe", 1), ("duo.universe", 2), ("grp.universe", 4)))
-      and LOOKS_REG["solo.universe"] == {"echo": "live", "vortex": "live", "deepfield": "lab", "starfield": "lab"}
-      and CT.looks_for("solo.universe", 1) == {"echo": "preview", "vortex": "preview"} and any(t["id"] == "solo.universe" for t in CT.tiles_for(1)), [(i, CT.ceiling(i, 1)) for i in UNIVERSE_STYLES])
+      and LOOKS_REG["solo.universe"] == {"lens": "live", "echo": "retired", "vortex": "retired", "deepfield": "lab", "starfield": "lab"}
+      and CT.looks_for("solo.universe", 1) == {"lens": "preview"} and CT.looks_for("solo.universe", 1, admin=True) == {"lens": "preview", "deepfield": "lab", "starfield": "lab"}
+      and CT.default_look("solo.universe", 1) == "lens" and any(t["id"] == "solo.universe" for t in CT.tiles_for(1)), [(i, CT.ceiling(i, 1)) for i in UNIVERSE_STYLES])
 check("the catalogue says the universe styles are renderable for their own eye counts (one; two; three to six) and for no other",
       CT.renderable("solo.universe", 1) and not CT.renderable("solo.universe", 2) and CT.renderable("duo.universe", 2) and not CT.renderable("duo.universe", 3)
       and all(CT.renderable("grp.universe", n) for n in (3, 4, 5, 6)) and not CT.renderable("grp.universe", 7))
@@ -424,7 +426,9 @@ check("render refuses what it cannot draw: " + ", ".join(r[0] for r in res_ref),
 # ============================================================================================ 5. the contract
 section("5. the contract: resolve, preview, tiles")
 PROF = {n: EYE.profile_of_bytes(FIX[n], rules=("lid",)) for n in ("blue_round", "dark_brown_round", "dark_brown_bar", "green_bar", "grey_round")}
-spec1 = {"style": "solo.universe", "eyes": 1, "layout": "single", "canvas": "1:1", "opts": {}, "pv": CT.PLATES_VERSION}
+# ENGINE_V 14: the one-eye style draws Lens by default; the checks of this section and of section 8 pin ECHO, so their spec names it (an Echo plan, as one made under 13: the engine
+# still draws the retired look for a plan, section 10 holds the rest); Lens has its own checks in section 10
+spec1 = {"style": "solo.universe", "eyes": 1, "layout": "single", "canvas": "1:1", "opts": {"look": "echo"}, "pv": CT.PLATES_VERSION}
 t0 = time.time()
 r1 = U.resolve(spec1)
 t_res = time.time() - t0
@@ -1500,12 +1504,13 @@ check("two eyes asked for the one eye style are not drawn by it: the request fal
 LAB_EYE = b64(SI.jpeg_bytes("blue_round"))
 lst = ops.a_styles_lab({}, "t")
 row_u = [r for r in lst["styles"] if r["id"] == "solo.universe"]
-check("styles_lab lists the Universe style with its stage, its four looks, its canvases and the plate families (the page builds its menus from it)",
-      len(row_u) == 1 and row_u[0]["module"] == "universe" and row_u[0]["ceiling"] == "live" and row_u[0]["stage"] == "preview" and sorted(row_u[0]["looks"]) == sorted(U.LOOKS)
+check("styles_lab lists the Universe style with its stage, its five looks (the retired Echo and Vortex too: the laboratory draws what an order paid under 13 gets), its canvases and the plate "
+      "families (the page builds its menus from it)",
+      len(row_u) == 1 and row_u[0]["module"] == "universe" and row_u[0]["ceiling"] == "live" and row_u[0]["stage"] == "preview" and sorted(row_u[0]["looks"]) == sorted(U.ALL_LOOKS)
       and row_u[0]["canvases"] == ["1:1", "4:5", "9:19.5"]
       and row_u[0]["plates"] == ["P-DN-SPIRAL", "P-UV-DUST", "P-UV-MILKY"] and all("looks" in r for r in lst["styles"]), row_u)
 rows_ = {}
-for lk in U.LOOKS:
+for lk in U.ALL_LOOKS:
     rr = ops.a_styles_lab({"style": "solo.universe", "look": lk, "eye": LAB_EYE, "size": 480, "names": "Anna"}, "t")
     rows_[lk] = rr
     PL.clear_memory()
@@ -1513,7 +1518,8 @@ check("styles_lab draws every look of the Universe style on one eye, whatever it
       "plan, the self checks T1, T6, T7 and T12 green, the cost table's estimate of the look",
       all(r["ok"] and r["design"] == lk and r["width"] == r["height"] == 480 and r["seed_mode"] == "eye_id" and r["plan"]["seed"] == r["seed"] and r["plan"]["design_used"] == lk and r["selfcheck"]["ok"]
           and set(r["selfcheck"]["checks"]) == {"t1", "t6", "t7", "t12"} and isinstance(r["estimate"]["need_s"], float) and r["facts"]["look"] == lk for lk, r in rows_.items())
-      and len(rows_["vortex"]["facts"]["plates"]) == 1 and rows_["echo"]["facts"]["plates"] == [], {k: (v["design"], v["selfcheck"]["ok"]) for k, v in rows_.items()})
+      and len(rows_["vortex"]["facts"]["plates"]) == 1 and rows_["echo"]["facts"]["plates"] == [] and rows_["lens"]["facts"]["plates"] == [],
+      {k: (v["design"], v["selfcheck"]["ok"]) for k, v in rows_.items()})
 est_v = ops.a_styles_lab({"style": "solo.universe", "look": "vortex", "eye": LAB_EYE, "size": 480}, "t")["estimate"]
 check("the estimate of a look is the cost table's row of that look (universe.vortex), not Echo's", est_v["need_s"] == round(CO.preview_need("universe.vortex", 1, 480), 2) and est_v["need_s"] != rows_["echo"]["estimate"]["need_s"],
       (est_v, rows_["echo"]["estimate"]))
@@ -1535,19 +1541,21 @@ store.put(f"orders/{LAB}/eye_1.jpg", master.getvalue(), "image/jpeg", upsert=Tru
 store.put(f"orders/{LAB}/eye_1.json", store.json_bytes({"order": LAB, "eye": 1, "created": "2026-10-05T00:00:00Z", "bytes": 1, "eye_id": "ef" * 8}), "application/json", upsert=True)
 print(f"   (a 4096 px synthetic master made in {time.time() - t0:.0f} s)", flush=True)
 dry = ops.ACTIONS["lab_steps"]({"order": LAB, "style": "solo.universe", "dry": True}, "t")
-check("lab_steps dry of the Universe style: the plan (family universe, Echo, one art step with its estimate) and the capacity at the factor in force; nothing is drawn",
-      dry["result"] == "dry" and dry["plan"]["family"] == "universe" and dry["plan"]["design_used"] == "echo" and dry["capacity"]["ok"] and dry["plan"]["plates"] is None and len(dry["plan"]["steps"]) == 1, dry)
+check("lab_steps dry of the Universe style: the plan (family universe, Lens: the default of one eye since ENGINE_V 14, one art step with its estimate) and the capacity at the factor in force; "
+      "nothing is drawn",
+      dry["result"] == "dry" and dry["plan"]["family"] == "universe" and dry["plan"]["design_used"] == "lens" and dry["capacity"]["ok"] and dry["plan"]["plates"] is None
+      and len(dry["plan"]["steps"]) == 1 and dry["plan"]["cost_key"] == "universe.lens", dry)
 lr = ops.ACTIONS["lab_steps"]({"order": LAB, "style": "solo.universe", "names": "Anna", "date": "12 May 2026"}, "t")
 done = lr["steps"][0]["done"]
-print(f"   the master of Echo on one 4096 px eye through the step runner: {done.get('ms')} ms, cpu {done.get('cpu_s')} s, +{done.get('peak_mb')} MB (hwm {done.get('hwm_mb')}), "
+print(f"   the master of Lens on one 4096 px eye through the step runner: {done.get('ms')} ms, cpu {done.get('cpu_s')} s, +{done.get('peak_mb')} MB (hwm {done.get('hwm_mb')}), "
       f"estimate {lr['plan']['steps'][0]['need_s']} s and {lr['plan']['steps'][0]['est_mb']} MB", flush=True)
 rec_art = store.get_json(lr["artwork"]["key"][:-4] + ".json", timeout=5.0, retry=False)
-check("lab_steps draws the master of Echo through the master plan: the artwork (4096 x 4096, a signed link), the steps with their time, CPU and memory increase, the capacity, the drawn seed equal to the "
-      "plan's, T1 and T6 green in the artwork's record, nothing paid and no image model",
+check("lab_steps draws the master of Lens (the default of one eye since ENGINE_V 14) through the master plan: the artwork (4096 x 4096, a signed link), the steps with their time, CPU and memory "
+      "increase, the capacity, the drawn seed equal to the plan's, T1 and T6 green in the artwork's record, nothing paid and no image model",
       lr["result"] == "made" and lr["artwork"]["width"] == 4096 and lr["artwork"]["height"] == 4096 and lr["artwork"]["url"] and done["by"] == "lab" and done["ms"] > 500 and lr["capacity"]["ok"]
       and lr["plan"]["family"] == "universe" and store.exists(lr["artwork"]["key"]) and lr["artwork"]["needs_review"] is False and rec_art["selfcheck"]["ok"]
-      and rec_art["selfcheck"]["checks"]["t1"]["bad"] == 0 and rec_art["design_used"] == "echo" and rec_art["canvas"] == "1:1"
-      and rec_art["seed"] == lr["plan"]["seed"] == str(SD.seed_for_key(["ef" * 8], U.seed_key("solo.universe", "echo", "single", {}, CT.PLATES_VERSION))), {k: lr.get(k) for k in ("result", "capacity")})
+      and rec_art["selfcheck"]["checks"]["t1"]["bad"] == 0 and rec_art["design_used"] == "lens" and rec_art["canvas"] == "1:1"
+      and rec_art["seed"] == lr["plan"]["seed"] == str(SD.seed_for_key(["ef" * 8], U.seed_key("solo.universe", "lens", "single", {}, CT.PLATES_VERSION))), {k: lr.get(k) for k in ("result", "capacity")})
 lr2 = ops.ACTIONS["lab_steps"]({"order": LAB, "style": "solo.universe", "names": "Anna", "date": "12 May 2026"}, "t")
 check("asked again it is the same file (nothing drawn)", lr2["result"] == "same" and lr2["artwork"]["key"] == lr["artwork"]["key"])
 e_vh = raises(lambda: ops.ACTIONS["lab_steps"]({"order": LAB, "style": "solo.universe", "opts": {"look": "vortex"}}, "t"), store.Answer)
@@ -1735,7 +1743,7 @@ eyes_rec_u = [{"eye_id": PROF[n].eye_id, "profile": PROF[n].rec} for n in ("blue
 plan_pw = STP2.make_plan({"style": "duo.universe", "eyes": 2, "layout": "pair", "opts": {}}, eyes_rec_u)
 with mock.patch.object(PUP, "reach", lambda pup, u: 0.60):
     plan_pk = STP2.make_plan({"style": "duo.universe", "eyes": 2, "layout": "pair", "opts": {}}, eyes_rec_u)
-plan_e1 = STP2.make_plan({"style": "solo.universe", "eyes": 1, "layout": "single", "opts": {}}, eyes_rec_u[:1])
+plan_e1 = STP2.make_plan({"style": "solo.universe", "eyes": 1, "layout": "single", "opts": {"look": "echo"}}, eyes_rec_u[:1])          # an Echo plan (spec1 names Echo, see section 5)
 check("the master plan of a universe style holds the seed, the frozen fallback and whether it is decided, and they are part of plan8 (a plan that freezes the Kiss distance is another plan): the pair at "
       "the weave and at the Kiss distance have different plan8, the plan of one Echo has no plate and no plates_needed, its seed is the resolve's",
       plan_pw["frozen"] == {"fallback": None} and plan_pw["decided"] is True and plan_pk["frozen"] == {"fallback": "kiss"} and plan_pw["plan8"] != plan_pk["plan8"] and plan_pw["engine_v"] == ST.ENGINE_V >= 4
@@ -1760,7 +1768,7 @@ check("a master whose pupils contradict the plan's weave is held as design_chang
 # -- the laboratory: both seeds
 rr_new = ops.a_styles_lab({"style": "solo.universe", "eye": LAB_EYE, "size": 480}, "t")
 rr_old = ops.a_styles_lab({"style": "solo.universe", "eye": LAB_EYE, "size": 480, "seed": "legacy"}, "t")
-legacy_scene = U.render("echo", [C.Iris(base64.b64decode(LAB_EYE), "lab", max_side=2048)], 480, "1:1", opts={"seed_mode": "legacy"}, want_scene=True)[1]
+legacy_scene = U.render("lens", [C.Iris(base64.b64decode(LAB_EYE), "lab", max_side=2048)], 480, "1:1", opts={"seed_mode": "legacy"}, want_scene=True)[1]     # the lab's default look: Lens since ENGINE_V 14
 check("styles_lab has both seeds for the Universe style as it has for the singles: the eye's (default: the seed a customer's picture has, equal to the plan's) and the old one from the bytes of the iris "
       "(seed legacy), and the reply says which",
       rr_new["seed_mode"] == "eye_id" and rr_old["seed_mode"] == "legacy" and rr_new["seed"] != rr_old["seed"] and rr_old["seed"] == str(legacy_scene.seed) and rr_new["plan"]["seed"] == rr_new["seed"]
@@ -1887,6 +1895,117 @@ else:
     print("   (the real calibration eyes are replayed only with SNAPEYES_CALIB)", flush=True)
 if not (SCRATCH_Y3 and os.path.isdir(SCRATCH_Y3)):
     print("   (the pictures that draw from 4K plates and the edit check are replayed only with SNAPEYES_SCRATCH_Y3)", flush=True)
+
+# ============================================================================================ 10. the Lens look (ENGINE_V 14, 2026-11-25)
+section("10. the Lens look (lens.py, ENGINE_V 14): its goldens, the pupil, the lids, the retired looks, the plans made under 13")
+from _lib.styles.universe import lens as LNS  # noqa: E402
+GOLD_LENS = json.load(open(os.path.join(HERE, "data", "lens_goldens.json"), encoding="utf-8"))
+FIX_L = UC.lens_fixtures(SI)
+LCASES = UC.lens_cases()
+check("the Lens goldens are this case list on these fixtures (recorded on this repository's code: record_goldens_universe_repo.py --lens)",
+      set(c["key"] for c in LCASES) == set(GOLD_LENS["cases"]) and all(hashlib.sha256(FIX_L[n]).hexdigest() == GOLD_LENS["fixtures"][n] for n in FIX_L), "")
+bad_l, t1_l = [], []
+for c in LCASES:
+    rec = UC.render_case(port_render, C.Iris, FIX_L, c)
+    g = GOLD_LENS["cases"][c["key"]]
+    diff = [k for k in ("sha", "seed", "eye_seeds", "facts", "w", "h", "cls") if rec[k] != g[k]]
+    if diff:
+        bad_l.append((c["key"], diff))
+    sc_l, img_l = LASTS["scene"], LASTS["img"]
+    rep_l = SCK.run(np.asarray(img_l), [e.disc for e in sc_l.eyes], text_log=[{"kind": k, "text": t} for k, t in sc_l.info.get("text", [])],
+                    customer=U._text_expected([n for n in c["names"] if n], c["date"], 1), ids=["universe", "lens", "single"])
+    t1_l.append((c["key"], rep_l["ok"]))
+    if c["size"] >= 2048:
+        gc.collect()
+check(f"Lens: {len(LCASES)} pictures (three colour classes at 512 and 1024 px, a 4096 px master, 4:5 and the wall, names and a date, a slit and a bar pupil, a lid and a lash fan, a pupil half the "
+      "iris remapped and not, no lid fill) equal the recording byte for byte, with their seeds and facts", not bad_l and len(LCASES) >= 19, str(bad_l[:4]) + NOTE)
+check("Lens: the self checks T1, T6, T7 and T12 are green on every one of them (the Lens disc is pasted last and the canvas holds it to the pixel: the exception of 2026-11-25 is that the disc is the "
+      "look's own drawing of the iris, not that anything covers it)", all(ok for _, ok in t1_l), [k for k, ok in t1_l if not ok])
+GL = GOLD_LENS["cases"]
+check("Lens on a pupil half the iris: the remap draws it at 0.30 of the iris (measured 0.5 and more), the switch off draws it as measured; a 0.27 pupil is left as it is; a slit and a bar keep their shape "
+      "(no rubber sheet makes them round)",
+      GL["lens.blue_wide.1:1.512"]["facts"]["lens"]["p_drawn"] == 0.3 and GL["lens.blue_wide.1:1.512"]["facts"]["lens"]["p_measured"] >= 0.5
+      and GL["lens.blue_wide.1:1.512"]["facts"]["lens"]["remap"] is True and GL["lens.blue_wide.1:1.512.noremap"]["facts"]["lens"]["remap"] is False
+      and GL["lens.blue_wide.1:1.512.noremap"]["facts"]["lens"]["p_drawn"] == GL["lens.blue_wide.1:1.512.noremap"]["facts"]["lens"]["p_measured"]
+      and GL["lens.blue_round.1:1.512"]["facts"]["lens"]["remap"] is False and GL["lens.amber_slit.1:1.512"]["facts"]["lens"]["pupil_round"] is False
+      and GL["lens.dark_brown_bar.1:1.512"]["facts"]["lens"]["pupil_round"] is False, {k: GL[k]["facts"]["lens"] for k in ("lens.blue_wide.1:1.512", "lens.amber_slit.1:1.512")})
+img_w, sc_w = U.render("lens", [C.Iris(FIX_L["blue_wide"], "w")], 512, want_scene=True)
+a_w = np.asarray(img_w).astype(np.float32)
+d_w = sc_w.eyes[0].disc
+yy_, xx_ = np.mgrid[0:512, 0:512]
+r_w = np.hypot(xx_ + 0.5 - d_w.cx, yy_ + 0.5 - d_w.cy) / d_w.R
+lum_w = a_w @ np.array([0.299, 0.587, 0.114], np.float32)
+check("Lens: the pupil is a deep matte black with no highlight (the owner, 2026-11-25): inside 0.85 of the drawn pupil the brightest pixel is under 6 of 255 and the spread is the dither's; the iris "
+      "just outside it is the iris (brighter than 40 on average)",
+      float(lum_w[r_w < 0.85 * 0.3].max()) < 6.0 and float(lum_w[r_w < 0.85 * 0.3].std()) < 1.5 and float(lum_w[(r_w > 0.40) & (r_w < 0.55)].mean()) > 40.0,
+      (float(lum_w[r_w < 0.85 * 0.3].max()), float(lum_w[(r_w > 0.40) & (r_w < 0.55)].mean())))
+corner = np.concatenate([a_w[:12, :12].ravel(), a_w[:12, -12:].ravel(), a_w[-12:, :12].ravel(), a_w[-12:, -12:].ravel()])
+check("Lens: the background falls to black at the corners (under 3 of 255) and the dark ring hugs the disc (just outside the disc darker than at 1.5 R)",
+      float(corner.max()) < 3.0 and float(lum_w[(r_w > 1.03) & (r_w < 1.08)].mean()) < float(lum_w[(r_w > 1.45) & (r_w < 1.55)].mean()), float(corner.max()))
+# the lids: the measurement on the synthetic lid (the upper rim) and on clean eyes
+lm_lid = LNS.lid_map(C._tight(C.Iris(FIX_L["blue_lid"], "l").graded(LNS.BG_SRC, finish=False))[0])
+lm_clean = [LNS.lid_map(C._tight(C.Iris(FIX[n], n).graded(LNS.BG_SRC, finish=False))[0]) for n in ("blue_round", "dark_brown_round", "grey_round", "green_round")]
+check("Lens lids: the synthetic lid is found on the upper arc (the runs lie between 195 and 345 degrees, screen angles), the background takes the whole upper arc, the disc keeps a lid that large; "
+      "no lid is found on four clean eyes",
+      lm_lid["runs"] and all(195 <= s and s + n <= 346 for s, n in lm_lid["runs"]) and lm_lid["bg_runs"] == [(195, 150)] and not lm_lid["disc_fill"]
+      and all(not m["runs"] for m in lm_clean), (lm_lid["runs"], lm_lid["bg_runs"], [m["runs"] for m in lm_clean]))
+img_lid, sc_lid = U.render("lens", [C.Iris(FIX_L["blue_lid"], "l")], 512, want_scene=True)
+img_nol = U.render("lens", [C.Iris(FIX_L["blue_lid"], "l")], 512, opts={"lens_lids": False})
+a_l, a_n = np.asarray(img_lid).astype(np.float32), np.asarray(img_nol).astype(np.float32)
+up = (r_w > 1.2) & (yy_ < sc_lid.eyes[0].disc.cy - 0.6 * sc_lid.eyes[0].disc.R)
+skin = np.array([205, 158, 132], np.float32)
+def _skin_share(a):
+    v = a[up]
+    v = v / np.maximum(v.sum(1, keepdims=True), 1.0)
+    s = skin / skin.sum()
+    return float(np.mean(np.abs(v - s).sum(1) < 0.06))
+check("Lens lids: the magnified lid is gone from the background above the disc (its skin colour there drops), the disc itself is unchanged by the background's fill",
+      _skin_share(a_l) < 0.5 * _skin_share(a_n) and np.array_equal(a_l[r_w < 0.9], a_n[r_w < 0.9]), (_skin_share(a_l), _skin_share(a_n)))
+sm_r = {}
+for nm_ in ("own", "ragged"):
+    pu_ = {"r_theta": np.full(180, 0.40, np.float32), "cx": 0.0, "cy": 0.0, "rp": 0.40, "found": True, "cls": "round", "thr": 40.0}
+    sq_ = np.full((256, 256, 3), 150, np.uint8)
+    ax_ = (np.arange(256) + 0.5 - 128) / 128.0
+    rr_ = np.hypot(ax_[None, :], ax_[:, None])
+    sq_[rr_ < 0.40] = 3
+    if nm_ == "ragged":
+        th_ = np.arctan2(ax_[:, None] + 0 * ax_[None, :], ax_[None, :] + 0 * ax_[:, None])
+        sq_[(rr_ < 0.60) & (np.abs(th_ - 0.3) < 0.25)] = 3                     # a black island hanging on the pupil, about 30 degrees wide
+    sm_r[nm_] = LNS.pupil_curve(pu_, sq_)
+fit_r = LNS.curve_at(sm_r["ragged"][2], np.linspace(0, 2 * math.pi, 361))
+check("Lens pupil: a round pupil keeps its radius (0.40), a ragged one (a black island hanging on its edge) is fitted by a smooth closed curve that takes the island in (the drawn pupil is round "
+      "and the island does not stay in the iris ring) and never cuts into the measured pupil",
+      abs(sm_r["own"][3] - 0.40) < 0.02 and sm_r["ragged"][3] > sm_r["own"][3] and float(fit_r.min()) >= 0.39 and float(np.max(np.abs(np.diff(fit_r)))) < 0.02, (sm_r["own"][3], sm_r["ragged"][3]))
+# the retired looks and the plans made under 13
+check("the retired looks: Echo and Vortex are not offered (looks_for), a request that names them is drawn in Lens (applied_opts leaves them out, look_of is Lens), the laboratory and a plan still draw "
+      "them; Lens is the style's only look, so an order of it is labelled 'Universe' and an old Vortex order 'Universe, Vortex'",
+      "echo" not in CT.looks_for("solo.universe", 1, admin=True) and CT.retired_look("solo.universe", 1, "vortex") and not CT.retired_look("solo.universe", 1, "lens")
+      and CT.applied_opts("solo.universe", 1, {"look": "vortex"}) == {} and CT.look_of("solo.universe", 1, {"look": "echo"}) == "lens"
+      and CT.applied_opts("solo.universe", 1, {"look": "deepfield"}) == {"look": "deepfield"} and CT.style_label("solo.universe", 1) == "Universe"
+      and CT.style_label("solo.universe", 1, {"look": "lens"}) == "Universe" and U.resolve(dict(spec1, opts={"look": "vortex"}))["design_used"] == "vortex",
+      (CT.style_label("solo.universe", 1), CT.applied_opts("solo.universe", 1, {"look": "vortex"})))
+plan13 = {"family": "universe", "engine_v": 13, "design_used": "echo", "opts": {"swap": None, "rotate": None, "look": None}}
+plan14 = dict(plan13, engine_v=14, design_used="lens")
+e_sk = raises(lambda: STP.check_skew(dict(plan13, engine_v=12)), STP.Hold)
+check("a plan made under ENGINE_V 13 is drawn as it was paid for: check_skew lets 13 through under 14 (SAME_PICTURES: no picture of 13 changed), an older one is still held (engine_skew); the master "
+      "draws the plan's own look (a 13 plan without a look drew Echo, the default of 13, and draws Echo now; a 14 plan draws Lens), and the seed key of that look is the one of 13",
+      ST.ENGINE_V == 14 and ST.SAME_PICTURES == ((14, 13),) and STP.check_skew(plan13) is None and STP.check_skew(plan14) is None
+      and isinstance(e_sk, STP.Hold) and e_sk.reason == "engine_skew" and STP.master_opts(plan13)["look"] == "echo" and STP.master_opts(plan14)["look"] == "lens"
+      and STP.master_opts(dict(plan13, design_used="vortex", opts={"look": "vortex"}))["look"] == "vortex"
+      and U.seed_key("solo.universe", "echo", "single", {"look": "echo"})["opts"]["look"] is None
+      and U.seed_key("solo.universe", "lens", "single", {})["opts"]["look"] is None, (STP.master_opts(plan13), getattr(e_sk, "reason", e_sk)))
+eid13 = "0123456789abcd13"
+pv13 = U.preview([C.Iris(FIX["blue_round"], "p13", eye_id=eid13)], {"style": "solo.universe", "eyes": 1, "layout": "single", "canvas": "1:1", "opts": STP.master_opts(plan13), "pv": CT.PLATES_VERSION}, 256)
+ref13 = U.render("echo", [C.Iris(FIX["blue_round"], "r13", eye_id=eid13)], 256)
+check("the master of a 13 plan with no look draws Echo byte for byte as a render of Echo does (the very picture the customer saw before ENGINE_V 14)",
+      pv13.design == "echo" and pv13.img.tobytes() == ref13.tobytes(), pv13.design)
+PROF_heavy = {"gate": {"lid": {"ok": False, "why": ["lid_sectors_inner"], "values": {}}, "fill": {"ok": True, "why": [], "values": {"run18": 10}}}, "cls": "own"}
+PROF_wide = {"gate": {"lid": {"ok": True, "why": [], "values": {}}, "fill": {"ok": True, "why": [], "values": {"run18": 50}}}, "cls": "own"}
+PROF_ok = {"gate": {"lid": {"ok": True, "why": [], "values": {}}, "fill": {"ok": True, "why": [], "values": {"run18": 12}}}, "cls": "own"}
+check("the picker's advice: an eye whose lid is larger than Lens fills in its disc (the lid gate fails, or the fill gate's longest run is over 45 degrees) never gets Universe as the recommended tile; "
+      "an eye without one is judged as before; the style is still drawn and can be bought (no new refusal)",
+      CT.lid_heavy(PROF_heavy) and CT.lid_heavy(PROF_wide) and not CT.lid_heavy(PROF_ok) and not CT.lid_heavy({}) and CT._problem("solo.universe", [PROF_heavy]) is None
+      and "solo.universe" in CT.LID_ADVICE, "")
 
 n_ok, n_all = sum(RESULTS), len(RESULTS)
 print(f"\n{n_ok} of {n_all} passed" + (f" (+ {sum(LOCAL)} of {len(LOCAL)} LOCAL lines)" if LOCAL else ""), flush=True)

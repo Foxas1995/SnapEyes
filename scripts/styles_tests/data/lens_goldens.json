@@ -1,0 +1,986 @@
+{
+ "about": "SHA-256 of the RGB bytes of universe_cases.lens_cases() rendered on api/_lib/styles/universe (the Lens look, lens.py, ENGINE_V 14, 2026-11-25), synthetic irises of synth_iris, the seed from the eyes' ids and the look's default seed key; recorded on this repository's code (no scratch prototype has the look).",
+ "cases": {
+  "lens.amber_slit.1:1.512": {
+   "cls": [
+    "own"
+   ],
+   "eye_seeds": [
+    191732506401946758
+   ],
+   "facts": {
+    "S": 512,
+    "aspect": "1:1",
+    "band_rows": 512,
+    "contacts": null,
+    "eye_geometry": [
+     [
+      256.0,
+      256.0,
+      163.84,
+      "lens",
+      2.1
+     ]
+    ],
+    "f": 1,
+    "halo_rows": 6,
+    "layout": "solo/lens/1:1",
+    "lens": {
+     "bg_grid": 1,
+     "lid_bg_runs": [],
+     "lid_in_disc": "none",
+     "lid_max_depth": 0.0,
+     "lid_max_run": 0,
+     "lid_runs": [],
+     "p_drawn": 0.222,
+     "p_measured": 0.222,
+     "pupil_round": false,
+     "remap": false
+    },
+    "notches": null,
+    "plate_fallback": null,
+    "text": [],
+    "wh": [
+     512,
+     512
+    ]
+   },
+   "h": 512,
+   "seed": 6063877233674887421,
+   "sha": "479ca878e297fadb4237f89a5f88002202bdfbbf6ce3bbbe5b6332d4454fa3d1",
+   "w": 512
+  },
+  "lens.blue_lid.1:1.512": {
+   "cls": [
+    "own"
+   ],
+   "eye_seeds": [
+    12835055270870294906
+   ],
+   "facts": {
+    "S": 512,
+    "aspect": "1:1",
+    "band_rows": 512,
+    "contacts": null,
+    "eye_geometry": [
+     [
+      256.0,
+      256.0,
+      163.84,
+      "lens",
+      2.1
+     ]
+    ],
+    "f": 1,
+    "halo_rows": 6,
+    "layout": "solo/lens/1:1",
+    "lens": {
+     "bg_grid": 1,
+     "lid_bg_runs": [
+      [
+       195,
+       150
+      ]
+     ],
+     "lid_in_disc": "kept",
+     "lid_max_depth": 0.471,
+     "lid_max_run": 138,
+     "lid_runs": [
+      [
+       201,
+       138
+      ]
+     ],
+     "p_drawn": 0.293,
+     "p_measured": 0.293,
+     "pupil_round": true,
+     "remap": false
+    },
+    "notches": null,
+    "plate_fallback": null,
+    "text": [],
+    "wh": [
+     512,
+     512
+    ]
+   },
+   "h": 512,
+   "seed": 1738306798241610247,
+   "sha": "fb366b22fc262c66b98cb534314de2dae604b244bcd8e7a04bd1c6ff138f8784",
+   "w": 512
+  },
+  "lens.blue_lid.1:1.512.nolids": {
+   "cls": [
+    "own"
+   ],
+   "eye_seeds": [
+    12835055270870294906
+   ],
+   "facts": {
+    "S": 512,
+    "aspect": "1:1",
+    "band_rows": 512,
+    "contacts": null,
+    "eye_geometry": [
+     [
+      256.0,
+      256.0,
+      163.84,
+      "lens",
+      2.1
+     ]
+    ],
+    "f": 1,
+    "halo_rows": 6,
+    "layout": "solo/lens/1:1",
+    "lens": {
+     "bg_grid": 1,
+     "lid_bg_runs": [],
+     "lid_in_disc": "none",
+     "lid_max_depth": 0.471,
+     "lid_max_run": 138,
+     "lid_runs": [],
+     "p_drawn": 0.293,
+     "p_measured": 0.293,
+     "pupil_round": true,
+     "remap": false
+    },
+    "notches": null,
+    "plate_fallback": null,
+    "text": [],
+    "wh": [
+     512,
+     512
+    ]
+   },
+   "h": 512,
+   "seed": 1738306798241610247,
+   "sha": "f8f77d388a2005ced5dbd1ba258d97675124914ed6e83801703c727171d7e034",
+   "w": 512
+  },
+  "lens.blue_round.1:1.1024": {
+   "cls": [
+    "own"
+   ],
+   "eye_seeds": [
+    15189607120481255205
+   ],
+   "facts": {
+    "S": 1024,
+    "aspect": "1:1",
+    "band_rows": 1024,
+    "contacts": null,
+    "eye_geometry": [
+     [
+      512.0,
+      512.0,
+      327.68,
+      "lens",
+      2.1
+     ]
+    ],
+    "f": 1,
+    "halo_rows": 6,
+    "layout": "solo/lens/1:1",
+    "lens": {
+     "bg_grid": 2,
+     "lid_bg_runs": [],
+     "lid_in_disc": "none",
+     "lid_max_depth": 0.0,
+     "lid_max_run": 0,
+     "lid_runs": [],
+     "p_drawn": 0.293,
+     "p_measured": 0.293,
+     "pupil_round": true,
+     "remap": false
+    },
+    "notches": null,
+    "plate_fallback": null,
+    "text": [],
+    "wh": [
+     1024,
+     1024
+    ]
+   },
+   "h": 1024,
+   "seed": 1780129948460048944,
+   "sha": "8ad6f61ab247932b525361be5299d71876e54b3fd3bd28b04b2d02ddc6bf566c",
+   "w": 1024
+  },
+  "lens.blue_round.1:1.4096": {
+   "cls": [
+    "own"
+   ],
+   "eye_seeds": [
+    15189607120481255205
+   ],
+   "facts": {
+    "S": 4096,
+    "aspect": "1:1",
+    "band_rows": 512,
+    "contacts": null,
+    "eye_geometry": [
+     [
+      2048.0,
+      2048.0,
+      1310.72,
+      "lens",
+      2.1
+     ]
+    ],
+    "f": 3,
+    "halo_rows": 18,
+    "layout": "solo/lens/1:1",
+    "lens": {
+     "bg_grid": 8,
+     "lid_bg_runs": [],
+     "lid_in_disc": "none",
+     "lid_max_depth": 0.0,
+     "lid_max_run": 0,
+     "lid_runs": [],
+     "p_drawn": 0.293,
+     "p_measured": 0.293,
+     "pupil_round": true,
+     "remap": false
+    },
+    "notches": null,
+    "plate_fallback": null,
+    "text": [],
+    "wh": [
+     4096,
+     4096
+    ]
+   },
+   "h": 4096,
+   "seed": 1780129948460048944,
+   "sha": "f9aac46ba1964c37ecc4ae79e13c83ba8f60c703a36ab687411a3a123d15f715",
+   "w": 4096
+  },
+  "lens.blue_round.1:1.512": {
+   "cls": [
+    "own"
+   ],
+   "eye_seeds": [
+    15189607120481255205
+   ],
+   "facts": {
+    "S": 512,
+    "aspect": "1:1",
+    "band_rows": 512,
+    "contacts": null,
+    "eye_geometry": [
+     [
+      256.0,
+      256.0,
+      163.84,
+      "lens",
+      2.1
+     ]
+    ],
+    "f": 1,
+    "halo_rows": 6,
+    "layout": "solo/lens/1:1",
+    "lens": {
+     "bg_grid": 1,
+     "lid_bg_runs": [],
+     "lid_in_disc": "none",
+     "lid_max_depth": 0.0,
+     "lid_max_run": 0,
+     "lid_runs": [],
+     "p_drawn": 0.293,
+     "p_measured": 0.293,
+     "pupil_round": true,
+     "remap": false
+    },
+    "notches": null,
+    "plate_fallback": null,
+    "text": [],
+    "wh": [
+     512,
+     512
+    ]
+   },
+   "h": 512,
+   "seed": 1780129948460048944,
+   "sha": "a13cfc818360f2d2c3ef81a9568c73fc1dccb6c1ab3b6215423977b55316bb87",
+   "w": 512
+  },
+  "lens.blue_round.1:1.512.text": {
+   "cls": [
+    "own"
+   ],
+   "eye_seeds": [
+    15189607120481255205
+   ],
+   "facts": {
+    "S": 512,
+    "aspect": "1:1",
+    "band_rows": 512,
+    "contacts": null,
+    "eye_geometry": [
+     [
+      256.0,
+      240.64,
+      154.01,
+      "lens",
+      2.1
+     ]
+    ],
+    "f": 1,
+    "halo_rows": 6,
+    "layout": "solo/lens/1:1",
+    "lens": {
+     "bg_grid": 1,
+     "lid_bg_runs": [],
+     "lid_in_disc": "none",
+     "lid_max_depth": 0.0,
+     "lid_max_run": 0,
+     "lid_runs": [],
+     "p_drawn": 0.293,
+     "p_measured": 0.293,
+     "pupil_round": true,
+     "remap": false
+    },
+    "notches": null,
+    "plate_fallback": null,
+    "text": [
+     [
+      "names",
+      "ANNA"
+     ],
+     [
+      "date",
+      "12 MAY 2026"
+     ]
+    ],
+    "wh": [
+     512,
+     512
+    ]
+   },
+   "h": 512,
+   "seed": 1780129948460048944,
+   "sha": "e781288fd27516b8535ebd87208c678dfa58f9cb9005358a5a104837869accd6",
+   "w": 512
+  },
+  "lens.blue_round.9:19.5.512": {
+   "cls": [
+    "own"
+   ],
+   "eye_seeds": [
+    15189607120481255205
+   ],
+   "facts": {
+    "S": 236,
+    "aspect": "9:19.5",
+    "band_rows": 512,
+    "contacts": null,
+    "eye_geometry": [
+     [
+      118.0,
+      204.8,
+      74.916,
+      "lens",
+      2.1
+     ]
+    ],
+    "f": 1,
+    "halo_rows": 6,
+    "layout": "solo/lens/9:19.5",
+    "lens": {
+     "bg_grid": 1,
+     "lid_bg_runs": [],
+     "lid_in_disc": "none",
+     "lid_max_depth": 0.0,
+     "lid_max_run": 0,
+     "lid_runs": [],
+     "p_drawn": 0.293,
+     "p_measured": 0.293,
+     "pupil_round": true,
+     "remap": false
+    },
+    "notches": null,
+    "plate_fallback": null,
+    "text": [],
+    "wh": [
+     236,
+     512
+    ]
+   },
+   "h": 512,
+   "seed": 1780129948460048944,
+   "sha": "6049d2e17ff2fd10329bb9b43c7cb24d98cdeee7db415397e72125ad37a89d56",
+   "w": 236
+  },
+  "lens.blue_wide.1:1.1024": {
+   "cls": [
+    "own"
+   ],
+   "eye_seeds": [
+    14693371707988016362
+   ],
+   "facts": {
+    "S": 1024,
+    "aspect": "1:1",
+    "band_rows": 1024,
+    "contacts": null,
+    "eye_geometry": [
+     [
+      512.0,
+      512.0,
+      327.68,
+      "lens",
+      2.1
+     ]
+    ],
+    "f": 1,
+    "halo_rows": 6,
+    "layout": "solo/lens/1:1",
+    "lens": {
+     "bg_grid": 2,
+     "lid_bg_runs": [],
+     "lid_in_disc": "none",
+     "lid_max_depth": 0.0,
+     "lid_max_run": 0,
+     "lid_runs": [],
+     "p_drawn": 0.3,
+     "p_measured": 0.544,
+     "pupil_round": true,
+     "remap": true
+    },
+    "notches": null,
+    "plate_fallback": null,
+    "text": [],
+    "wh": [
+     1024,
+     1024
+    ]
+   },
+   "h": 1024,
+   "seed": 8451583558020262601,
+   "sha": "4187a912c93e6e228b7cbbae9a04d14e2e16f691ea53cf5267b26956ec9ec9c7",
+   "w": 1024
+  },
+  "lens.blue_wide.1:1.512": {
+   "cls": [
+    "own"
+   ],
+   "eye_seeds": [
+    14693371707988016362
+   ],
+   "facts": {
+    "S": 512,
+    "aspect": "1:1",
+    "band_rows": 512,
+    "contacts": null,
+    "eye_geometry": [
+     [
+      256.0,
+      256.0,
+      163.84,
+      "lens",
+      2.1
+     ]
+    ],
+    "f": 1,
+    "halo_rows": 6,
+    "layout": "solo/lens/1:1",
+    "lens": {
+     "bg_grid": 1,
+     "lid_bg_runs": [],
+     "lid_in_disc": "none",
+     "lid_max_depth": 0.0,
+     "lid_max_run": 0,
+     "lid_runs": [],
+     "p_drawn": 0.3,
+     "p_measured": 0.544,
+     "pupil_round": true,
+     "remap": true
+    },
+    "notches": null,
+    "plate_fallback": null,
+    "text": [],
+    "wh": [
+     512,
+     512
+    ]
+   },
+   "h": 512,
+   "seed": 8451583558020262601,
+   "sha": "4613ca9a24e17f5a0bf4cdbfe537ae8a40799305ba3b5974df22884b74946755",
+   "w": 512
+  },
+  "lens.blue_wide.1:1.512.noremap": {
+   "cls": [
+    "own"
+   ],
+   "eye_seeds": [
+    14693371707988016362
+   ],
+   "facts": {
+    "S": 512,
+    "aspect": "1:1",
+    "band_rows": 512,
+    "contacts": null,
+    "eye_geometry": [
+     [
+      256.0,
+      256.0,
+      163.84,
+      "lens",
+      2.1
+     ]
+    ],
+    "f": 1,
+    "halo_rows": 6,
+    "layout": "solo/lens/1:1",
+    "lens": {
+     "bg_grid": 1,
+     "lid_bg_runs": [],
+     "lid_in_disc": "none",
+     "lid_max_depth": 0.0,
+     "lid_max_run": 0,
+     "lid_runs": [],
+     "p_drawn": 0.544,
+     "p_measured": 0.544,
+     "pupil_round": true,
+     "remap": false
+    },
+    "notches": null,
+    "plate_fallback": null,
+    "text": [],
+    "wh": [
+     512,
+     512
+    ]
+   },
+   "h": 512,
+   "seed": 8451583558020262601,
+   "sha": "3fceef87b1a66f8e01531bd094aa3932accf4cfede6cfca7595977720864362d",
+   "w": 512
+  },
+  "lens.dark_brown_bar.1:1.512": {
+   "cls": [
+    "dark_brown"
+   ],
+   "eye_seeds": [
+    15769496287233434942
+   ],
+   "facts": {
+    "S": 512,
+    "aspect": "1:1",
+    "band_rows": 512,
+    "contacts": null,
+    "eye_geometry": [
+     [
+      256.0,
+      256.0,
+      163.84,
+      "lens",
+      2.1
+     ]
+    ],
+    "f": 1,
+    "halo_rows": 6,
+    "layout": "solo/lens/1:1",
+    "lens": {
+     "bg_grid": 1,
+     "lid_bg_runs": [],
+     "lid_in_disc": "none",
+     "lid_max_depth": 0.0,
+     "lid_max_run": 0,
+     "lid_runs": [],
+     "p_drawn": 0.251,
+     "p_measured": 0.251,
+     "pupil_round": false,
+     "remap": false
+    },
+    "notches": null,
+    "plate_fallback": null,
+    "text": [],
+    "wh": [
+     512,
+     512
+    ]
+   },
+   "h": 512,
+   "seed": 2245423157979168573,
+   "sha": "c8d7e6aefcbf692932d71edf311991f1c73e646261da536a15cdb68b45c96fc1",
+   "w": 512
+  },
+  "lens.dark_brown_round.1:1.1024": {
+   "cls": [
+    "dark_brown"
+   ],
+   "eye_seeds": [
+    17909753545456560889
+   ],
+   "facts": {
+    "S": 1024,
+    "aspect": "1:1",
+    "band_rows": 1024,
+    "contacts": null,
+    "eye_geometry": [
+     [
+      512.0,
+      512.0,
+      327.68,
+      "lens",
+      2.1
+     ]
+    ],
+    "f": 1,
+    "halo_rows": 6,
+    "layout": "solo/lens/1:1",
+    "lens": {
+     "bg_grid": 2,
+     "lid_bg_runs": [],
+     "lid_in_disc": "none",
+     "lid_max_depth": 0.0,
+     "lid_max_run": 0,
+     "lid_runs": [],
+     "p_drawn": 0.291,
+     "p_measured": 0.291,
+     "pupil_round": true,
+     "remap": false
+    },
+    "notches": null,
+    "plate_fallback": null,
+    "text": [],
+    "wh": [
+     1024,
+     1024
+    ]
+   },
+   "h": 1024,
+   "seed": 667512082778405377,
+   "sha": "935949b71a3e51ce82c0434c2b2e737d51a6e7e4892f4eeb957d4db1d8bc1096",
+   "w": 1024
+  },
+  "lens.dark_brown_round.1:1.512": {
+   "cls": [
+    "dark_brown"
+   ],
+   "eye_seeds": [
+    17909753545456560889
+   ],
+   "facts": {
+    "S": 512,
+    "aspect": "1:1",
+    "band_rows": 512,
+    "contacts": null,
+    "eye_geometry": [
+     [
+      256.0,
+      256.0,
+      163.84,
+      "lens",
+      2.1
+     ]
+    ],
+    "f": 1,
+    "halo_rows": 6,
+    "layout": "solo/lens/1:1",
+    "lens": {
+     "bg_grid": 1,
+     "lid_bg_runs": [],
+     "lid_in_disc": "none",
+     "lid_max_depth": 0.0,
+     "lid_max_run": 0,
+     "lid_runs": [],
+     "p_drawn": 0.291,
+     "p_measured": 0.291,
+     "pupil_round": true,
+     "remap": false
+    },
+    "notches": null,
+    "plate_fallback": null,
+    "text": [],
+    "wh": [
+     512,
+     512
+    ]
+   },
+   "h": 512,
+   "seed": 667512082778405377,
+   "sha": "bed4942d35e93650f80e2508fb09b35113e3f4eea5a5bc7e48f271a3d86b75d8",
+   "w": 512
+  },
+  "lens.grey_lash.1:1.512": {
+   "cls": [
+    "grey"
+   ],
+   "eye_seeds": [
+    6933299359670870772
+   ],
+   "facts": {
+    "S": 512,
+    "aspect": "1:1",
+    "band_rows": 512,
+    "contacts": null,
+    "eye_geometry": [
+     [
+      256.0,
+      256.0,
+      163.84,
+      "lens",
+      2.1
+     ]
+    ],
+    "f": 1,
+    "halo_rows": 6,
+    "layout": "solo/lens/1:1",
+    "lens": {
+     "bg_grid": 1,
+     "lid_bg_runs": [
+      [
+       195,
+       150
+      ]
+     ],
+     "lid_in_disc": "kept",
+     "lid_max_depth": 0.412,
+     "lid_max_run": 117,
+     "lid_runs": [
+      [
+       207,
+       117
+      ]
+     ],
+     "p_drawn": 0.293,
+     "p_measured": 0.293,
+     "pupil_round": true,
+     "remap": false
+    },
+    "notches": null,
+    "plate_fallback": null,
+    "text": [],
+    "wh": [
+     512,
+     512
+    ]
+   },
+   "h": 512,
+   "seed": 1974974736350116725,
+   "sha": "f28a66ba67d20bc9772caf03bad833770b24a1b3eb09ad1db80d0d5dd2d9c701",
+   "w": 512
+  },
+  "lens.grey_round.1:1.1024": {
+   "cls": [
+    "grey"
+   ],
+   "eye_seeds": [
+    16960966768154235942
+   ],
+   "facts": {
+    "S": 1024,
+    "aspect": "1:1",
+    "band_rows": 1024,
+    "contacts": null,
+    "eye_geometry": [
+     [
+      512.0,
+      512.0,
+      327.68,
+      "lens",
+      2.1
+     ]
+    ],
+    "f": 1,
+    "halo_rows": 6,
+    "layout": "solo/lens/1:1",
+    "lens": {
+     "bg_grid": 2,
+     "lid_bg_runs": [],
+     "lid_in_disc": "none",
+     "lid_max_depth": 0.0,
+     "lid_max_run": 0,
+     "lid_runs": [],
+     "p_drawn": 0.293,
+     "p_measured": 0.293,
+     "pupil_round": true,
+     "remap": false
+    },
+    "notches": null,
+    "plate_fallback": null,
+    "text": [],
+    "wh": [
+     1024,
+     1024
+    ]
+   },
+   "h": 1024,
+   "seed": 9982884669267927363,
+   "sha": "b0ff379873a6c045b1369b906197885b7b5066fcbd019dcb7087b1665d472d4b",
+   "w": 1024
+  },
+  "lens.grey_round.1:1.512": {
+   "cls": [
+    "grey"
+   ],
+   "eye_seeds": [
+    16960966768154235942
+   ],
+   "facts": {
+    "S": 512,
+    "aspect": "1:1",
+    "band_rows": 512,
+    "contacts": null,
+    "eye_geometry": [
+     [
+      256.0,
+      256.0,
+      163.84,
+      "lens",
+      2.1
+     ]
+    ],
+    "f": 1,
+    "halo_rows": 6,
+    "layout": "solo/lens/1:1",
+    "lens": {
+     "bg_grid": 1,
+     "lid_bg_runs": [],
+     "lid_in_disc": "none",
+     "lid_max_depth": 0.0,
+     "lid_max_run": 0,
+     "lid_runs": [],
+     "p_drawn": 0.293,
+     "p_measured": 0.293,
+     "pupil_round": true,
+     "remap": false
+    },
+    "notches": null,
+    "plate_fallback": null,
+    "text": [],
+    "wh": [
+     512,
+     512
+    ]
+   },
+   "h": 512,
+   "seed": 9982884669267927363,
+   "sha": "5f6bc33b61e845a4fc71cafb84a405c3763abb27db9601e628ce12f05f5e4bd4",
+   "w": 512
+  },
+  "lens.grey_round.1:1.512.text": {
+   "cls": [
+    "grey"
+   ],
+   "eye_seeds": [
+    16960966768154235942
+   ],
+   "facts": {
+    "S": 512,
+    "aspect": "1:1",
+    "band_rows": 512,
+    "contacts": null,
+    "eye_geometry": [
+     [
+      256.0,
+      240.64,
+      154.01,
+      "lens",
+      2.1
+     ]
+    ],
+    "f": 1,
+    "halo_rows": 6,
+    "layout": "solo/lens/1:1",
+    "lens": {
+     "bg_grid": 1,
+     "lid_bg_runs": [],
+     "lid_in_disc": "none",
+     "lid_max_depth": 0.0,
+     "lid_max_run": 0,
+     "lid_runs": [],
+     "p_drawn": 0.293,
+     "p_measured": 0.293,
+     "pupil_round": true,
+     "remap": false
+    },
+    "notches": null,
+    "plate_fallback": null,
+    "text": [
+     [
+      "names",
+      "GABRIEL\u0116"
+     ]
+    ],
+    "wh": [
+     512,
+     512
+    ]
+   },
+   "h": 512,
+   "seed": 9982884669267927363,
+   "sha": "3fe8f46fd02f71965f02f1c1ae0c1e23924aab0aa89c4ba69d9496cbd14c6f5c",
+   "w": 512
+  },
+  "lens.grey_round.4:5.512": {
+   "cls": [
+    "grey"
+   ],
+   "eye_seeds": [
+    16960966768154235942
+   ],
+   "facts": {
+    "S": 410,
+    "aspect": "4:5",
+    "band_rows": 512,
+    "contacts": null,
+    "eye_geometry": [
+     [
+      205.0,
+      225.28,
+      131.2,
+      "lens",
+      2.1
+     ]
+    ],
+    "f": 1,
+    "halo_rows": 6,
+    "layout": "solo/lens/4:5",
+    "lens": {
+     "bg_grid": 1,
+     "lid_bg_runs": [],
+     "lid_in_disc": "none",
+     "lid_max_depth": 0.0,
+     "lid_max_run": 0,
+     "lid_runs": [],
+     "p_drawn": 0.293,
+     "p_measured": 0.293,
+     "pupil_round": true,
+     "remap": false
+    },
+    "notches": null,
+    "plate_fallback": null,
+    "text": [],
+    "wh": [
+     410,
+     512
+    ]
+   },
+   "h": 512,
+   "seed": 9982884669267927363,
+   "sha": "e6aee916ac695ba38dd6711c110d007188bc5aec1d1fe9fca97afc517320a9b9",
+   "w": 410
+  }
+ },
+ "fixtures": {
+  "amber_slit": "10be5b5174a59579f50444c401bdf91b909cd6a93fce011e9f8ff1bf4730a48e",
+  "blue_lid": "d7a9b250920f6e755c91d3f0c1ab64b934b99ee4512aa1dbbd72d20e9092acf6",
+  "blue_round": "fd37d54ef6cccd707e85949f5567db5dc9d5518265bf4cd942acc6b44561cefd",
+  "blue_wide": "f1659630c27e9d16c66b2ff8e245a33e0e064857a3351a5013c4cb5b592b2c87",
+  "dark_brown_bar": "782dfd7c50f3d5aec29e6824c062b27f296945d621886b9e4738b79d6f2492ea",
+  "dark_brown_round": "db098e0c793e0392e5516794a266a15dd021f6a9031a37ffb211d2aa94c4f750",
+  "grey_lash": "a5fcb06c053d3c45881c680c3f7662cdce40a185600c907c75d2c09e0cdeee44",
+  "grey_round": "42f0adad5ea8db965a21465cb6e5eb8c3cd6abf06715ac9fd98f386313894529"
+ },
+ "machine": {
+  "numpy": "2.4.4",
+  "pillow": "12.2.0",
+  "platform": "Windows-11-10.0.26100-SP0",
+  "python": "3.14.3"
+ }
+}

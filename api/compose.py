@@ -478,7 +478,11 @@ def _tile_opts(opts, style, n, admin):
         out["rotate"] = opts["rotate"] % n
     if "look" in opts:
         looks = (catalogue.engine_for(style, n) or {}).get("looks") or {}
-        if opts["look"] in looks:
+        if catalogue.retired_look(style, n, opts["look"]):
+            if admin:                               # the laboratory still draws it (the picture an order paid under ENGINE_V 13 gets)
+                out["look"] = opts["look"]
+            # else: a retired look (Universe's Echo and Vortex since 2026-11-25): an older page's request is drawn in the style's own look
+        elif opts["look"] in looks:
             if opts["look"] not in catalogue.looks_for(style, n, admin):
                 raise _refuse(422, "style_unavailable", "stage", False, None, why="stage", style=style, look=opts["look"])
             out["look"] = opts["look"]

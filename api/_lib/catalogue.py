@@ -361,18 +361,26 @@ def looks_for(style_id, n, admin=False):
     st = stage_of(style_id, n)
     out = {}
     for look, stage in ((e or {}).get("looks") or {}).items():
+        if stage == "retired":                  # Echo and Vortex of Universe since 2026-11-25: never offered (kept drawable for the plans made before)
+            continue
         eff = effective_stage(st, stage)
         if eff in ("preview", "live") or (admin and eff == "lab"):
             out[look] = eff
     return out
 
 
-LOOK_NAMES = {"echo": "Echo", "vortex": "Vortex", "deepfield": "Deep Field", "starfield": "Starfield"}      # the proper names of the Universe looks (English in every language)
+LOOK_NAMES = {"echo": "Echo", "vortex": "Vortex", "deepfield": "Deep Field", "starfield": "Starfield", "lens": "Lens"}      # the proper names of the Universe looks (English in every language)
 
 
 def look_name(look):
     """The proper name of a look ("Vortex"); an unknown code is returned as it came."""
     return LOOK_NAMES.get(look, look) if isinstance(look, str) else ""
+
+
+def retired_look(style_id, n, look):
+    """Is this a look the style no longer offers (styles_engine looks "retired": Universe's Echo and Vortex since 2026-11-25)? A request that names one draws the
+    style's design instead (an unpaid preview or draft is redrawn in the new look); only a plan made before draws it."""
+    return ((engine_for(style_id, n) or {}).get("looks") or {}).get(look) == "retired"
 
 
 def default_look(style_id, n):
@@ -386,10 +394,12 @@ def default_look(style_id, n):
 
 
 def look_of(style_id, n, opts=None):
-    """The look an order of this style draws: the one in its (applied) options, else the style's default; None for a style with no looks."""
+    """The look an order of this style draws: the one in its (applied) options, else the style's default; None for a style with no looks. A retired look is
+    the default's."""
     d = default_look(style_id, n)
     look = (opts or {}).get("look") if isinstance(opts, dict) else None
-    return look if d is not None and look in ((engine_for(style_id, n) or {}).get("looks") or {}) else d
+    ok = d is not None and look in ((engine_for(style_id, n) or {}).get("looks") or {}) and not retired_look(style_id, n, look)
+    return look if ok else d
 
 
 def look_orderable(style_id, n, opts=None):
@@ -410,8 +420,8 @@ def applied_opts(style_id, n, opts):
         out["swap"] = opts["swap"]
     if "rotate" in opts and n >= 3:
         out["rotate"] = opts["rotate"] % n
-    if "look" in opts and opts["look"] in ((engine_for(style_id, n) or {}).get("looks") or {}):
-        out["look"] = opts["look"]
+    if "look" in opts and opts["look"] in ((engine_for(style_id, n) or {}).get("looks") or {}) and not retired_look(style_id, n, opts["look"]):
+        out["look"] = opts["look"]                  # a retired look (Universe's Echo and Vortex) is left out: the style's own design is drawn
     return out
 
 
@@ -422,6 +432,9 @@ def style_label(style_id, n, opts=None):
     if not d:
         return str(style_id)
     look = look_of(style_id, n, opts) if not d["legacy"] and in_range(style_id, n) else None
+    offered = [lk for lk, s in ((engine_for(style_id, n) or {}).get("looks") or {}).items() if s in ("preview", "live")] if look else []
+    if look and look == default_look(style_id, n) and len(offered) <= 1:
+        look = None                                  # a style whose one look is its own (Universe since 2026-11-25: Lens) is just its name
     return d["name"] + (f", {look_name(look)}" if look else "")
 
 
@@ -483,12 +496,41 @@ def tile_list(n, profiles=None, admin=False):
     return {"tiles": rows, "pick": pid, "reason": pick_reason(pid, set_class(profiles))}
 
 
+# Universe's Lens look (2026-11-25) fills a SMALL eyelid in the disc from the iris's own neighbouring angles (and every lid in its background); a larger one stays
+# in the disc as photographed, so the style is then never the recommended tile for that eye: the picker's own mechanism, no refusal (the style is drawn and can be
+# bought). Read from the sealed profile, no pixels: the lid gate fails (a lid band in the ring), or the fill gate's longest deviating run is over LENS_LID_RUN degrees
+# (the look fills runs up to 50 degrees; the profile's run is measured without the look's margins).
+LENS_LID_RUN = 45
+
+
+def _lens_styles():
+    """The styles whose engine draws the Lens look (styles_engine.py: module universe, design lens): read from the registry, never written here."""
+    return tuple(i for i, e in ENGINE.items() if (e.get("engine") or {}).get("module") == "universe" and (e.get("engine") or {}).get("design") == "lens")
+
+
+LID_ADVICE = _lens_styles()
+
+
+def lid_heavy(profile):
+    """Does this eye carry an eyelid larger than the Lens look fills in its disc (see LENS_LID_RUN)? False when the profile says nothing."""
+    g = profile.get("gate") if isinstance(profile, dict) else None
+    if not isinstance(g, dict):
+        return False
+    lid, fill = g.get("lid"), g.get("fill")
+    if isinstance(lid, dict) and lid.get("ok") is False:
+        return True
+    run = ((fill or {}).get("values") or {}).get("run18") if isinstance(fill, dict) else None
+    return isinstance(run, int) and not isinstance(run, bool) and run > LENS_LID_RUN
+
+
 def pick_for(n, profiles=None, skip=()):
     """The recommended tile: among the tiles the customer can BUY now (live and available), the first whose pick lists the set's
     colour class, else DEFAULT_STYLE if it is one of them, else the first. None when nothing can be bought. The table is
     price blind: it reads the class and the stage, never the price. skip: ids the engine itself refused when it came to draw them (a
     refusal the profile did not predict, api/compose.py): they are no longer buyable for these eyes."""
     buyable = [t for t in tiles_for(n, profiles) if t["stage"] == "live" and t["available"] and t["id"] not in skip]
+    if isinstance(profiles, (list, tuple)) and any(lid_heavy(p) for p in profiles):
+        buyable = [t for t in buyable if t["id"] not in LID_ADVICE] or buyable          # never the only buyable tile taken away: then it stays the pick
     cls = set_class(profiles)
     for t in buyable:
         if cls in STYLES[t["id"]]["pick"]:
