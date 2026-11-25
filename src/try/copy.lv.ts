@@ -464,7 +464,7 @@ export const lv: TryCopy = {
     applied: (value: string) => `Dāvanu karte: −${value}`,
     remove: 'Noņemt',
     toPay: (value: string) => `Jāmaksā: ${value}`,
-    note: 'Karte tiek izmantota, kad pabeidzat maksājumu. Ja mākslas darbs maksā mazāk nekā kartes vērtība, atlikums netiek izmaksāts.',
+    note: 'Karte tiek izmantota, kad pabeidzat maksājumu. Atlikums paliek kartē.',
     errors: {
       format: 'Tas nav kartes kods. Kodā ir 12 burti un cipari, piemēram, ABCD-EFGH-JKLM.',
       unknown: 'Šādu kodu nezinām. Pārbaudiet to.',

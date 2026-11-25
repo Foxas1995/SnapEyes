@@ -1,7 +1,10 @@
 // The words of the gift voucher page (/gift, ./GiftApp.tsx; api/_lib/voucher.py) in the five languages of the site. Plain words, short sentences: the
 // page is read on a phone by someone buying a present. The Hungarian page speaks to the visitor with "te", as /try does.
 import type { Lang } from '../shared/lang';
+import type { GiftAmount } from '../shared/gift';
 
+/** The old kinds of voucher, sold until the owner's decision of 2026-11-25 (value vouchers): their words stay for the page that shows the code of one
+ *  bought before (a payment page opened before that day can still be paid). Every voucher sold since is an amount (kind "value"). */
 export type GiftKind = 'one' | 'two';
 
 export interface GiftCopy {
@@ -11,6 +14,10 @@ export interface GiftCopy {
   title: string;
   lead: string;
   choose: string;
+  /** one short line under the chosen amount: what it covers, as an example (the owner's decision of 2026-11-25: never a promise per country) */
+  amounts: Record<GiftAmount, string>;
+  /** the "For" row of a value voucher's code */
+  valueFor: string;
   kinds: Record<GiftKind, { name: string; note: string; alt: string }>;
   stepsTitle: string;
   /** the captions under the three pictures of how it works (2026-11-25): short, no full stop */
@@ -49,7 +56,15 @@ const en: GiftCopy = {
   tag: 'Gift voucher',
   title: 'Give an artwork of their own eye',
   lead: 'You buy the voucher now. The person you give it to photographs their eye with their phone later, chooses a style and gets their artwork.',
-  choose: 'Choose the voucher',
+  choose: 'Choose the amount',
+  amounts: {
+    3000: 'For example, an artwork of one eye.',
+    6000: 'For example, an artwork for two, or an artwork and a keyring.',
+    10000: 'For example, an artwork and a 30 cm acrylic or metal print.',
+    12000: 'For example, an artwork and a 40 cm acrylic print.',
+    17000: 'For example, an artwork and a 60 cm acrylic print.',
+  },
+  valueFor: 'Artworks and prints',
   kinds: {
     one: { name: 'One eye', note: 'An artwork of one eye, any style', alt: 'An artwork of one eye' },
     two: { name: 'Two eyes', note: 'An artwork of two eyes, for a couple or two people', alt: 'An artwork of two eyes' },
@@ -60,7 +75,7 @@ const en: GiftCopy = {
     'They photograph their eye',
     'And get their own artwork',
   ],
-  rules: 'Valid for 12 months, for one order.',
+  rules: 'Valid for 12 months.',
   buy: (price) => `Buy the voucher · ${price}`,
   next: "Next is Stripe's secure payment page. There you enter your email; we send the code to it.",
   accept: ['By buying you accept our ', 'terms of sale', '.'],
@@ -103,7 +118,15 @@ const de: GiftCopy = {
   tag: 'Geschenkgutschein',
   title: 'Schenken Sie ein Kunstwerk aus dem eigenen Auge',
   lead: 'Sie kaufen den Gutschein jetzt. Die beschenkte Person fotografiert später ihr Auge mit dem Smartphone, wählt einen Stil und erhält ihr Kunstwerk.',
-  choose: 'Wählen Sie den Gutschein',
+  choose: 'Wählen Sie den Betrag',
+  amounts: {
+    3000: 'Zum Beispiel für ein Kunstwerk mit einem Auge.',
+    6000: 'Zum Beispiel für ein Kunstwerk zu zweit oder ein Kunstwerk und einen Schlüsselanhänger.',
+    10000: 'Zum Beispiel für ein Kunstwerk und ein Acryl- oder Metallbild, 30 cm.',
+    12000: 'Zum Beispiel für ein Kunstwerk und ein Acrylglasbild, 40 cm.',
+    17000: 'Zum Beispiel für ein Kunstwerk und ein Acrylglasbild, 60 cm.',
+  },
+  valueFor: 'Kunstwerke und Drucke',
   kinds: {
     one: { name: 'Ein Auge', note: 'Ein Kunstwerk mit einem Auge, jeder Stil', alt: 'Ein Kunstwerk mit einem Auge' },
     two: { name: 'Zwei Augen', note: 'Ein Kunstwerk mit zwei Augen, für ein Paar oder zwei Personen', alt: 'Ein Kunstwerk mit zwei Augen' },
@@ -114,7 +137,7 @@ const de: GiftCopy = {
     'Die beschenkte Person fotografiert ihr Auge',
     'Und bekommt ihr eigenes Kunstwerk',
   ],
-  rules: 'Gültig 12 Monate, für eine Bestellung.',
+  rules: '12 Monate gültig.',
   buy: (price) => `Gutschein kaufen · ${price}`,
   next: 'Als Nächstes öffnet sich die sichere Zahlungsseite von Stripe. Dort geben Sie Ihre E-Mail-Adresse ein; dorthin senden wir den Code.',
   accept: ['Mit dem Kauf akzeptieren Sie unsere ', 'AGB', '.'],
@@ -157,7 +180,15 @@ const lt: GiftCopy = {
   tag: 'Dovanų kuponas',
   title: 'Padovanokite kūrinį iš artimo žmogaus akies',
   lead: 'Kuponą perkate dabar. Apdovanotas žmogus vėliau pats nusifotografuoja akį telefonu, pasirenka stilių ir gauna savo kūrinį.',
-  choose: 'Pasirinkite kuponą',
+  choose: 'Pasirinkite sumą',
+  amounts: {
+    3000: 'Pavyzdžiui, užtenka vienos akies kūriniui.',
+    6000: 'Pavyzdžiui, užtenka kūriniui porai arba kūriniui ir raktų pakabukui.',
+    10000: 'Pavyzdžiui, užtenka kūriniui ir 30 cm akrilo ar metalo spaudiniui.',
+    12000: 'Pavyzdžiui, užtenka kūriniui ir 40 cm akrilo spaudiniui.',
+    17000: 'Pavyzdžiui, užtenka kūriniui ir 60 cm akrilo spaudiniui.',
+  },
+  valueFor: 'Kūriniams ir spaudiniams',
   kinds: {
     one: { name: 'Viena akis', note: 'Vienos akies kūrinys, bet kuris stilius', alt: 'Vienos akies kūrinys' },
     two: { name: 'Dvi akys', note: 'Dviejų akių kūrinys, porai arba dviem žmonėms', alt: 'Dviejų akių kūrinys' },
@@ -168,7 +199,7 @@ const lt: GiftCopy = {
     'Apdovanotasis nufotografuoja akį',
     'Ir gauna savo kūrinį',
   ],
-  rules: 'Galioja 12 mėnesių, vienam užsakymui.',
+  rules: 'Galioja 12 mėnesių.',
   buy: (price) => `Pirkti kuponą · ${price}`,
   next: 'Toliau atsidarys saugus Stripe mokėjimo puslapis. Ten įvesite el. paštą; juo atsiųsime kodą.',
   accept: ['Pirkdami sutinkate su mūsų ', 'pardavimo sąlygomis', '.'],
@@ -211,7 +242,15 @@ const hu: GiftCopy = {
   tag: 'Ajándékutalvány',
   title: 'Ajándékozz valakinek alkotást a saját szeméből',
   lead: 'Az utalványt most veszed meg. A megajándékozott később lefotózza a szemét a telefonjával, stílust választ, és megkapja az alkotását.',
-  choose: 'Válaszd ki az utalványt',
+  choose: 'Válaszd ki az összeget',
+  amounts: {
+    3000: 'Például egy alkotás egy szemről.',
+    6000: 'Például egy alkotás két szemről, vagy egy alkotás és egy kulcstartó.',
+    10000: 'Például egy alkotás és egy 30 cm-es akril- vagy fémnyomat.',
+    12000: 'Például egy alkotás és egy 40 cm-es akrilüveg kép.',
+    17000: 'Például egy alkotás és egy 60 cm-es akrilüveg kép.',
+  },
+  valueFor: 'Alkotások és nyomatok',
   kinds: {
     one: { name: 'Egy szem', note: 'Alkotás egy szemről, bármilyen stílusban', alt: 'Alkotás egy szemről' },
     two: { name: 'Két szem', note: 'Alkotás két szemről, párnak vagy két embernek', alt: 'Alkotás két szemről' },
@@ -222,7 +261,7 @@ const hu: GiftCopy = {
     'A megajándékozott lefotózza a szemét',
     'És megkapja a saját alkotását',
   ],
-  rules: '12 hónapig érvényes, egy rendeléshez.',
+  rules: '12 hónapig érvényes.',
   buy: (price) => `Utalvány megvásárlása · ${price}`,
   next: 'Ezután megnyílik a Stripe biztonságos fizetési oldala. Ott megadod az e-mail-címedet; oda küldjük a kódot.',
   accept: ['A vásárlással elfogadod az ', 'általános szerződési feltételeinket', '.'],
@@ -265,7 +304,15 @@ const hr: GiftCopy = {
   tag: 'Poklon-bon',
   title: 'Poklonite dragoj osobi umjetničku sliku njezina oka',
   lead: 'Bon kupujete sada. Osoba kojoj ga darujete kasnije fotografira svoje oko mobitelom, odabere stil i dobije svoju sliku.',
-  choose: 'Odaberite bon',
+  choose: 'Odaberite iznos',
+  amounts: {
+    3000: 'Na primjer, umjetnička slika jednog oka.',
+    6000: 'Na primjer, slika dvaju očiju ili slika i privjesak za ključeve.',
+    10000: 'Na primjer, slika i ispis na akrilnom staklu ili metalu od 30 cm.',
+    12000: 'Na primjer, slika i ispis na akrilnom staklu od 40 cm.',
+    17000: 'Na primjer, slika i ispis na akrilnom staklu od 60 cm.',
+  },
+  valueFor: 'Umjetničke slike i ispisi',
   kinds: {
     one: { name: 'Jedno oko', note: 'Umjetnička slika jednog oka, bilo koji stil', alt: 'Umjetnička slika jednog oka' },
     two: { name: 'Dva oka', note: 'Umjetnička slika dvaju očiju, za par ili dvije osobe', alt: 'Umjetnička slika dvaju očiju' },
@@ -276,7 +323,7 @@ const hr: GiftCopy = {
     'Darovana osoba fotografira svoje oko',
     'I dobiva vlastitu sliku',
   ],
-  rules: 'Vrijedi 12 mjeseci, za jednu narudžbu.',
+  rules: 'Vrijedi 12 mjeseci.',
   buy: (price) => `Kupite bon · ${price}`,
   next: 'Zatim se otvara Stripeova sigurna stranica za plaćanje. Ondje upisujete adresu e-pošte; na nju šaljemo kod.',
   accept: ['Kupnjom prihvaćate naše ', 'uvjete prodaje', '.'],
@@ -318,7 +365,15 @@ const fi: GiftCopy = {
   tag: 'Lahjakortti',
   title: 'Anna lahjaksi taideteos saajan omasta silmästä',
   lead: 'Ostat lahjakortin nyt. Lahjan saaja kuvaa silmänsä puhelimellaan myöhemmin, valitsee tyylin ja saa taideteoksensa.',
-  choose: 'Valitse lahjakortti',
+  choose: 'Valitse summa',
+  amounts: {
+    3000: 'Esimerkiksi taideteos yhdestä silmästä.',
+    6000: 'Esimerkiksi taideteos kahdesta silmästä tai taideteos ja avaimenperä.',
+    10000: 'Esimerkiksi taideteos ja 30 cm:n akryyli- tai metallitaulu.',
+    12000: 'Esimerkiksi taideteos ja 40 cm:n akryylilasitaulu.',
+    17000: 'Esimerkiksi taideteos ja 60 cm:n akryylilasitaulu.',
+  },
+  valueFor: 'Taideteokset ja tulosteet',
   kinds: {
     one: { name: 'Yksi silmä', note: 'Taideteos yhdestä silmästä, mikä tahansa tyyli', alt: 'Taideteos yhdestä silmästä' },
     two: { name: 'Kaksi silmää', note: 'Taideteos kahdesta silmästä, pariskunnalle tai kahdelle ihmiselle', alt: 'Taideteos kahdesta silmästä' },
@@ -329,7 +384,7 @@ const fi: GiftCopy = {
     'Lahjan saaja kuvaa silmänsä',
     'Ja saa oman taideteoksensa',
   ],
-  rules: 'Voimassa 12 kuukautta, yhteen tilaukseen.',
+  rules: 'Voimassa 12 kuukautta.',
   buy: (price) => `Osta lahjakortti · ${price}`,
   next: 'Seuraavaksi avautuu Stripen turvallinen maksusivu. Siellä annat sähköpostiosoitteesi; lähetämme koodin siihen.',
   accept: ['Ostamalla hyväksyt ', 'myyntiehtomme', '.'],
@@ -371,7 +426,15 @@ const et: GiftCopy = {
   tag: 'Kinkekaart',
   title: 'Kingi kunstiteos tema enda silmast',
   lead: 'Sina ostad kinkekaardi kohe. Kingisaaja pildistab oma silma hiljem telefoniga, valib stiili ja saab oma kunstiteose.',
-  choose: 'Vali kinkekaart',
+  choose: 'Vali summa',
+  amounts: {
+    3000: 'Näiteks ühe silma kunstiteos.',
+    6000: 'Näiteks kahe silma kunstiteos või kunstiteos ja võtmehoidja.',
+    10000: 'Näiteks kunstiteos ja 30 cm pilt akrüülklaasil või metallil.',
+    12000: 'Näiteks kunstiteos ja 40 cm pilt akrüülklaasil.',
+    17000: 'Näiteks kunstiteos ja 60 cm pilt akrüülklaasil.',
+  },
+  valueFor: 'Kunstiteosed ja trükitud pildid',
   kinds: {
     one: { name: 'Üks silm', note: 'Kunstiteos ühest silmast, mis tahes stiilis', alt: 'Kunstiteos ühest silmast' },
     two: { name: 'Kaks silma', note: 'Kunstiteos kahest silmast, paarile või kahele inimesele', alt: 'Kunstiteos kahest silmast' },
@@ -382,7 +445,7 @@ const et: GiftCopy = {
     'Kingisaaja pildistab oma silma',
     'Ja saab oma kunstiteose',
   ],
-  rules: 'Kehtib 12 kuud, üheks tellimuseks.',
+  rules: 'Kehtib 12 kuud.',
   buy: (price) => `Osta kinkekaart · ${price}`,
   next: 'Järgmisena avaneb Stripe’i turvaline makseleht. Seal sisestad oma e-posti aadressi; saadame koodi sellele.',
   accept: ['Ostes nõustud meie ', 'müügitingimustega', '.'],
@@ -425,7 +488,15 @@ const lv: GiftCopy = {
   tag: 'Dāvanu karte',
   title: 'Uzdāviniet mākslas darbu no apdāvinātā acs',
   lead: 'Karti jūs pērkat tagad. Apdāvinātais vēlāk ar telefonu nofotografē savu aci, izvēlas stilu un saņem savu mākslas darbu.',
-  choose: 'Izvēlieties karti',
+  choose: 'Izvēlieties summu',
+  amounts: {
+    3000: 'Piemēram, vienas acs mākslas darbs.',
+    6000: 'Piemēram, divu acu mākslas darbs vai mākslas darbs un atslēgu piekariņš.',
+    10000: 'Piemēram, mākslas darbs un 30 cm izdruka uz akrila stikla vai metāla.',
+    12000: 'Piemēram, mākslas darbs un 40 cm izdruka uz akrila stikla.',
+    17000: 'Piemēram, mākslas darbs un 60 cm izdruka uz akrila stikla.',
+  },
+  valueFor: 'Mākslas darbi un izdrukas',
   kinds: {
     one: { name: 'Viena acs', note: 'Vienas acs mākslas darbs, jebkurš stils', alt: 'Vienas acs mākslas darbs' },
     two: { name: 'Divas acis', note: 'Divu acu mākslas darbs, pārim vai diviem cilvēkiem', alt: 'Divu acu mākslas darbs' },
@@ -436,7 +507,7 @@ const lv: GiftCopy = {
     'Apdāvinātais nofotografē savu aci',
     'Un saņem savu mākslas darbu',
   ],
-  rules: 'Derīga 12 mēnešus, vienam pasūtījumam.',
+  rules: 'Derīga 12 mēnešus.',
   buy: (price) => `Pirkt karti · ${price}`,
   next: 'Tālāk atvērsies Stripe drošā maksājuma lapa. Tur ievadāt savu e-pasta adresi; uz to nosūtīsim kodu.',
   accept: ['Pērkot jūs piekrītat mūsu ', 'pārdošanas noteikumiem', '.'],

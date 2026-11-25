@@ -122,6 +122,16 @@ const en = {
     extra: 'This order already had a print, so this second payment was not needed. We will refund it. Write to us if you wanted the other print instead.',
     done: 'Thank you, your print is ordered.',
     doneEmail: 'The confirmation is on its way to you by email.',
+    // a gift voucher on the print (the owner's decision of 2026-11-25 (value vouchers)): the balance of the one the artwork was paid with, or a code typed in
+    voucher: {
+      balance: (v: string) => `Gift voucher balance: ${v}`,
+      row: 'Gift voucher',
+      pay: 'To pay',
+      open: 'I have a gift voucher',
+      apply: 'Apply',
+      bad: 'This code cannot be used here.',
+      artwork: 'This voucher pays for an artwork only.',
+    },
   },
   deleted: {
     title: 'Files deleted',
@@ -322,6 +332,16 @@ const de: OrderCopy = {
     extra: 'Diese Bestellung hatte bereits einen Druck, diese zweite Zahlung war also nicht nötig. Wir erstatten sie. Schreiben Sie uns, wenn Sie stattdessen den anderen Druck wollten.',
     done: 'Vielen Dank, Ihr Druck ist bestellt.',
     doneEmail: 'Die Bestätigung ist per E-Mail auf dem Weg zu Ihnen.',
+    // a gift voucher on the print (the owner's decision of 2026-11-25 (value vouchers)): the balance of the one the artwork was paid with, or a code typed in
+    voucher: {
+      balance: (v: string) => `Guthaben des Geschenkgutscheins: ${v}`,
+      row: 'Geschenkgutschein',
+      pay: 'Zu zahlen',
+      open: 'Ich habe einen Geschenkgutschein',
+      apply: 'Einlösen',
+      bad: 'Dieser Code kann hier nicht eingelöst werden.',
+      artwork: 'Dieser Gutschein gilt nur für ein Kunstwerk.',
+    },
   },
   deleted: {
     title: 'Dateien gelöscht',

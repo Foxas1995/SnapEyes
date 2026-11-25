@@ -972,7 +972,7 @@ export const TryApp: React.FC = () => {
       stale={ordering?.open && !eyes.some((e) => e.sample) ? staleEyes(eyes, orderRef, now) : []}
       onRetake={(i) => { const e = eyes[i - 1]; if (e) retakeEye(e.id); }}
       waiver={waiver} onWaiver={setWaiver}
-      gift={gift} onGift={(g) => { setGift(g); setBuy((b) => (b.error === 'voucher' ? { ...b, error: null } : b)); }}
+      gift={gift} onGift={(g) => { setGift(g); setBuy((b) => (b.error === 'voucher' ? { ...b, error: null } : b)); }} giftOrder={orderRef?.order ?? null}
       busy={buy.busy} step={stepText(buy.step)} error={buy.error ? T.buy.errors[buy.error] : null}
       priceNote={priceNote}
       onBuy={onBuy} />

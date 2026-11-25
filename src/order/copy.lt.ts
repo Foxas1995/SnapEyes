@@ -116,6 +116,16 @@ export const lt: OrderCopy = {
     extra: 'Šis užsakymas jau turėjo spaudinį, todėl šio antro mokėjimo nereikėjo. Pinigus grąžinsime. Parašykite mums, jei norėjote kito spaudinio.',
     done: 'Ačiū, Jūsų spaudinys užsakytas.',
     doneEmail: 'Patvirtinimas jau keliauja Jums el. paštu.',
+    // a gift voucher on the print (the owner's decision of 2026-11-25 (value vouchers)): the balance of the one the artwork was paid with, or a code typed in
+    voucher: {
+      balance: (v: string) => `Dovanų kupono likutis: ${v}`,
+      row: 'Dovanų kuponas',
+      pay: 'Mokėti',
+      open: 'Turiu dovanų kuponą',
+      apply: 'Panaudoti',
+      bad: 'Šio kodo čia panaudoti negalima.',
+      artwork: 'Šis kuponas skirtas tik kūriniui.',
+    },
   },
   deleted: {
     title: 'Failai ištrinti',

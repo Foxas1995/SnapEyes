@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Check, Copy, Gift, Lock, Mail, Printer } from 'lucide-react';
 import { GIFT_COPY, type GiftKind } from './copy';
-import { DEFAULT_MARKET, MARKETS, money, withMarket } from '../shared/markets';
+import { DEFAULT_MARKET, money, withMarket } from '../shared/markets';
 import { useMarket } from '../shared/useMarket';
 import { callApi } from '../order/api';
 import { livePayment, track, voucherPurchaseId } from '../shared/metaPixel';
@@ -12,11 +12,12 @@ import { LangMenu } from '../shared/LangMenu';
 import { LEGAL_DOCS, LEGAL_LABELS, legalHref } from '../shared/legal';
 import { CONTACT_EMAIL } from '../landing/config';
 import { BrandPicture } from '../shared/BrandLogo';
-import { giftMarket } from '../shared/gift';
+import { DEFAULT_GIFT_AMOUNT, GIFT_AMOUNTS, giftMarket, type GiftAmount } from '../shared/gift';
 import './gift.css';
 
-// The gift voucher page (/gift; api/_lib/voucher.py). Without ?s= it sells a voucher: the two kinds with their prices (the server's standard euro list, GET
-// /api/checkout), how it works, and the button to Stripe's page (POST /api/checkout {gift: {kind}}). With ?s=<Stripe session> (Stripe's success page) it asks
+// The gift voucher page (/gift; api/_lib/voucher.py). Without ?s= it sells a voucher: since the owner's decision of 2026-11-25 (value vouchers) an AMOUNT
+// (src/shared/gift.ts GIFT_AMOUNTS, 100 EUR chosen first) with one line of what it covers, as an example, how it works, and the button to Stripe's page
+// (POST /api/checkout {gift: {amount}}); GET /api/checkout says whether it can be bought now. With ?s=<Stripe session> (Stripe's success page) it asks
 // GET /api/checkout?gift=<session> until the payment is confirmed and shows the code, its value and its last day, a copy button and a card to print.
 // ?cancelled=1: Stripe's back link. The page carries no third-party script and sends no referrer (the session id in its address shows the code). The Meta
 // pixel's events of this page (src/shared/metaPixel.ts, the owner's decision of 2026-11-25) are single requests that name the path /gift alone: PageView,
@@ -24,13 +25,17 @@ import './gift.css';
 
 const SESSION_RE = /^cs_(test|live)_[A-Za-z0-9]{8,240}$/;
 const LANGS: readonly Lang[] = ['en', 'de', 'lt', 'hu', 'hr', 'fi', 'et', 'lv'];
-const KINDS: readonly GiftKind[] = ['one', 'two'];
-// the owner's choice of 2026-11-25: the single eye with rays (the landing's art/radiance_own, 900 x 900) and the two eyes with dust (art/duo_kiss_bb, 900 x 600), copied
-// to /assets/atelier under fixed names; the pair is wider than the tile and is shown whole on black, never cut
-const PICTURE: Record<GiftKind, string> = { one: '/assets/atelier/gift-one-900.webp', two: '/assets/atelier/gift-two-900.webp' };
-const PICTURE_H: Record<GiftKind, number> = { one: 900, two: 600 };
+// the owner's choice of 2026-11-25: the single eye with rays (the landing's art/radiance_own, 900 x 900), copied to /assets/atelier under a fixed name: the third
+// picture of how it works, and the picture of the card to print (the two pictures of the old kinds left the chooser with them)
+const PICTURE = '/assets/atelier/gift-one-900.webp';
 
-interface Ready { state: 'ready'; code: string; kind: GiftKind; value: number; currency: string; valid_until: string | null; mail?: string }
+/** A voucher's kind as the server names it: an amount (value), or one of the old kinds, whose code a payment page opened before 2026-11-25 can still bring. */
+type Kind = GiftKind | 'value';
+const isKind = (k: unknown): k is Kind => k === 'one' || k === 'two' || k === 'value';
+/** An amount of whole euros as the page's language writes it, without the cents (the buttons): "€100" in English, "100 €" elsewhere. */
+const wholeEur = (c: number, lang: Lang) => (lang === 'en' ? `€${Math.round(c / 100)}` : `${Math.round(c / 100)} €`);
+
+interface Ready { state: 'ready'; code: string; kind: Kind; value: number; currency: string; valid_until: string | null; mail?: string }
 type Status = { state: 'idle' } | { state: 'pending' | 'slow' | 'expired' | 'unknown' } | Ready;
 
 function readQuery(): { s: string | null; cancelled: boolean } {
@@ -57,10 +62,7 @@ export const GiftApp: React.FC = () => {
   const market = giftMarket(pageMarket) ? pageMarket : DEFAULT_MARKET;
   const [lang, setLang] = useState<Lang>(() => detectLang(market));
   const C = GIFT_COPY[lang];
-  const [kind, setKind] = useState<GiftKind>('one');
-  const [prices, setPrices] = useState<Record<GiftKind, number>>(() => ({
-    one: MARKETS[market].prices.one_eye_art, two: MARKETS[market].prices.two_eyes,
-  }));
+  const [amount, setAmount] = useState<GiftAmount>(DEFAULT_GIFT_AMOUNT);
   const [open, setOpen] = useState<boolean | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<keyof typeof C.errors | null>(null);
@@ -75,14 +77,12 @@ export const GiftApp: React.FC = () => {
     } catch { /* no document */ }
   }, [lang, C]);
 
-  // whether vouchers can be bought here now, and the server's standard prices (no visitor id is sent: never a price test's list)
+  // whether vouchers can be bought here now (the amounts are fixed: no price list is read)
   useEffect(() => {
     if (QUERY.s) return;
     let gone = false;
-    void callApi<{ open?: boolean; markets?: Record<string, { prices?: Record<string, number> }> }>('/api/checkout').then((r) => {
+    void callApi<{ open?: boolean }>('/api/checkout').then((r) => {
       if (gone) return;
-      const p = r.data?.markets?.[market]?.prices;
-      if (p && typeof p.one_eye_art === 'number' && typeof p.two_eyes === 'number') setPrices({ one: p.one_eye_art, two: p.two_eyes });
       setOpen(r.ok && r.data?.open === true);
     });
     return () => { gone = true; };
@@ -99,7 +99,7 @@ export const GiftApp: React.FC = () => {
       const r = await callApi<Omit<Partial<Ready>, 'state'> & { state?: string }>(`/api/checkout?gift=${encodeURIComponent(QUERY.s!)}`, { timeoutMs: 25_000 });
       if (gone) return;
       const d = r.data;
-      if (r.ok && d?.state === 'ready' && typeof d.code === 'string' && (d.kind === 'one' || d.kind === 'two') && typeof d.value === 'number') {
+      if (r.ok && d?.state === 'ready' && typeof d.code === 'string' && isKind(d.kind) && typeof d.value === 'number') {
         setStatus({ state: 'ready', code: d.code, kind: d.kind, value: d.value, currency: d.currency ?? 'EUR', valid_until: d.valid_until ?? null, mail: d.mail });
         // the Meta pixel's Purchase (a live payment only): the value and the currency, and the session id hashed into the event id (it shows the code)
         const sid = QUERY.s;
@@ -124,7 +124,7 @@ export const GiftApp: React.FC = () => {
     if (busy) return;
     setBusy(true);
     setError(null);
-    const r = await callApi<{ url?: string }>('/api/checkout', { body: { gift: { kind }, market, lang }, timeoutMs: 30_000 });
+    const r = await callApi<{ url?: string }>('/api/checkout', { body: { gift: { amount }, market, lang }, timeoutMs: 30_000 });
     if (r.ok && typeof r.data?.url === 'string' && r.data.url.startsWith('https://')) {
       track('InitiateCheckout', { category: 'voucher' }, undefined, true);       // the Meta pixel: off to Stripe's payment page
       window.location.assign(r.data.url);
@@ -152,7 +152,7 @@ export const GiftApp: React.FC = () => {
           <p data-testid="gift-code-shown" className="mt-4 text-center font-mono text-2xl sm:text-3xl tracking-[0.18em] text-gold-light select-all break-all">{status.code}</p>
           <dl className="mt-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-sm">
             <dt className="text-zinc-400">{C.ready.rows.value}</dt><dd className="text-zinc-100">{fmt(status.value)}</dd>
-            <dt className="text-zinc-400">{C.ready.rows.for}</dt><dd className="text-zinc-100">{C.kinds[status.kind].note}</dd>
+            <dt className="text-zinc-400">{C.ready.rows.for}</dt><dd className="text-zinc-100">{status.kind === 'value' ? C.valueFor : C.kinds[status.kind].note}</dd>
             {status.valid_until && <><dt className="text-zinc-400">{C.ready.rows.until}</dt><dd className="text-zinc-100">{dayText(status.valid_until, lang)}</dd></>}
           </dl>
           {(status.mail === 'sent' || status.mail === 'done') && (
@@ -173,7 +173,7 @@ export const GiftApp: React.FC = () => {
           <p className="gift-card-brand">SnapEyes</p>
           <p className="gift-card-heading">{C.card.heading}</p>
           <p className="gift-card-line">{C.card.line}</p>
-          <img className="gift-card-art" src={PICTURE[status.kind]} alt="" />
+          <img className="gift-card-art" src={PICTURE} alt="" />
           <p className="gift-card-code">{status.code}</p>
           <p className="gift-card-how">{C.card.how}</p>
           {status.valid_until && <p className="gift-card-until">{C.card.until(dayText(status.valid_until, lang))}</p>}
@@ -198,17 +198,15 @@ export const GiftApp: React.FC = () => {
         {QUERY.cancelled && <p role="status" data-testid="gift-cancelled" className="text-xs text-amber-100 bg-amber-950/30 border border-amber-500/40 rounded-xl p-3">{C.cancelled}</p>}
         <section className={CARD} aria-labelledby="gift-choose">
           <h2 id="gift-choose" className="text-[10px] uppercase tracking-widest text-zinc-400">{C.choose}</h2>
-          <div role="radiogroup" aria-labelledby="gift-choose" className="mt-3 grid grid-cols-2 gap-3">
-            {KINDS.map((k) => (
-              <button key={k} type="button" role="radio" aria-checked={kind === k} data-testid={`gift-kind-${k}`} onClick={() => setKind(k)} disabled={busy}
-                className={`text-left rounded-xl border p-2 transition-colors ${kind === k ? 'border-gold/70 bg-gold/10' : 'border-white/10 bg-white/5 hover:border-white/25'}`}>
-                <img src={PICTURE[k]} alt={C.kinds[k].alt} width={900} height={PICTURE_H[k]} loading="lazy" className="w-full aspect-square object-contain bg-black rounded-lg" />
-                <span className="mt-2 block text-sm font-semibold text-zinc-100">{C.kinds[k].name}</span>
-                <span className="block font-luxury text-lg font-bold text-gold-light whitespace-nowrap">{fmt(prices[k])}</span>
-                <span className="block text-[11px] text-zinc-300 mt-1 leading-snug">{C.kinds[k].note}</span>
+          <div role="radiogroup" aria-labelledby="gift-choose" className="mt-3 grid grid-cols-5 gap-1.5 sm:gap-2">
+            {GIFT_AMOUNTS.map((a) => (
+              <button key={a} type="button" role="radio" aria-checked={amount === a} data-testid={`gift-amount-${a}`} onClick={() => setAmount(a)} disabled={busy}
+                className={`min-h-[48px] rounded-xl border px-1 font-luxury text-sm min-[375px]:text-base sm:text-lg font-bold whitespace-nowrap transition-colors ${amount === a ? 'border-gold/70 bg-gold/10 text-gold-light' : 'border-white/10 bg-white/5 text-zinc-100 hover:border-white/25'}`}>
+                {wholeEur(a, lang)}
               </button>
             ))}
           </div>
+          <p data-testid="gift-hint" aria-live="polite" className="mt-3 text-sm text-zinc-200">{C.amounts[amount]}</p>
           {!giftMarket(pageMarket) && <p className="mt-3 text-[11px] text-zinc-400">{C.euroOnly}</p>}
           <p className="mt-3 text-[11px] text-zinc-400">{C.rules}</p>
           {open === false
@@ -216,7 +214,7 @@ export const GiftApp: React.FC = () => {
             : (
               <button type="button" data-testid="gift-buy" onClick={() => void buy()} disabled={disabled}
                 className={`mt-4 ${disabled && !busy ? 'w-full min-h-[48px] px-4 py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 bg-white/5 border border-white/10 text-zinc-500' : GOLD_BTN}`}>
-                {busy ? <Dot /> : <Lock className="w-4 h-4 shrink-0" />} {C.buy(fmt(prices[kind]))}
+                {busy ? <Dot /> : <Lock className="w-4 h-4 shrink-0" />} {C.buy(fmt(amount))}
               </button>
             )}
           {error && <p role="alert" data-testid="gift-error" className="mt-3 text-xs text-rose-200 bg-rose-950/40 border border-rose-500/40 rounded-xl p-3">{C.errors[error]}</p>}
@@ -256,7 +254,7 @@ export const GiftApp: React.FC = () => {
                         <span className="font-mono text-[8px] min-[375px]:text-[9px] sm:text-xs tracking-[0.12em] text-zinc-200 border border-dashed border-white/25 rounded px-1 sm:px-2 py-0.5 whitespace-nowrap">XXXX XXXX XXXX</span>
                       </div>
                     ) : (
-                      <img src={i === 1 ? '/assets/atelier/gift-eye-315.webp' : PICTURE.one} alt="" width={i === 1 ? 315 : 900} height={i === 1 ? 315 : 900} className="w-full aspect-square object-cover rounded-xl border border-white/10" />
+                      <img src={i === 1 ? '/assets/atelier/gift-eye-315.webp' : PICTURE} alt="" width={i === 1 ? 315 : 900} height={i === 1 ? 315 : 900} className="w-full aspect-square object-cover rounded-xl border border-white/10" />
                     )}
                     <span className="mt-2 text-[11px] sm:text-sm text-zinc-200 leading-snug"><span className="text-gold-light font-semibold">{i + 1}.</span> {s}</span>
                   </li>

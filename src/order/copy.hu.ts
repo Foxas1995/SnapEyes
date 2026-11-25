@@ -117,6 +117,16 @@ export const hu: OrderCopy = {
     extra: 'Ehhez a rendeléshez már tartozott nyomat, így erre a második fizetésre nem volt szükség. Visszatérítjük. Írj nekünk, ha inkább a másik nyomatot szeretted volna.',
     done: 'Köszönjük, a nyomatodat megrendelted.',
     doneEmail: 'A visszaigazolás e-mailben úton van hozzád.',
+    // a gift voucher on the print (the owner's decision of 2026-11-25 (value vouchers)): the balance of the one the artwork was paid with, or a code typed in
+    voucher: {
+      balance: (v: string) => `Ajándékutalvány egyenlege: ${v}`,
+      row: 'Ajándékutalvány',
+      pay: 'Fizetendő',
+      open: 'Van ajándékutalványom',
+      apply: 'Beváltás',
+      bad: 'Ez a kód itt nem használható.',
+      artwork: 'Ez az utalvány csak alkotásra szól.',
+    },
   },
   deleted: {
     title: 'Fájlok törölve',

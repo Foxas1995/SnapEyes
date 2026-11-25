@@ -78,6 +78,8 @@ export const SAMPLES = {
   'collector.lastFailed': [['Ezen a felvételen nem találtunk szemet.']],
   // the print offered after the purchase (src/order/copy*.ts offer; until 2026-11-21 these were /try's print.option and print.mockAlt: the picker moved to the order page)
   'offer.option': [['Akrilinis 30 × 30 cm', '59,00 €']], 'offer.mockAlt': [['Plakatas 50 × 50 cm']],
+  // the balance of a gift voucher on the print offer (the owner's decision of 2026-11-25 (value vouchers))
+  'offer.voucher.balance': [['75,03 €']],
   'gift.applied': [['24,97 €']], 'gift.toPay': [['0,00 €'], ['15,00 €']],
   'result.eyeLabel': [[1]], 'result.retakeEye': [[2]], 'result.removed': [[2]],
   'result.previewFile': [[true], [false]], 'result.fileName': [['celestial-gold', 2, false], ['studio-black', 1, true]],

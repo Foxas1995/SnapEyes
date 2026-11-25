@@ -65,6 +65,8 @@ interface Props {
    *  the price less the voucher. Without onGift the card offers no voucher field. */
   gift?: GiftApplied | null;
   onGift?: (g: GiftApplied | null) => void;
+  /** the order this tab made already, if any: the voucher's check leaves out that order's own reservation (a value voucher, api/_lib/voucher.py) */
+  giftOrder?: string | null;
 }
 
 // what a card is told when its caller says nothing of the picker (the card of before the picker existed, and the checks that render it alone): the
@@ -184,7 +186,7 @@ export const BuyCard: React.FC<Props> = (props) => {
   // no print here: since 2026-11-21 a print is offered after the purchase, on the order page of the delivered artwork (src/order/PrintOffer.tsx), so
   // that the first checkout shows the artwork's price alone (the owner: a big price at the first checkout scares)
   const total = cents;
-  // a gift voucher pays for the total up to its value; the rest is not paid out
+  // a gift voucher pays for the total up to its value (a value voucher keeps the rest for the next order: the owner's decision of 2026-11-25)
   const giftHere = !!p.onGift && giftMarket(market);
   const gift = giftHere ? p.gift ?? null : null;
   const toPay = gift ? Math.max(0, total - gift.value) : total;
@@ -222,7 +224,7 @@ export const BuyCard: React.FC<Props> = (props) => {
           <span>{waiverText}</span>
         </label>
       )}
-      {giftHere && <GiftField market={market} applied={gift} onApplied={(g) => p.onGift?.(g)} fmt={fmt} busy={p.busy} />}
+      {giftHere && <GiftField market={market} applied={gift} onApplied={(g) => p.onGift?.(g)} fmt={fmt} busy={p.busy} order={p.giftOrder ?? null} />}
       <p className="text-[11px] text-zinc-400 mt-2 leading-relaxed"><LegalParts parts={legal.acceptance} lang={lang} /></p>
 
       <button data-testid="buy" type="button" onClick={p.onBuy} disabled={disabled}

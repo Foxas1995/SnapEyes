@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Lock, RefreshCcw } from 'lucide-react';
+import { Gift, Lock, RefreshCcw } from 'lucide-react';
 import type { OrderCopy } from './copy';
 import type { OrderStatus } from './api';
 import type { OrderLink } from './driver';
-import { PRINT_BUSY, buyPrint, marketCountry, offerPrints, type BuyPrintOutcome, type PrintBack } from './printAddon';
+import { PRINT_BUSY, buyPrint, checkPrintVoucher, marketCountry, offerPrints, offerVoucher, voucherSplit, type BuyPrintOutcome, type PrintBack } from './printAddon';
 import { CARD, PLAIN_BTN } from './ui';
 import { NO_PRINT, PrintPick, printPart, type PrintChoice } from '../try/PrintPick';
 import { defaultCountry } from '../shared/prints';
@@ -20,6 +20,8 @@ import type { Lang } from '../try/lang';
 // opens Stripe's (./printAddon.ts buyPrint). After the way back from Stripe the page asks until the print is on record (the parent runs
 // watchPrint and hands the result down as `back`); while a payment is being confirmed or is on record the card stays away, so a second
 // payment is never invited.
+// A gift voucher (the owner's decision of 2026-11-25 (value vouchers)): when the artwork was paid with one that has a balance left, the offer says so
+// and the price after it, and the server applies it by itself; otherwise a small "I have a gift voucher" link opens a field for a code. Few words.
 
 interface Props {
   C: OrderCopy;
@@ -40,20 +42,33 @@ interface Props {
   /** the request that opens the payment page (the tests replace it) */
   buy?: typeof buyPrint;
   /** the state the card starts in (the tests draw its states with it; the page starts with nothing chosen and nothing ticked) */
-  initial?: { choice?: PrintChoice; consent?: boolean; error?: OfferError };
+  initial?: { choice?: PrintChoice; consent?: boolean; error?: OfferError; typed?: { code: string; value: number }; field?: boolean };
+  /** the check of a typed voucher code (the tests replace it) */
+  checkVoucher?: typeof checkPrintVoucher;
 }
 
 export type OfferError = Exclude<Extract<BuyPrintOutcome, { kind: 'error' }>['code'], 'has'>;
 
-export const PrintOffer: React.FC<Props> = ({ C, lang, link, st, market, back, email, onReload, onRecheck, go, buy, initial }) => {
+export const PrintOffer: React.FC<Props> = ({ C, lang, link, st, market, back, email, onReload, onRecheck, go, buy, initial, checkVoucher }) => {
   const [choice, setChoice] = useState<PrintChoice>(initial?.choice ?? NO_PRINT);
   const [consent, setConsent] = useState(initial?.consent ?? false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<OfferError | null>(initial?.error ?? null);
+  // a voucher code typed into the offer and accepted by the server (its balance), the field, the code being typed, and why a code was refused
+  const [typed, setTyped] = useState<{ code: string; value: number } | null>(initial?.typed ?? null);
+  const [field, setField] = useState(initial?.field ?? false);
+  const [code, setCode] = useState('');
+  const [checking, setChecking] = useState(false);
+  const [vWhy, setVWhy] = useState<'bad' | 'artwork' | null>(null);
   const W = C.offer;
+  const V = W.voucher;
   const offered = st.print ? [] : offerPrints(st);
   const fmt = (c: number) => money(c, 'eur', lang);
   const part = printPart(choice, offered);
+  // the balance that pays for the print: the voucher the artwork was paid with (the server applies it), else a code typed here
+  const auto = offerVoucher(st);
+  const balance = auto || typed?.value || 0;
+  const split = part && balance ? voucherSplit(part.price + part.ship, balance) : null;
   const legal = checkoutLegal(lang, market);
   // the print box's words: the server's (it records a fingerprint of its own text), else the page's copy of the same words
   const consentText = st.print_offer?.consent?.[lang] || legal.printConsent;
@@ -69,7 +84,7 @@ export const PrintOffer: React.FC<Props> = ({ C, lang, link, st, market, back, e
     if (busy || !part || !choice.product || !consent) return;
     setBusy(true);
     setError(null);
-    const out = await (buy ?? buyPrint)(link, { product: choice.product, country: choice.country }, lang, part.price + part.ship);
+    const out = await (buy ?? buyPrint)(link, { product: choice.product, country: choice.country }, lang, part.price + part.ship, undefined, auto ? null : typed?.code ?? null);
     if (out.kind === 'redirect') {
       track('InitiateCheckout', { category: 'print' }, undefined, true);       // the Meta pixel (src/shared/metaPixel.ts): off to Stripe's payment page
       (go ?? ((u: string) => window.location.assign(u)))(out.url);
@@ -77,6 +92,7 @@ export const PrintOffer: React.FC<Props> = ({ C, lang, link, st, market, back, e
     }
     setBusy(false);
     if (out.code === 'changed' || out.code === 'unavailable' || out.code === 'has') onReload();   // the offer as the server has it now, or the print the order already has
+    if (out.code === 'voucher') { setTyped(null); onReload(); }       // the code cannot pay (any more): it is taken off, the offer read again
     if (out.code !== 'has') setError(out.code);
   };
 
@@ -99,7 +115,16 @@ export const PrintOffer: React.FC<Props> = ({ C, lang, link, st, market, back, e
 
   const blockedBy = !choice.product ? 'product' : !choice.country || !part ? 'country' : !consent ? 'consent' : null;
   const disabled = busy || blockedBy !== null;
-  const errorText = error === 'changed' ? W.changed : error === 'unavailable' ? W.unavailable : error ? C.errors[error] : null;
+  const errorText = error === 'changed' ? W.changed : error === 'unavailable' ? W.unavailable : error === 'voucher' ? V.bad : error ? C.errors[error] : null;
+  const apply = async () => {
+    if (checking || busy) return;
+    setChecking(true);
+    setVWhy(null);
+    const r = await (checkVoucher ?? checkPrintVoucher)(code, market, link.o);
+    setChecking(false);
+    if ('value' in r) { setTyped({ code: code.toUpperCase().replace(/[^A-Z0-9]/g, ''), value: r.value }); setField(false); setError(null); return; }
+    setVWhy(r.why);
+  };
   return (
     <>
       {note}
@@ -112,6 +137,36 @@ export const PrintOffer: React.FC<Props> = ({ C, lang, link, st, market, back, e
           <p data-testid="print-total" className="mt-3 text-sm font-semibold text-zinc-100 flex justify-between gap-2">
             <span>{W.total}</span><span className="whitespace-nowrap">{fmt(part.price + part.ship)}</span>
           </p>
+        )}
+        {balance > 0 && (
+          <p data-testid="print-voucher" className="mt-3 text-sm text-emerald-200 flex items-center gap-2"><Gift className="w-4 h-4 shrink-0" /> {V.balance(fmt(balance))}</p>
+        )}
+        {split && (
+          <div data-testid="print-voucher-split" className="mt-1 text-sm">
+            <p className="text-emerald-200 flex justify-between gap-2"><span>{V.row}</span><span className="whitespace-nowrap">−{fmt(split.discount)}</span></p>
+            <p data-testid="print-to-pay" className="font-semibold text-zinc-100 flex justify-between gap-2"><span>{V.pay}</span><span className="whitespace-nowrap">{fmt(split.pay)}</span></p>
+          </div>
+        )}
+        {!balance && !field && (
+          <button type="button" data-testid="print-voucher-open" disabled={busy} onClick={() => setField(true)}
+            className="mt-3 min-h-[40px] text-xs text-zinc-300 underline underline-offset-2 flex items-center gap-1.5">
+            <Gift className="w-3.5 h-3.5" /> {V.open}
+          </button>
+        )}
+        {!balance && field && (
+          <div data-testid="print-voucher-field" className="mt-3">
+            <div className="flex gap-2">
+              <input aria-label={V.open} data-testid="print-voucher-code" type="text" autoComplete="off" autoCapitalize="characters" spellCheck={false} maxLength={20}
+                value={code} disabled={busy || checking} placeholder="ABCD-EFGH-JKLM" onChange={(e) => { setCode(e.target.value.toUpperCase()); setVWhy(null); }}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); void apply(); } }}
+                className="flex-1 min-w-0 min-h-[44px] px-3 rounded-xl bg-white/5 border border-white/15 text-zinc-100 text-sm tracking-widest font-mono" />
+              <button type="button" data-testid="print-voucher-apply" disabled={busy || checking || !code} onClick={() => void apply()}
+                className="min-h-[44px] px-4 rounded-xl border border-gold/40 text-gold-light text-sm font-semibold disabled:opacity-50">
+                {checking ? <Dot /> : V.apply}
+              </button>
+            </div>
+            {vWhy && <p role="alert" data-testid="print-voucher-error" className="text-[11px] text-rose-200 mt-2">{vWhy === 'artwork' ? V.artwork : V.bad}</p>}
+          </div>
         )}
         <p className="text-[11px] text-zinc-400 mt-2 leading-relaxed"><LegalParts parts={legal.acceptance} lang={lang} /></p>
         <button data-testid="print-buy" type="button" onClick={() => { void press(); }} disabled={disabled}

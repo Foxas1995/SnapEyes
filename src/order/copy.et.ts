@@ -124,6 +124,16 @@ export const et: OrderCopy = {
     extra: 'Sellel tellimusel oli juba trükitud pilt, seega seda teist makset ei olnud vaja. Tagastame selle. Kirjuta meile, kui soovisid hoopis teist trükitud pilti.',
     done: 'Aitäh, sinu trükitud pilt on tellitud.',
     doneEmail: 'Kinnitus on e-kirjaga teel sinu juurde.',
+    // a gift voucher on the print (the owner's decision of 2026-11-25 (value vouchers)): the balance of the one the artwork was paid with, or a code typed in
+    voucher: {
+      balance: (v: string) => `Kinkekaardi jääk: ${v}`,
+      row: 'Kinkekaart',
+      pay: 'Tasuda',
+      open: 'Mul on kinkekaart',
+      apply: 'Kasuta',
+      bad: 'Seda koodi ei saa siin kasutada.',
+      artwork: 'See kinkekaart kehtib ainult kunstiteose jaoks.',
+    },
   },
   deleted: {
     title: 'Failid on kustutatud',

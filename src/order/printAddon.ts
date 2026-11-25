@@ -12,6 +12,32 @@ export interface PrintOfferReply {
   currency?: string;
   products?: ServerPrints['products'];
   consent?: Partial<Record<Lang, string>>;
+  /** the balance (euro cents) of the gift voucher the artwork was paid with, while something is left (the owner's decision of 2026-11-25 (value
+   *  vouchers), api/_lib/voucher.py offer_balance): the checkout applies it by itself, nothing is typed */
+  voucher?: { balance?: number; valid_until?: string | null };
+}
+
+/** The voucher balance the offer carries, or 0. */
+export function offerVoucher(st: Pick<OrderStatus, 'print_offer'> | null | undefined): number {
+  const b = (st?.print_offer as PrintOfferReply | undefined)?.voucher?.balance;
+  return typeof b === 'number' && Number.isInteger(b) && b > 0 ? b : 0;
+}
+
+/** What a voucher pays of a print and what is left to pay (euro cents): the voucher takes the whole total up to its balance, the shipping too. */
+export function voucherSplit(total: number, balance: number): { discount: number; pay: number } {
+  const discount = Math.max(0, Math.min(balance, total));
+  return { discount, pay: total - discount };
+}
+
+/** A gift voucher code typed into the print offer, checked by the server for a print of this order (GET /api/checkout?voucher=&m=&o=&u=print): its
+ *  balance, or why it cannot pay (artwork: a voucher of the old kinds pays for an artwork only; bad: anything else, including no answer). */
+export async function checkPrintVoucher(code: string, market: string, order: string, api: typeof callApi = callApi): Promise<{ value: number } | { why: 'artwork' | 'bad' }> {
+  const c = code.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (c.length !== 12) return { why: 'bad' };
+  const q = new URLSearchParams({ voucher: c, m: market, o: order, u: 'print' }).toString();
+  const r = await api<{ valid?: boolean; value?: number; why?: string }>(`/api/checkout?${q}`, { timeoutMs: 15_000 });
+  if (r.ok && r.data?.valid === true && typeof r.data.value === 'number' && r.data.value > 0) return { value: r.data.value };
+  return { why: r.data?.why === 'artwork' ? 'artwork' : 'bad' };
 }
 
 /** The prints the order page offers: the server's list, each one the page knows and well formed (src/shared/prints.ts offeredPrints holds
@@ -73,15 +99,17 @@ export async function watchPrint(link: { o: string; k: string }, ps: string, dep
 /** How a press on the offer's button ended: Stripe's page, or why not. changed: the price or the shipping is not the one shown (nothing was
  *  created; the page reads the offer again). has: the order has a print already (another tab bought it). unavailable: prints cannot be
  *  bought for this order now (the switch went off, the order was refunded). */
-export type BuyPrintOutcome = { kind: 'redirect'; url: string } | { kind: 'error'; code: 'changed' | 'has' | 'unavailable' | 'network' | 'busy' | 'failed' };
+export type BuyPrintOutcome = { kind: 'redirect'; url: string } | { kind: 'error'; code: 'changed' | 'has' | 'unavailable' | 'voucher' | 'network' | 'busy' | 'failed' };
 
 /** POST /api/checkout {addon}: the payment page of this print for this order. shown: the print and its shipping as the card showed them
- *  (the server only compares it). The box is ticked: the button is shut until it is. */
+ *  (the server only compares it). The box is ticked: the button is shut until it is. voucher: a gift voucher code the customer typed into the offer
+ *  (the one the artwork was paid with needs none: the server applies it). voucher: the code cannot pay (nothing was created). */
 export async function buyPrint(link: { o: string; k: string }, print: { product: string; country: string }, lang: Lang, shown: number,
-  api: typeof callApi = callApi): Promise<BuyPrintOutcome> {
+  api: typeof callApi = callApi, voucher?: string | null): Promise<BuyPrintOutcome> {
   const r = await api<{ url?: string; why?: string }>('/api/checkout', {
-    body: { addon: { order: link.o, key: link.k }, print, consent_print: true, print_shown: shown, lang }, timeoutMs: 30_000,
+    body: { addon: { order: link.o, key: link.k }, print, consent_print: true, print_shown: shown, lang, ...(voucher ? { voucher } : {}) }, timeoutMs: 30_000,
   });
+  if (r.reason === 'voucher_invalid') return { kind: 'error', code: 'voucher' };
   if (r.ok && typeof r.data?.url === 'string' && r.data.url.startsWith('https://')) return { kind: 'redirect', url: r.data.url };
   if (r.reason === 'print_price_changed') return { kind: 'error', code: 'changed' };
   if (r.reason === 'print_not_offered' && r.data?.why === 'has_print') return { kind: 'error', code: 'has' };

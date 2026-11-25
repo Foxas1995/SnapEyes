@@ -466,7 +466,7 @@ export const et: TryCopy = {
     applied: (value: string) => `Kinkekaart: \u2212${value}`,
     remove: 'Eemalda',
     toPay: (value: string) => `Maksta: ${value}`,
-    note: 'Kinkekaart kasutatakse ära siis, kui viid makse lõpule. Kui kunstiteos maksab kinkekaardist vähem, siis ülejäänud summat välja ei maksta.',
+    note: 'Kinkekaarti kasutatakse siis, kui viid makse lõpule. Ülejäänud summa jääb kinkekaardile.',
     errors: {
       format: 'See ei ole kinkekaardi kood. Koodis on 12 tähte ja numbrit, näiteks ABCD-EFGH-JKLM.',
       unknown: 'Me ei tunne seda koodi. Palun kontrolli seda.',

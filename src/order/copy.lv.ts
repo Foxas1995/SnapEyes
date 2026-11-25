@@ -122,6 +122,16 @@ export const lv: OrderCopy = {
     extra: 'Šim pasūtījumam jau bija izdruka, tāpēc šis otrais maksājums nebija vajadzīgs. Mēs to atmaksāsim. Rakstiet mums, ja tā vietā vēlējāties otru izdruku.',
     done: 'Paldies, jūsu izdruka ir pasūtīta.',
     doneEmail: 'Apstiprinājums jau ir ceļā pie jums e-pastā.',
+    // a gift voucher on the print (the owner's decision of 2026-11-25 (value vouchers)): the balance of the one the artwork was paid with, or a code typed in
+    voucher: {
+      balance: (v: string) => `Dāvanu kartes atlikums: ${v}`,
+      row: 'Dāvanu karte',
+      pay: 'Jāmaksā',
+      open: 'Man ir dāvanu karte',
+      apply: 'Izmantot',
+      bad: 'Šo kodu šeit nevar izmantot.',
+      artwork: 'Šī dāvanu karte ir paredzēta tikai mākslas darbam.',
+    },
   },
   deleted: {
     title: 'Faili ir dzēsti',

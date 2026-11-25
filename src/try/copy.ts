@@ -533,7 +533,7 @@ const en = {
     applied: (value: string) => `Gift voucher: −${value}`,
     remove: 'Remove',
     toPay: (value: string) => `To pay: ${value}`,
-    note: 'The voucher is used when you complete the payment. If the artwork costs less than the voucher, the rest is not paid out.',
+    note: 'The voucher is used when you complete the payment. What is left stays on it.',
     errors: {
       format: 'This is not a voucher code. A code has 12 letters and numbers, for example ABCD-EFGH-JKLM.',
       unknown: 'We do not know this code. Please check it.',
@@ -1001,7 +1001,7 @@ const de: TryCopy = {
     applied: (value: string) => `Geschenkgutschein: −${value}`,
     remove: 'Entfernen',
     toPay: (value: string) => `Zu zahlen: ${value}`,
-    note: 'Der Gutschein wird eingelöst, wenn Sie die Zahlung abschließen. Kostet das Kunstwerk weniger als der Gutschein, wird der Rest nicht ausgezahlt.',
+    note: 'Der Gutschein wird eingelöst, wenn Sie die Zahlung abschließen. Was übrig bleibt, bleibt darauf.',
     errors: {
       format: 'Das ist kein Gutscheincode. Ein Code hat 12 Buchstaben und Ziffern, zum Beispiel ABCD-EFGH-JKLM.',
       unknown: 'Diesen Code kennen wir nicht. Bitte prüfen Sie ihn.',

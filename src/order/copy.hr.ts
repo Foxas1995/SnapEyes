@@ -122,6 +122,16 @@ export const hr: OrderCopy = {
     extra: 'Ova je narudžba već imala ispis, pa ovo drugo plaćanje nije bilo potrebno. Vratit ćemo vam ga. Pišite nam ako ste umjesto toga željeli drugi ispis.',
     done: 'Hvala, vaš je ispis naručen.',
     doneEmail: 'Potvrda vam stiže e-poštom.',
+    // a gift voucher on the print (the owner's decision of 2026-11-25 (value vouchers)): the balance of the one the artwork was paid with, or a code typed in
+    voucher: {
+      balance: (v: string) => `Stanje poklon-bona: ${v}`,
+      row: 'Poklon-bon',
+      pay: 'Za platiti',
+      open: 'Imam poklon-bon',
+      apply: 'Iskoristite',
+      bad: 'Ovaj se kod ovdje ne može iskoristiti.',
+      artwork: 'Ovaj bon vrijedi samo za umjetničku sliku.',
+    },
   },
   deleted: {
     title: 'Datoteke su izbrisane',

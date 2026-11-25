@@ -468,7 +468,7 @@ export const hu: TryCopy = {
     applied: (value: string) => `Ajándékutalvány: −${value}`,
     remove: 'Eltávolítás',
     toPay: (value: string) => `Fizetendő: ${value}`,
-    note: 'Az utalványt a fizetés befejezésekor váltjuk be. Ha az alkotás kevesebbe kerül, mint az utalvány, a maradékot nem fizetjük ki.',
+    note: 'Az utalványt a fizetés befejezésekor váltjuk be. Ami megmarad, az utalványon marad.',
     errors: {
       format: 'Ez nem utalványkód. A kód 12 betűből és számból áll, például ABCD-EFGH-JKLM.',
       unknown: 'Ezt a kódot nem ismerjük. Ellenőrizd, kérlek.',

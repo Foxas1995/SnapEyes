@@ -462,7 +462,7 @@ export const hr: TryCopy = {
     applied: (value: string) => `Poklon-bon: −${value}`,
     remove: 'Uklonite',
     toPay: (value: string) => `Za plaćanje: ${value}`,
-    note: 'Bon se iskorištava kada dovršite plaćanje. Ako umjetnička slika košta manje od bona, ostatak se ne isplaćuje.',
+    note: 'Bon se iskorištava kada dovršite plaćanje. Ostatak ostaje na bonu.',
     errors: {
       format: 'Ovo nije kod bona. Kod ima 12 slova i brojeva, na primjer ABCD-EFGH-JKLM.',
       unknown: 'Ne poznajemo ovaj kod. Provjerite ga.',

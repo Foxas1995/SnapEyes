@@ -459,7 +459,7 @@ export const fi: TryCopy = {
     applied: (value: string) => `Lahjakortti: −${value}`,
     remove: 'Poista',
     toPay: (value: string) => `Maksettavaa: ${value}`,
-    note: 'Lahjakortti käytetään, kun viet maksun loppuun. Jos taideteos maksaa vähemmän kuin lahjakortin arvo, loppuosaa ei makseta takaisin.',
+    note: 'Lahjakorttia käytetään, kun viet maksun loppuun. Loppusumma jää lahjakortille.',
     errors: {
       format: 'Tämä ei ole lahjakortin koodi. Koodissa on 12 kirjainta ja numeroa, esimerkiksi ABCD-EFGH-JKLM.',
       unknown: 'Emme tunne tätä koodia. Tarkista se.',

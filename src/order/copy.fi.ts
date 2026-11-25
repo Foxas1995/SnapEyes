@@ -123,6 +123,16 @@ export const fi: OrderCopy = {
     extra: 'Tässä tilauksessa oli jo tuloste, joten tätä toista maksua ei tarvittu. Palautamme sen. Kirjoita meille, jos halusit sen sijaan toisen tulosteen.',
     done: 'Kiitos, tulosteesi on tilattu.',
     doneEmail: 'Vahvistus on matkalla sähköpostiisi.',
+    // a gift voucher on the print (the owner's decision of 2026-11-25 (value vouchers)): the balance of the one the artwork was paid with, or a code typed in
+    voucher: {
+      balance: (v: string) => `Lahjakortin saldo: ${v}`,
+      row: 'Lahjakortti',
+      pay: 'Maksettavaa',
+      open: 'Minulla on lahjakortti',
+      apply: 'Käytä',
+      bad: 'Tätä koodia ei voi käyttää tässä.',
+      artwork: 'Tämä lahjakortti käy vain taideteokseen.',
+    },
   },
   deleted: {
     title: 'Tiedostot poistettu',

@@ -447,7 +447,7 @@ export const lt: TryCopy = {
     applied: (value: string) => `Dovanų kuponas: −${value}`,
     remove: 'Pašalinti',
     toPay: (value: string) => `Mokėti: ${value}`,
-    note: 'Kuponas panaudojamas, kai užbaigiate mokėjimą. Jei kūrinys kainuoja mažiau nei kuponas, likutis negrąžinamas.',
+    note: 'Kuponas panaudojamas, kai užbaigiate mokėjimą. Likutis lieka kupone.',
     errors: {
       format: 'Tai ne kupono kodas. Kodą sudaro 12 raidžių ir skaičių, pavyzdžiui, ABCD-EFGH-JKLM.',
       unknown: 'Tokio kodo nežinome. Patikrinkite jį.',

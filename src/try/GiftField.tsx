@@ -27,11 +27,13 @@ interface Props {
   /** the voucher's value as money in the page's currency */
   fmt: (cents: number) => string;
   busy: boolean;
+  /** the order this tab made already (a customer back from Stripe's page): a value voucher's balance is checked without that order's own reservation */
+  order?: string | null;
 }
 
 /** "I have a gift voucher": a closed link until it is pressed, then the code field and its button. An accepted voucher shows as one line with its value
  *  and a way to remove it. Nothing here is ticked or entered for the customer. */
-export const GiftField: React.FC<Props> = ({ market, applied, onApplied, fmt, busy }) => {
+export const GiftField: React.FC<Props> = ({ market, applied, onApplied, fmt, busy, order }) => {
   const [open, setOpen] = useState(false);
   const [code, setCode] = useState('');
   const [checking, setChecking] = useState(false);
@@ -61,7 +63,7 @@ export const GiftField: React.FC<Props> = ({ market, applied, onApplied, fmt, bu
     if (c.length !== 12) { setWhy('format'); return; }
     setChecking(true);
     setWhy(null);
-    const r = await callApi<{ valid?: boolean; value?: number }>(`/api/checkout?voucher=${encodeURIComponent(c.toUpperCase())}&m=${encodeURIComponent(market)}`, { timeoutMs: 15_000 });
+    const r = await callApi<{ valid?: boolean; value?: number }>(`/api/checkout?voucher=${encodeURIComponent(c.toUpperCase())}&m=${encodeURIComponent(market)}${order ? `&o=${encodeURIComponent(order)}` : ''}`, { timeoutMs: 15_000 });
     setChecking(false);
     if (r.ok && r.data && r.data.valid === true && typeof r.data.value === 'number' && r.data.value > 0) {
       onApplied({ code: c.toUpperCase(), value: r.data.value });
