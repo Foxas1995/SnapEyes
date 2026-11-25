@@ -464,9 +464,9 @@ async function checkLinks() {
     const r = JSON.parse(await page.eval(`JSON.stringify({ legal: [...document.querySelectorAll('#legalNav a')].map((a) => a.getAttribute('href')), try: [...document.querySelectorAll('a.lp-btn-gold, a.lp-btn-line')].map((a) => a.getAttribute('href')).filter((h) => !h.startsWith('mailto:')) })`));
     const market = m.replace('m=', '');
     const msgs = [];
-    if (r.legal.length !== 5) msgs.push(`${r.legal.length} legal links (4 documents and the withdrawal function)`);
+    if (r.legal.length !== 4) msgs.push(`${r.legal.length} legal links (the 4 documents; no withdrawal function at the foot of the landing since 2026-11-25)`);
     for (const h of r.legal) {
-      if (!new RegExp(`^/(privacy|terms|withdrawal|imprint|order)\\?[^#]*lang=${lang}(&|$)`).test(h)) msgs.push(`${h} has no lang=${lang}`);
+      if (!new RegExp(`^/(privacy|terms|withdrawal|imprint)\\?[^#]*lang=${lang}(&|$)`).test(h)) msgs.push(`${h} has no lang=${lang}`);
       if (market && !h.includes(`m=${market}`)) msgs.push(`${h} lacks m=${market}`);
       if (!market && /[?&]m=/.test(h)) msgs.push(`${h} names a market on the default market`);
     }

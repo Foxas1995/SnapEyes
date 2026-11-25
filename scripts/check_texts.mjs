@@ -809,7 +809,8 @@ function checkLandingCopy(root, mods, strings, out) {
     const labels = legal.LEGAL_LABELS[l], online = legal.WITHDRAWAL_ONLINE[l];
     for (const d of ['privacy', 'terms', 'withdrawal', 'imprint']) if (x.footer?.legal?.[d] !== labels[d]) out.push(`${rel}: footer.legal.${d} is "${x.footer?.legal?.[d]}", src/shared/legal.ts LEGAL_LABELS.${l}.${d} is "${labels[d]}"`);
     if (x.footer?.legalNav !== labels.nav) out.push(`${rel}: footer.legalNav is "${x.footer?.legalNav}", LEGAL_LABELS.${l}.nav is "${labels.nav}"`);
-    if (x.footer?.legal?.withdrawFn !== online.button) out.push(`${rel}: footer.legal.withdrawFn is "${x.footer?.legal?.withdrawFn}", WITHDRAWAL_ONLINE.${l}.button is "${online.button}"`);
+    // the owner's word of 2026-11-25 (the third of that day): the landing's footer offers no online withdrawal function (it is on the legal pages)
+    if (x.footer?.legal && 'withdrawFn' in x.footer.legal) out.push(`${rel}: footer.legal.withdrawFn is back ("${x.footer.legal.withdrawFn}"): the landing's footer has the four documents only`);
     const w = (x.faq?.items ?? []).find((it) => it.id === 'withdraw');
     if (w && !w.a.includes(online.button)) out.push(`${rel}: the faq answer "withdraw" does not name the online withdrawal button "${online.button}" (src/shared/legal.ts WITHDRAWAL_ONLINE.${l}.button)`);
     // the button of the phone picture in step 2 (shown once ordering is open) is the real checkout button of /try: its statutory label

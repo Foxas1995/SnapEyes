@@ -6,7 +6,7 @@ import { useMarket } from '../shared/useMarket';
 import { EMPTY_VIEW, REAL_DEPS, driveOrder, stopOf, type DriveView, type OrderLink } from './driver';
 import { KEY_RE, ORDER_RE, SESSION_RE, callApi, isStatus, orderPageUrl, statusPath, type OrderPrint, type OrderState, type OrderStatus } from './api';
 import { countryName, printName, printProduct } from '../shared/prints';
-import { WithdrawEntry, WithdrawForm, WithdrawnCard } from './WithdrawPanel';
+import { WithdrawForm, WithdrawnCard } from './WithdrawPanel';
 import { PrintOffer } from './PrintOffer';
 import { watchPrint, type PrintBack } from './printAddon';
 import { CARD, GOLD_BTN, PLAIN_BTN } from './ui';
@@ -21,8 +21,7 @@ import { clearCheckoutStorage } from '../try/checkout';
 import { CONTACT_EMAIL } from '../landing/config';
 import { styleName } from '../shared/styles';
 import { layoutName } from '../shared/layouts';
-import { LEGAL_DOCS, LEGAL_LABELS, WITHDRAWAL_ONLINE, legalHref } from '../shared/legal';
-import { withdrawHref } from './withdraw';
+import { LEGAL_DOCS, LEGAL_LABELS, legalHref } from '../shared/legal';
 import { count, note as noteCounter } from '../shared/counter';
 import { BrandPicture } from '../shared/BrandLogo';
 import { livePayment, purchaseId, track } from '../shared/metaPixel';
@@ -60,8 +59,8 @@ function readPrintReturn(): { ps: string | null; cancelled: boolean } {
 }
 const PRINT_RETURN = typeof window !== 'undefined' && !WITHDRAW_MODE ? readPrintReturn() : { ps: null, cancelled: false };
 
-// the states of a concluded contract: the withdrawal function stays on the page for all of them (the server decides
-// whether the right still exists and says so in its answer)
+// the states of a concluded contract (the page offers no withdrawal function of its own since the owner's word of 2026-11-25, the third of that day: it is
+// on the legal pages, and its form is this page's ?withdraw=1 mode)
 const CONTRACT_STATES: readonly OrderState[] = ['pending', 'paid', 'making', 'review', 'ready'];
 
 const secondsLeft = (until: number, now: number) => Math.max(0, Math.ceil((until - now) / 1000));
@@ -376,7 +375,6 @@ export const OrderApp: React.FC = () => {
               text only: no motion there), keyed by what the card shows so a re-render of the same card never replays it; the withdrawal form keeps one key, a form is never remounted
               under the hands of the person typing in it */}
           <div key={WITHDRAW_MODE ? 'withdraw' : card} className={`flex flex-col gap-4${rec.moved && !WITHDRAW_MODE && card !== 'review' ? ' fx-step' : ''}`}>{content}</div>
-          {!WITHDRAW_MODE && LINK && st && CONTRACT_STATES.includes(st.state) && <WithdrawEntry C={C} lang={lang} link={LINK} />}
           <p className="text-center text-xs text-zinc-400 mt-2">
             {C.contact.lead}{' '}
             <a href={mail} className="inline-flex items-center gap-1 underline underline-offset-4 decoration-white/30 hover:text-white">
@@ -386,8 +384,7 @@ export const OrderApp: React.FC = () => {
         </div>
       </main>
 
-      {/* the legal pages open in a new tab, so an artwork being made is never interrupted; the withdrawal function, as
-          on every page's foot (src/shared/legal.ts), leads to this page's own form with this order filled in */}
+      {/* the legal pages open in a new tab, so an artwork being made is never interrupted */}
       <footer className="max-w-2xl mx-auto px-4 pb-10">
         <nav aria-label={LEGAL_LABELS[lang].nav} className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-zinc-400">
           {LEGAL_DOCS.map((d) => (
@@ -395,11 +392,6 @@ export const OrderApp: React.FC = () => {
               {LEGAL_LABELS[lang][d]}
             </a>
           ))}
-          {!WITHDRAW_MODE && (
-            <a data-testid="footer-withdraw" href={withdrawHref(lang, LINK)} className="hover:text-white hover:underline underline-offset-4 rounded-sm">
-              {WITHDRAWAL_ONLINE[lang].button}
-            </a>
-          )}
         </nav>
       </footer>
     </div>

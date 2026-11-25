@@ -684,7 +684,7 @@ async function checkTransition() {
   for (const [label, how] of [
     ['an order address with its key', "location.assign('/order?o=abcd1234&k=0123456789abcdef0123456789abcdef')"],
     ['the return from a payment', "location.assign('/try?checkout=cancelled&o=abcd1234')"],
-    ['the online withdrawal function (the footer link)', "document.querySelector('.lp-ftr a[href*=\"withdraw=1\"]').click()"],
+    ['the online withdrawal function (its address; the landing has no link to it since 2026-11-25)', "location.assign('/order?withdraw=1&lang=en')"],
   ]) {
     const r = await offered('/?lang=en', how, 10);
     expect('transition', !!r.hit, `${label}: the browser never offered a transition to skip in ${r.n} attempts, so the gate could not be tested`);

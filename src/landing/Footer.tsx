@@ -66,8 +66,8 @@ export function SiteFooter() {
             <p>© {new Date().getFullYear()} {f.rights}</p>
             <CurrencySwitch label={f.currency} flush />
           </div>
-          {/* the legal pages (src/legal) in the language the visitor reads now and the market's edition, and the online withdrawal
-              function (Art. 11a Directive 2011/83/EU: clearly labelled and easy to reach while the right of withdrawal lasts) */}
+          {/* the legal pages (src/legal) in the language the visitor reads now and the market's edition (the online withdrawal function is on those
+              pages: the owner's word of 2026-11-25) */}
           <nav id="legalNav" aria-label={f.legalNav}>
             {legal.map((l) => (
               <a key={l.key} href={l.href}>{l.label}</a>

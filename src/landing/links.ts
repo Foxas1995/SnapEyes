@@ -1,30 +1,28 @@
 // Every link of the new landing that leaves the page for a legal page or /try, in one place, so none is written by hand.
-// The legal links go only through src/shared/legal.ts (legalHref, withdrawFunctionHref: they carry ?lang= and, through
+// The legal links go only through src/shared/legal.ts (legalHref: they carry ?lang= and, through
 // editionHref, the market's edition m=au / m=hu exactly as the legal pack and the footer do today), the /try link through
 // ./config.ts tryUrl (?lang= and m=). The links read the page's market when they are made, so each hook subscribes to it.
 import { useMemo } from 'react';
 import { useLang } from './lang';
 import { useCopy } from './copy/useCopy';
 import { giftUrl, tryUrl } from './config';
-import { LEGAL_DOCS, legalHref, withdrawFunctionHref, type LegalDocId } from '../shared/legal';
+import { LEGAL_DOCS, legalHref, type LegalDocId } from '../shared/legal';
 import type { Lang } from '../shared/lang';
 import { useMarket } from '../shared/useMarket';
 import type { LandingCopy } from './copy/types';
 
 export interface LegalLink {
-  /** The four documents, then the online withdrawal function. */
-  key: LegalDocId | 'withdrawFn';
+  /** The four documents. */
+  key: LegalDocId;
   label: string;
   href: string;
 }
 
-/** The footer's legal links in the page's order (privacy, terms, withdrawal, legal notice) and the withdrawal function last,
- *  with the labels of the copy (scripts/check_texts.mjs checks they are the statutory ones of src/shared/legal.ts). */
+/** The footer's legal links in the page's order (privacy, terms, withdrawal, legal notice), with the labels of the copy (scripts/check_texts.mjs
+ *  checks they are the ones of src/shared/legal.ts). The owner's word of 2026-11-25 (the third of that day): the online withdrawal function is not
+ *  offered at the foot of this page any more; it is on the legal pages (their foot, the withdrawal page, the legal notice). */
 export function legalLinkList(lang: Lang, footer: LandingCopy['footer']): LegalLink[] {
-  return [
-    ...LEGAL_DOCS.map((doc): LegalLink => ({ key: doc, label: footer.legal[doc], href: legalHref(doc, lang) })),
-    { key: 'withdrawFn', label: footer.legal.withdrawFn, href: withdrawFunctionHref(lang) },
-  ];
+  return LEGAL_DOCS.map((doc): LegalLink => ({ key: doc, label: footer.legal[doc], href: legalHref(doc, lang) }));
 }
 
 export function useLegalLinks(): LegalLink[] {

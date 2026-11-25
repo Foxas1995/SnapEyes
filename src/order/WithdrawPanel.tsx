@@ -1,24 +1,20 @@
 // The online withdrawal function on the /order page (Art. 11a Directive 2011/83/EU as amended by Directive (EU)
-// 2023/2673; § 356a BGB). Three parts:
-//  - WithdrawEntry: on the order page, a button with the statutory words ("Withdraw from contract here" / "Vertrag hier
-//    widerrufen") that opens the form. It is a link to the page's withdrawal mode (./withdraw.ts withdrawHref), which
-//    never starts making anything, so opening the form cannot itself end the right of withdrawal.
+// 2023/2673; § 356a BGB). Two parts (the order page's own card with the button that opened the form is gone since the owner's word of 2026-11-25,
+// the third of that day: the function is reached from the legal pages, whose link opens this page's withdrawal mode, ./withdraw.ts withdrawHref):
 //  - WithdrawForm: name, email for the receipt, the order (filled in from the link), the statement as it is sent, and
 //    the confirmation button with the statutory words ("Confirm withdrawal" / "Widerruf bestätigen").
 //  - the honest answer: the server alone decides whether the withdrawal takes effect (nothing made yet) or the right
-//    had already ended (making had started after the customer's express consent and its email confirmation), and
-//    the page says exactly that, with the time the statement arrived.
+//    had already ended (making had started), and the page says exactly that, with the time the statement arrived.
 import React, { useRef, useState } from 'react';
-import { ExternalLink, FileX2 } from 'lucide-react';
 import { dateOf, whenOf, type OrderCopy } from './copy';
 import { adoptMarket, money } from '../shared/markets';
 import type { OrderLink } from './driver';
 import type { OrderStatus } from './api';
-import { cleanOrder, emailOk, nameOk, newNonce, orderOk, readWithdrawal, sendWithdrawal, withdrawHref, NAME_MAX, EMAIL_MAX, type WithdrawDone, type WithdrawError } from './withdraw';
-import { WITHDRAWAL_ONLINE, legalEdition, legalHref } from '../shared/legal';
+import { cleanOrder, emailOk, nameOk, newNonce, orderOk, readWithdrawal, sendWithdrawal, NAME_MAX, EMAIL_MAX, type WithdrawDone, type WithdrawError } from './withdraw';
+import { WITHDRAWAL_ONLINE, legalEdition } from '../shared/legal';
 import { useMarket } from '../shared/useMarket';
 import type { Lang } from '../try/lang';
-import { CARD, LINK, PLAIN_BTN, Spinner } from './ui';
+import { CARD, PLAIN_BTN, Spinner } from './ui';
 
 const FIELD = 'mt-1 w-full min-h-[44px] rounded-xl bg-black/40 border px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:border-gold/70';
 const CONFIRM_BTN = 'min-h-[48px] px-4 py-3 rounded-xl bg-[#f0f3fa] text-black text-sm font-bold flex items-center justify-center gap-2 text-center active:scale-[0.98] disabled:opacity-60';
@@ -32,23 +28,6 @@ const AclNote: React.FC<{ C: OrderCopy; usOnly?: boolean }> = ({ C, usOnly = fal
   if (e === 'us') return <p data-testid="withdraw-us" className="text-xs text-zinc-400 mt-2 leading-relaxed">{C.withdraw.us}</p>;
   return null;
 };
-
-/** The order page's withdrawal section: what the right is, and the button to the form. */
-export const WithdrawEntry: React.FC<{ C: OrderCopy; lang: Lang; link: OrderLink }> = ({ C, lang, link }) => (
-  <section data-testid="withdraw-entry" aria-labelledby="withdraw-entry-h" className={CARD}>
-    <h2 id="withdraw-entry-h" className="font-luxury text-lg font-bold">{C.withdraw.heading}</h2>
-    {/* the owner's decision of 2026-11-25, the second one of that day: no sentence about withdrawing here (it is in the refund conditions, linked below); the US edition keeps its line */}
-    <AclNote C={C} usOnly />
-    <div className="flex flex-wrap items-center gap-x-5 gap-y-3 mt-4">
-      <a data-testid="withdraw-open" href={withdrawHref(lang, link)} className={`${PLAIN_BTN} w-full sm:w-auto`}>
-        <FileX2 className="w-4 h-4 shrink-0" /> {WITHDRAWAL_ONLINE[lang].button}
-      </a>
-      <a href={legalHref('withdrawal', lang)} target="_blank" rel="noopener" className={`text-xs text-zinc-400 inline-flex items-center gap-1 ${LINK}`}>
-        <ExternalLink className="w-3.5 h-3.5" /> {C.withdraw.info}
-      </a>
-    </div>
-  </section>
-);
 
 /** A withdrawn order, as its status reports it. */
 export const WithdrawnCard: React.FC<{ C: OrderCopy; lang: Lang; st: OrderStatus }> = ({ C, lang, st }) => {
