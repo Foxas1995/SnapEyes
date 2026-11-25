@@ -95,12 +95,12 @@ const GLOBE_FILES: Readonly<Record<string, readonly [string, number]>> = {
   'supernova_own_160': ['b9a8936114', 2674],
   'supernova_own_240': ['c551242075', 5580],
   'supernova_own_480': ['33f7087076', 24034],
-  'universe_own_160': ['9ee1e50bc4', 4790],
-  'universe_own_240': ['424518e231', 10928],
-  'universe_own_480': ['a952c3e4b0', 45768],
-  'universe_yg_160': ['c144da851c', 5804],
-  'universe_yg_240': ['823f463ae8', 13026],
-  'universe_yg_480': ['b49c9486b2', 53870],
+  'universe_own_160': ['ca88559522', 2686],
+  'universe_own_240': ['1173c07da3', 5326],
+  'universe_own_480': ['40290b662f', 19264],
+  'universe_yg_160': ['470ac38d64', 2614],
+  'universe_yg_240': ['3e32e50a07', 5284],
+  'universe_yg_480': ['f640effd01', 18960],
 };
 
 /** The address of an artwork of the globe at a width (160, 240 or 480 px). */
