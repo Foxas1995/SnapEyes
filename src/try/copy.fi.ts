@@ -82,6 +82,7 @@ export const fi: TryCopy = {
     stepsOpenMore: 'Katso suoraan eteenpäin ja nosta yläluomea varovasti sormenpäällä, jotta luomi tai ripset eivät peitä iiristä.',
     stepsShots: 'Ota 3-5 otosta ja lähetä ne kaikki.',
     stepsShotsMore: ' Käänny hieman otosten välillä. Mittaamme jokaisen ja käytämme terävintä; oikeassa testissä parhaassa otoksessa oli 3,7 kertaa niin paljon yksityiskohtia kuin heikoimmassa.',
+    cameraFirst: 'Kuvaa silmä puhelimesi omalla kameralla (2x, ikkunan ääressä) ja valitse kuva sitten tästä: niin siitä tulee terävin.',
     takePhoto: 'Ota kuva',
     pickShots: 'Valitse 3-5 otosta',
     consent: 'Tallenna silmäni kuva ja tulos SnapEyesin koulutusmuistiin, jotta entisöinnit paranevat ajan myötä. Nimetön, ei nimeä eikä kasvoja. Voit pyytää meitä poistamaan sen milloin tahansa.',

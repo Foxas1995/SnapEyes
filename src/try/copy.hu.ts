@@ -102,6 +102,7 @@ export const hu: TryCopy = {
     stepsOpenMore: 'Nézz egyenesen előre, és egy ujjheggyel óvatosan emeld meg a felső szemhéjadat, hogy se a szemhéj, se a szempillák ne takarják az íriszt.',
     stepsShots: 'Készíts 3-5 felvételt, és küldd el mindet.',
     stepsShotsMore: ' A felvételek között fordulj egy kicsit. Mindegyiket megmérjük, és a legélesebbet használjuk; egy valódi teszten a legjobb felvételen 3,7-szer annyi részlet volt, mint a leggyengébben.',
+    cameraFirst: 'Fotózd le a szemed a telefonod saját kamerájával (2x, ablak mellett), aztán itt válaszd ki a fotót: így lesz a legélesebb.',
     takePhoto: 'Fotó készítése',
     pickShots: '3-5 fotó kiválasztása',
     consent: 'A szemfotóm és az eredmény mentése a SnapEyes tanító adattárába, hogy a helyreállítások idővel jobbak legyenek. Névtelenül, név és arc nélkül. Bármikor kérheted a törlésüket.',

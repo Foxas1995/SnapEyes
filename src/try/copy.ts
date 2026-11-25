@@ -104,6 +104,9 @@ const en = {
     stepsOpenMore: 'Look straight ahead and lift the upper lid gently with a fingertip, so no lid or lashes cross the iris.',
     stepsShots: 'Take 3-5 shots and send them all.',
     stepsShotsMore: ' Turn a little between shots. We measure every one and use the sharpest; on a real test the best shot had 3.7x the detail of the worst.',
+    // the capture screen's first way (the owner's decision of 2026-11-25): the phone's own camera app, then the picker; the page's camera button (capture="environment",
+    // the phone's reduced capture mode, visibly softer in his test) is the second, quieter choice
+    cameraFirst: 'Photograph your eye with your phone\'s own camera (2x, by a window), then choose the photo here: that way it is sharpest.',
     takePhoto: 'Take a photo',
     pickShots: 'Pick 3-5 shots',
     consent: "Save my eye photo and result to SnapEyes' training memory so restorations get better over time. Anonymous, no name or face. You can ask us to delete it any time.",
@@ -642,6 +645,7 @@ const de: TryCopy = {
     stepsOpenMore: 'Schauen Sie geradeaus und heben Sie das Oberlid sanft mit einer Fingerspitze an, damit weder Lid noch Wimpern über der Iris liegen.',
     stepsShots: 'Machen Sie 3-5 Aufnahmen und senden Sie alle.',
     stepsShotsMore: ' Drehen Sie sich zwischen den Aufnahmen ein wenig. Wir messen jede und verwenden die schärfste; in einem echten Test hatte die beste Aufnahme 3,7-mal so viele Details wie die schlechteste.',
+    cameraFirst: 'Fotografieren Sie Ihr Auge mit der Kamera-App Ihres Handys (2x, am Fenster) und wählen Sie dann das Foto hier: So wird es am schärfsten.',
     takePhoto: 'Foto aufnehmen',
     pickShots: '3-5 Fotos wählen',
     consent: 'Mein Augenfoto und das Ergebnis im Trainingsspeicher von SnapEyes sichern, damit Restaurierungen mit der Zeit besser werden. Anonym, ohne Namen oder Gesicht. Sie können jederzeit die Löschung verlangen.',

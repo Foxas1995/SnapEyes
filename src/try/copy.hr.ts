@@ -84,6 +84,7 @@ export const hr: TryCopy = {
     stepsOpenMore: 'Gledajte ravno naprijed i vrhom prsta nježno podignite gornji kapak, tako da ni kapak ni trepavice ne prelaze preko šarenice.',
     stepsShots: 'Napravite 3-5 snimaka i pošaljite sve.',
     stepsShotsMore: ' Između snimaka se malo okrenite. Mjerimo svaku i koristimo najoštriju; u pravom testu najbolja je snimka imala 3,7 puta više detalja od najslabije.',
+    cameraFirst: 'Fotografirajte oko kamerom svojeg mobitela (2x, uz prozor), a zatim ovdje odaberite fotografiju: tako je najoštrija.',
     takePhoto: 'Snimite fotografiju',
     pickShots: 'Odaberite 3-5 snimaka',
     consent: 'Spremiti fotografiju mojeg oka i rezultat u SnapEyes memoriju za učenje kako bi obnove s vremenom bile sve bolje. Anonimno, bez imena i lica. Brisanje možete zatražiti u bilo kojem trenutku.',

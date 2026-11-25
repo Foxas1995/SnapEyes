@@ -87,6 +87,7 @@ export const et: TryCopy = {
     stepsOpenMore: 'Vaata otse ette ja tõsta ülemist laugu õrnalt sõrmeotsaga, et laug ega ripsmed ei ulatuks iirise peale.',
     stepsShots: 'Tee 3-5 võtet ja saada kõik.',
     stepsShotsMore: ' Pööra end võtete vahel veidi. Mõõdame iga võtet ja kasutame kõige teravamat; päris katses oli parimal võttel 3,7 korda rohkem detaile kui kõige nõrgemal.',
+    cameraFirst: 'Pildista silma oma telefoni kaameraga (2x, akna juures) ja vali siis foto siit: nii on see kõige teravam.',
     takePhoto: 'Tee foto',
     pickShots: 'Vali 3-5 võtet',
     consent: 'Salvesta minu silmafoto ja tulemus SnapEyesi õppemällu, et taastamine muutuks ajaga paremaks. Anonüümselt, ilma nime ja näota. Võid igal ajal paluda meil selle kustutada.',

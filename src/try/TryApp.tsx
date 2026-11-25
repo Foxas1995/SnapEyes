@@ -1096,7 +1096,8 @@ export const TryApp: React.FC = () => {
                 window tall, so the steps and the photo button stay on the first screen of a 412 x 915 phone; it loads and plays only on screen (src/shared/GuideVideo.tsx) */}
             <GuideVideo key={lang} src={`/assets/howto/howto-11-${lang}.mp4`} poster={`/assets/howto/howto-11-${lang}.jpg`} w={720} h={720}
               play={T.capture.videoPlay} pause={T.capture.videoPause} className="mx-auto rounded-2xl overflow-hidden border border-white/10"
-              style={{ width: 'min(100%, 40vh)' }} />
+              style={{ width: 'min(100%, 36vh, calc(100vh - 380px))' }} />{/* 2026-11-25: the line about the phone's own camera stands above the gold button, the guide is at most
+                36 percent of the window tall (40 before) and on a screen under about 600 px less still (the button stays on the first screen of a 320 x 568 phone, check:polish fold) */}
 
             {/* on a short screen (a phone under 820 px tall) the steps come after the buttons: the way to take the photo is on the first screen, the steps are one scroll away (QA of 2026-10-20: at 360 x 740 the button was below the fold) */}
             {/* the four steps, one line each (the video shows them); the open eye, the 3-5 shots and the pair are one tap away in a closed disclosure (the owner, 2026-10-20: "a lot of text before the photo") */}
@@ -1117,14 +1118,18 @@ export const TryApp: React.FC = () => {
               </details>
             </div>
 
-            {/* the first camera shot starts a fresh collection */}
-            <button onClick={() => { clearShots(); fileRef.current?.click(); }} className="fx-gold gold-metal w-full py-4 rounded-2xl font-luxury font-bold uppercase tracking-widest text-sm flex items-center justify-center gap-2">
-              <Camera className="w-5 h-5" /> {T.capture.takePhoto}
+            {/* the better way first (the owner's decision of 2026-11-25: the same eye taken with the page's camera button, the phone's reduced capture mode of
+                capture="environment", came out visibly softer than with the phone's own camera app): one line, then the gold button opens the picker WITHOUT the
+                capture attribute (an iPhone offers its photo library, the camera and files; an Android phone its photo picker or a chooser with the camera) */}
+            <p data-testid="camera-first" className="text-xs text-zinc-300 text-center">{T.capture.cameraFirst}</p>
+            <button data-testid="pick-first" onClick={() => galleryRef.current?.click()} className="fx-gold gold-metal w-full py-4 rounded-2xl font-luxury font-bold uppercase tracking-widest text-sm flex items-center justify-center gap-2">
+              <Upload className="w-5 h-5" /> {T.capture.pickShots}
             </button>
 
             <div className={`grid gap-3 ${offerSample ? 'grid-cols-2' : 'grid-cols-1'}`}>
-              <button onClick={() => galleryRef.current?.click()} className="py-3 rounded-xl bg-white/5 border border-white/10 text-sm font-semibold flex items-center justify-center gap-2 hover:bg-white/10">
-                <Upload className="w-4 h-4 text-gold" /> {T.capture.pickShots}
+              {/* the page's own camera, the second and quieter choice; the first camera shot starts a fresh collection */}
+              <button data-testid="camera-direct" onClick={() => { clearShots(); fileRef.current?.click(); }} className="py-3 rounded-xl bg-white/5 border border-white/10 text-sm font-semibold flex items-center justify-center gap-2 hover:bg-white/10">
+                <Camera className="w-4 h-4 text-gold" /> {T.capture.takePhoto}
               </button>
               {offerSample && (
                 <button onClick={trySample} className="py-3 rounded-xl bg-white/5 border border-white/10 text-sm font-semibold flex items-center justify-center gap-2 hover:bg-white/10">

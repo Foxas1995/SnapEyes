@@ -85,6 +85,7 @@ export const lv: TryCopy = {
     stepsOpenMore: 'Skatieties taisni uz priekšu un ar pirksta galu saudzīgi paceliet augšējo plakstiņu, lai plakstiņš un skropstas neaizsedz varavīksneni.',
     stepsShots: 'Uzņemiet 3-5 kadrus un nosūtiet visus.',
     stepsShotsMore: ' Starp kadriem nedaudz pagriezieties. Mēs izmērām katru un izmantojam asāko; īstā testā labākajā kadrā bija 3,7 reizes vairāk detaļu nekā sliktākajā.',
+    cameraFirst: 'Nofotografējiet aci ar sava telefona kameru (2x, pie loga) un pēc tam izvēlieties fotogrāfiju šeit: tā tā būs visasākā.',
     takePhoto: 'Fotografēt',
     pickShots: 'Izvēlēties 3-5 kadrus',
     consent: 'Saglabāt manas acs fotogrāfiju un rezultātu SnapEyes mācību atmiņā, lai atjaunošana ar laiku kļūtu arvien labāka. Anonīmi, bez vārda un sejas. Dzēšanu varat lūgt jebkurā brīdī.',

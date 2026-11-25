@@ -73,6 +73,7 @@ export const lt: TryCopy = {
     stepsOpenMore: 'Žiūrėkite tiesiai į priekį ir piršto galiuku švelniai pakelkite viršutinį voką, kad nei vokas, nei blakstienos nedengtų rainelės.',
     stepsShots: 'Padarykite 3-5 kadrus ir siųskite visus.',
     stepsShotsMore: ' Tarp kadrų šiek tiek pasisukite. Įvertiname kiekvieną ir naudojame ryškiausią; tikrame bandyme geriausias kadras turėjo 3,7 karto daugiau detalių nei prasčiausias.',
+    cameraFirst: 'Nufotografuokite akį savo telefono kamera (2x, prie lango) ir pasirinkite nuotrauką: taip ji ryškiausia.',
     takePhoto: 'Fotografuoti',
     pickShots: 'Pasirinkti 3-5 kadrus',
     consent: 'Išsaugoti mano akies nuotrauką ir rezultatą SnapEyes mokymosi atmintyje, kad atkūrimas laikui bėgant gerėtų. Anonimiškai, be vardo ir veido. Bet kada galite paprašyti juos ištrinti.',
