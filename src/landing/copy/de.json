@@ -585,7 +585,7 @@
       {
         "id": "unhappy",
         "q": "Was, wenn mir das Ergebnis nicht gefällt?",
-        "a": "Sie sehen Ihre eigene Vorschau kostenlos, bevor Sie bezahlen, und nach der Zahlung beginnen wir sofort mit der Erstellung Ihrer Datei. Ist die Datei mangelhaft oder weicht sie deutlich von der freigegebenen Vorschau ab, schreiben Sie uns: Wir erstellen sie neu oder erstatten Ihnen den Preis. Einzelheiten zum Widerruf stehen unten."
+        "a": "Sie sehen Ihre eigene Vorschau kostenlos, bevor Sie bezahlen, und nach der Zahlung beginnen wir sofort mit der Erstellung Ihrer Datei. Ist die Datei mangelhaft oder weicht sie deutlich von der freigegebenen Vorschau ab, schreiben Sie uns: Wir erstellen sie neu."
       },
       {
         "id": "phone",
@@ -620,16 +620,11 @@
         "a": "Wir speichern Ihre kostenlose Vorschau nicht. Nur wenn Sie eine Bestellung beginnen, bewahren wir den Irisausschnitt und die Vorschau auf. Wenn Sie bestellen, bewahren wir die Dateien Ihrer Bestellung (nicht Ihr Smartphone-Foto) 12 Monate auf, damit Sie sie erneut herunterladen können, und löschen sie danach. Ihre Iris wird nie zur Identifizierung oder zum Training von KI verwendet. Einzelheiten finden Sie in unserer Datenschutzerklärung, verlinkt am Ende dieser Seite."
       },
       {
-        "id": "withdraw",
-        "q": "Kann ich eine Bestellung widerrufen?",
-        "a": "Wir beginnen mit der Erstellung Ihrer Datei, sobald Ihre Bestellbestätigung per E-Mail versandt ist, normalerweise innerhalb einer Minute nach Ihrer Zahlung. Ihr 14-tägiges Widerrufsrecht behalten Sie: Sie können binnen 14 Tagen ab Ihrer Bestellung widerrufen, auch wenn Sie Ihre Datei schon erhalten haben, und erhalten alles zurück, was Sie bezahlt haben. Sie können per E-Mail oder online mit „Vertrag hier widerrufen“ widerrufen, am Ende dieser Seite oder über den Widerrufslink in Ihrer Bestellbestätigung per E-Mail. Ist Ihre Datei mangelhaft oder weicht sie deutlich von der freigegebenen Vorschau ab, schreiben Sie uns: Wir erstellen sie neu oder erstatten Ihnen den Preis. Einzelheiten stehen in unseren AGB und der Widerrufsbelehrung, verlinkt am Ende dieser Seite."
-      },
-      {
         "id": "order",
         "q": "Wann kann ich bestellen?",
         "a": "Bestellungen sind bald möglich. Bis dahin ist die kostenlose Vorschau verfügbar. Zum Bestellen brauchen Sie nur eine E-Mail-Adresse.",
         "qOpen": "Wie bestelle ich?",
-        "aOpen": "Direkt nach Ihrer kostenlosen Vorschau, auf derselben Seite: Wählen Sie Ihren Stil und gehen Sie weiter zur Zahlungsseite von Stripe, auf der Sie bezahlen. Danach öffnet sich sofort Ihre Bestellseite, und ihren Link erhalten Sie per E-Mail. Sie brauchen nur eine E-Mail-Adresse."
+        "aOpen": "Direkt nach Ihrer kostenlosen Vorschau, auf derselben Seite: Wählen Sie Ihren Stil, setzen Sie das Häkchen zur digitalen Datei und gehen Sie weiter zur Zahlungsseite von Stripe, auf der Sie bezahlen. Danach öffnet sich sofort Ihre Bestellseite, und ihren Link erhalten Sie per E-Mail. Sie brauchen nur eine E-Mail-Adresse."
       },
       {
         "id": "pets",
@@ -641,11 +636,7 @@
   "faqAu": {
     "unhappy": {
       "q": "Was, wenn mir das Ergebnis nicht gefällt?",
-      "a": "Sie sehen Ihre eigene Vorschau kostenlos, bevor Sie bezahlen, und nach der Zahlung beginnen wir sofort mit der Erstellung Ihrer Datei. Ist die Datei mangelhaft oder weicht sie deutlich von der freigegebenen Vorschau ab, schreiben Sie uns. Unsere Leistungen sind mit Garantien verbunden, die nach dem Australian Consumer Law nicht ausgeschlossen werden können. Einzelheiten zur Stornierung stehen unten."
-    },
-    "withdraw": {
-      "q": "Kann ich eine Bestellung stornieren?",
-      "a": "Wir beginnen mit der Erstellung Ihrer Datei, sobald Ihre Bestellbestätigung per E-Mail versandt ist, normalerweise innerhalb einer Minute nach Ihrer Zahlung. Das 14-tägige Widerrufsrecht nach dem EU-Verbraucherrecht, das für Ihre Bestellung gilt, erlischt dadurch nicht: Auch wenn Sie Ihre Datei schon erhalten haben, können Sie binnen 14 Tagen per E-Mail oder online mit „Vertrag hier widerrufen“ widerrufen, am Ende dieser Seite oder über den Widerrufslink in Ihrer Bestellbestätigung per E-Mail, und wir erstatten Ihnen den vollen Preis. Das betrifft nur eine Meinungsänderung: Unsere Leistungen sind mit Garantien verbunden, die nach dem Australian Consumer Law nicht ausgeschlossen werden können. Ist Ihre Datei mangelhaft oder weicht sie deutlich von der freigegebenen Vorschau ab, schreiben Sie uns. Einzelheiten stehen in unseren AGB (Ihre Rechte in Australien) und der Widerrufsbelehrung, verlinkt am Ende dieser Seite."
+      "a": "Sie sehen Ihre eigene Vorschau kostenlos, bevor Sie bezahlen, und nach der Zahlung beginnen wir sofort mit der Erstellung Ihrer Datei. Ist die Datei mangelhaft oder weicht sie deutlich von der freigegebenen Vorschau ab, schreiben Sie uns. Unsere Leistungen sind mit Garantien verbunden, die nach dem Australian Consumer Law nicht ausgeschlossen werden können."
     }
   },
   "final": {

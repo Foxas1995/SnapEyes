@@ -142,7 +142,6 @@ export const hr: OrderCopy = {
   withdraw: {
     heading: 'Jednostrani raskid ugovora',
     lead: 'Pri narudžbi ste pristali da odmah počnemo izrađivati vašu datoteku. Dok još nismo počeli, ovaj ugovor ovdje možete jednostrano raskinuti. Čim izrada započne, vaše pravo na jednostrani raskid ugovora prestaje.',
-    leadOpen: 'Ovaj ugovor ovdje možete jednostrano raskinuti u roku od 14 dana od narudžbe, čak i nakon što ste primili datoteku, i vraćamo vam sve što ste platili.',
     acl: 'Ovo je pravo na jednostrani raskid ugovora prema potrošačkom pravu EU-a, za slučaj da se predomislite. Ono ne utječe na vaša prava prema australskom zakonu o zaštiti potrošača (Australian Consumer Law): ako je vaša datoteka neispravna ili ne odgovara opisu, pišite nam i navedite broj narudžbe.',
     us: 'Ovo je pravo na jednostrani raskid ugovora prema potrošačkom pravu EU-a, za slučaj da se predomislite. Ono ne utječe na vaša prava ako je datoteka neispravna: ako je vaša datoteka neispravna ili ne odgovara opisu, pišite nam i navedite broj narudžbe.',
     info: 'Pravo na jednostrani raskid ugovora',
@@ -189,6 +188,7 @@ export const hr: OrderCopy = {
       settling: 'Kad ste raskinuli ugovor, vaše se plaćanje još obrađivalo. Ako stigne do nas, vratit ćemo vam ga u cijelosti na način plaćanja kojim ste platili, najkasnije u roku od 14 dana.',
       refundStarted: (amount: string) => `Povrat iznosa (${amount}) na način plaćanja kojim ste platili je pokrenut. Ovisno o vašoj banci, može proći nekoliko dana dok stigne.`,
       lapsed: 'Izrada vaše datoteke već je bila započela. Pri narudžbi ste pristali da počnemo odmah i potvrdili da početkom izrade gubite pravo na jednostrani raskid ugovora, pa je to pravo već prestalo. Vaša narudžba ostaje na snazi: datoteku ćete pronaći na stranici svoje narudžbe.',
+      lapsedTerms: 'Izrada vaše datoteke već je bila započela. Prema našim uvjetima prodaje plaćanjem ste pristali da počnemo odmah i da nakon početka izrade ugovor više nije moguće jednostrano raskinuti, pa je to pravo već prestalo. Vaša narudžba ostaje na snazi: datoteku ćete pronaći na stranici svoje narudžbe.',
       lapsedPeriod: 'Rok od 14 dana za jednostrani raskid ugovora za ovu narudžbu već je bio istekao, pa je vaše pravo na jednostrani raskid prestalo prije nego što je vaša izjava stigla.',
       lapsedHelp: 'Vašu ćemo izjavu svejedno osobno pogledati i odgovoriti vam e-poštom. To ne utječe na vaša zakonska prava u slučaju neispravne datoteke.',
       mailSent: (email: string) => `Potvrda o primitku poslana je na ${email}.`,

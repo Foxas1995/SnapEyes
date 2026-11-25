@@ -26,20 +26,19 @@ const CONFIRM_BTN = 'min-h-[48px] px-4 py-3 rounded-xl bg-[#f0f3fa] text-black t
 /** An order of the Australian market (the page adopts its order's market): the line that keeps the Australian
  *  Consumer Law next to anything about the end of the right of withdrawal; an order of the US market: the line that
  *  keeps the rights for a faulty file there. */
-const AclNote: React.FC<{ C: OrderCopy }> = ({ C }) => {
+const AclNote: React.FC<{ C: OrderCopy; usOnly?: boolean }> = ({ C, usOnly = false }) => {
   const e = legalEdition(useMarket());
-  if (e === 'au') return <p data-testid="withdraw-acl" className="text-xs text-zinc-400 mt-2 leading-relaxed">{C.withdraw.acl}</p>;
+  if (e === 'au' && !usOnly) return <p data-testid="withdraw-acl" className="text-xs text-zinc-400 mt-2 leading-relaxed">{C.withdraw.acl}</p>;
   if (e === 'us') return <p data-testid="withdraw-us" className="text-xs text-zinc-400 mt-2 leading-relaxed">{C.withdraw.us}</p>;
   return null;
 };
 
 /** The order page's withdrawal section: what the right is, and the button to the form. */
-export const WithdrawEntry: React.FC<{ C: OrderCopy; lang: Lang; link: OrderLink; consent?: boolean }> = ({ C, lang, link, consent = false }) => (
+export const WithdrawEntry: React.FC<{ C: OrderCopy; lang: Lang; link: OrderLink }> = ({ C, lang, link }) => (
   <section data-testid="withdraw-entry" aria-labelledby="withdraw-entry-h" className={CARD}>
     <h2 id="withdraw-entry-h" className="font-luxury text-lg font-bold">{C.withdraw.heading}</h2>
-    {/* an order placed without the consent box (the owner's decision of 2026-11-25) keeps the 14 days; one that holds a consent: the lead of before */}
-    <p data-testid="withdraw-lead" className="text-xs text-zinc-400 mt-2 leading-relaxed">{consent ? C.withdraw.lead : C.withdraw.leadOpen}</p>
-    <AclNote C={C} />
+    {/* the owner's decision of 2026-11-25, the second one of that day: no sentence about withdrawing here (it is in the refund conditions, linked below); the US edition keeps its line */}
+    <AclNote C={C} usOnly />
     <div className="flex flex-wrap items-center gap-x-5 gap-y-3 mt-4">
       <a data-testid="withdraw-open" href={withdrawHref(lang, link)} className={`${PLAIN_BTN} w-full sm:w-auto`}>
         <FileX2 className="w-4 h-4 shrink-0" /> {WITHDRAWAL_ONLINE[lang].button}
@@ -190,7 +189,7 @@ const WithdrawResult: React.FC<{ C: OrderCopy; lang: Lang; d: WithdrawDone; emai
         </>
       ) : (
         <>
-          <p className="text-sm text-zinc-300 mt-2">{d.reason === 'period_over' ? D.lapsedPeriod : D.lapsed}</p>
+          <p className="text-sm text-zinc-300 mt-2">{d.reason === 'period_over' ? D.lapsedPeriod : d.terms ? D.lapsedTerms : D.lapsed}</p>
           <p className="text-xs text-zinc-400 mt-2">{D.lapsedHelp}</p>
           <AclNote C={C} />
         </>

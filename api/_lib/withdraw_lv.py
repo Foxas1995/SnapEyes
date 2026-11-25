@@ -66,6 +66,10 @@ def receipt_lv(stmt, *, order, name, money, by_day, last_day, seller):
         what = [f"14 dienu atteikuma termiņš šim pasūtījumam beidzās {end}, tāpēc jūsu atteikuma tiesības jau bija "
                 f"beigušās, kad saņēmām jūsu paziņojumu. Jūsu paziņojumu tomēr izskatīsim personīgi un atbildēsim "
                 f"jums e-pastā."]
+    elif stmt.get("consent_kind") == "by_terms":   # lapsed: making began on an order placed under the terms (the owner's decision of 2026-11-25, the second one of that day)
+        what = [f"Jūsu failu sākām veidot (sākums: {_w(stmt.get('began_at'))}). Saskaņā ar mūsu pārdošanas noteikumiem, kas attiecas uz jūsu pasūtījumu, maksājot jūs piekritāt, ka sākam uzreiz un ka pēc tam, kad esam sākuši, no līguma vairs nevar atteikties. Tāpēc jūsu atteikuma tiesības jau bija beigušās, kad saņēmām jūsu paziņojumu. Jūsu pasūtījums paliek spēkā, un failu saņemat savā pasūtījuma lapā.",
+                "Jūsu paziņojumu tomēr izskatīsim personīgi un atbildēsim jums e-pastā. Tas neietekmē jūsu likumīgās "
+                "tiesības, ja failam ir trūkumi."]
     else:   # lapsed: making began after the consent and the confirmation
         what = [f"Pasūtot jūs skaidri piekritāt, ka jūsu failu sākam veidot uzreiz, un apliecinājāt, ka līdz ar to "
                 f"zaudējat atteikuma tiesības, tiklīdz esam sākuši (jūsu piekrišanas laiks: "

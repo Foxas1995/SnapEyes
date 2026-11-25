@@ -21,7 +21,7 @@ POST /api/checkout {order, k, eyes: 1-8, style, layout, names (a list, or the ol
      400). lang: the page's language when the market's edition of the legal texts has it (the Australian one: en, de;
      the US one: en), else "en": the order, its consent text and its emails are in that language. The server computes the price from eyes, style and market (a price or currency sent by the client is
      ignored), on the US market refuses without the withdrawal waiver and records the consent's version, time and text fingerprint
-     (every other market since 2026-11-25, the owner's decision, has no consent box: the order records placed {at, lang, terms, box: false}),
+     (every other market since the owner's decision of 2026-11-25, the second one of that day: the consent of the kind "by_terms", {kind, version: the terms' date, at, lang, box: false}),
      creates a Stripe Checkout Session (mode payment, the market's currency, one line item, the customer's email
      collected by Stripe, Stripe's own page in de or en (en-GB for Australia), the payment methods of the visitor's country (pay.payment_methods, since 2026-11-25), no
      Stripe Tax, no Adaptive Pricing), records market, currency and amount with the order and in the session's
@@ -251,7 +251,7 @@ def checkout(body):
     order, k = body.get("order"), body.get("k")
     rec = pay.load_order(order, k)
     spec = pay.spec_from(body, markets=pay.SELECTABLE)
-    # the consent box is asked only where the market's checkout still shows it (pay.consent_box: the US market; the owner's decision of 2026-11-25)
+    # the consent box is asked only where the market's checkout still shows it (pay.consent_box: the US market; the owner's decision of 2026-11-25, the second one of that day)
     if pay.consent_box(spec["market"]) and body.get("consent_digital") is not True:
         raise store.Answer(400, "consent_required", "Please tick the box about the digital file and your right of "
                            "withdrawal.", False)
@@ -302,13 +302,14 @@ def checkout(body):
     currency = pay.market_currency(market)
     # the exact text the customer ticked (the market's own for Australia) is kept with the order: the confirmation
     # email quotes it word for word
-    # without the box (every market but the US one, since 2026-11-25) no consent is recorded: the plain fact of how the order was placed instead
-    consent, placed = None, {"at": pay.iso(now), "lang": lang, "terms": pay.legal_day(), "box": False}
     if pay.consent_box(market):
         text = pay.consent_for(market, lang)
         consent = {"version": pay.CONSENT_VERSION, "at": pay.iso(now), "lang": lang, "text": text,
                    "text_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]}
-        placed = None
+    else:
+        # the owner's decision of 2026-11-25, the second one of that day: no box; the order is placed under the terms of this date, which say that by paying the customer agrees to the immediate start
+        # and that the contract can no longer be withdrawn from once making has started: the plain facts are kept
+        consent = {"kind": "by_terms", "version": pay.legal_day(), "at": pay.iso(now), "lang": lang, "box": False}
     camp = counter.pack(counter.parse(body.get("camp")))     # the campaign code of the advertisement the customer came from: "" when there is none
     # the Meta Conversions API's identifiers of this visit (api/_lib/meta.py checkout_meta: the _fbp and _fbc values the page sent, the IP address and
     # the user agent of this request), only while it is configured; they travel in the session's metadata and are stored nowhere else
@@ -317,7 +318,7 @@ def checkout(body):
     sid = sess["id"]
     rec = dict(rec, lang=lang, sessions=(list(rec.get("sessions") or [])[-9:] + [sid]),
                checkout={"session_id": sid, "created_at": int(now), "created": pay.iso(now), "amount": amount,
-                         "currency": currency, "market": market, "spec": spec, **({"consent": consent} if consent else {"placed": placed}),
+                         "currency": currency, "market": market, "spec": spec, "consent": consent,
                          "expires_at": int(expires),
                          "livemode": bool(sess.get("livemode")),
                          # the frozen plan (the master reads it, steps._stored_plan), the engine it was made under, the set level gate result at checkout

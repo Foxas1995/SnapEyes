@@ -56,6 +56,10 @@ def receipt_hu(stmt, *, order, name, money, by_day, last_day, seller):
         what = [f"Ennek a rendelésnek a 14 napos elállási határideje {end} napján lejárt. Így a nyilatkozatod "
                 f"beérkezésekor az elállási jogod már megszűnt. A nyilatkozatodat ennek ellenére személyesen is "
                 f"megnézzük, és e-mailben válaszolunk."]
+    elif stmt.get("consent_kind") == "by_terms":   # lapsed: making began on an order placed under the terms (the owner's decision of 2026-11-25, the second one of that day)
+        what = [f"A fájlod elkészítését megkezdtük (kezdés: {_w(stmt.get('began_at'))}). A rendelésedre vonatkozó ÁSZF szerint a fizetéssel hozzájárultál, hogy azonnal megkezdjük, és hogy a megkezdés után a szerződéstől már nem lehet elállni. Így a nyilatkozatod beérkezésekor az elállási jogod már megszűnt. A rendelésed érvényben marad, a fájlodat a rendelési oldaladon kapod meg.",
+                "A nyilatkozatodat ennek ellenére személyesen is megnézzük, és e-mailben válaszolunk. Hibás fájl esetén "
+                "a jogszabályon alapuló jogaidat ez nem érinti."]
     else:   # lapsed: making began after the consent and the confirmation
         what = [f"A rendeléskor kifejezetten hozzájárultál, hogy azonnal megkezdjük a fájlod elkészítését, és "
                 f"tudomásul vetted, hogy a kezdéssel elveszíted az elállási jogodat (a hozzájárulásod időpontja: "

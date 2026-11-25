@@ -136,7 +136,6 @@ export const lt: OrderCopy = {
   withdraw: {
     heading: 'Atsisakyti sutarties',
     lead: 'Užsakymo metu sutikote, kad Jūsų failą pradėtume kurti iš karto. Kol dar nepradėjome, šios sutarties galite atsisakyti čia. Kai tik kūrimas pradėtas, Jūsų teisė atsisakyti sutarties baigiasi.',
-    leadOpen: 'Šios sutarties čia galite atsisakyti per 14 dienų nuo užsakymo, net jei jau gavote savo failą, ir atgausite visus sumokėtus pinigus.',
     acl: 'Tai teisė atsisakyti sutarties pagal ES vartotojų teisės aktus, kai apsigalvojate. Ji nedaro įtakos Jūsų teisėms pagal Australijos vartotojų įstatymą (Australian Consumer Law): jei Jūsų failas turi trūkumų arba neatitinka aprašymo, parašykite mums nurodydami užsakymo numerį.',
     us: 'Tai teisė atsisakyti sutarties pagal ES vartotojų teisės aktus, kai apsigalvojate. Ji nedaro įtakos Jūsų teisėms, jei failas turi trūkumų: jei Jūsų failas turi trūkumų arba neatitinka aprašymo, parašykite mums nurodydami užsakymo numerį.',
     info: 'Teisė atsisakyti sutarties',
@@ -182,6 +181,7 @@ export const lt: OrderCopy = {
       settling: 'Kai atsisakėte sutarties, Jūsų mokėjimas dar buvo apdorojamas. Jei jis mus pasieks, visą sumą grąžinsime tuo pačiu mokėjimo būdu, kuriuo mokėjote, ne vėliau kaip per 14 dienų.',
       refundStarted: (amount: string) => `Pradėjome grąžinti sumą (${amount}) tuo pačiu mokėjimo būdu, kuriuo mokėjote. Pinigai gali ateiti per kelias dienas, tai priklauso nuo Jūsų banko.`,
       lapsed: 'Jūsų failo kūrimas jau buvo pradėtas. Užsakymo metu sutikote, kad pradėtume iš karto, ir pripažinote, kad pradėjus kurti netenkate teisės atsisakyti sutarties, todėl ši teisė jau buvo pasibaigusi. Jūsų užsakymas lieka galioti: failą rasite savo užsakymo puslapyje.',
+      lapsedTerms: 'Jūsų failo kūrimas jau buvo pradėtas. Pagal mūsų pardavimo sąlygas mokėdami sutikote, kad pradėtume iš karto ir kad pradėjus kurti sutarties atsisakyti nebegalima, todėl ši teisė jau buvo pasibaigusi. Jūsų užsakymas lieka galioti: failą rasite savo užsakymo puslapyje.',
       lapsedPeriod: 'Šio užsakymo 14 dienų sutarties atsisakymo terminas jau buvo pasibaigęs, todėl, kai gavome Jūsų pareiškimą, teisė atsisakyti sutarties jau buvo pasibaigusi.',
       lapsedHelp: 'Jūsų pareiškimą vis tiek asmeniškai peržiūrėsime ir atsakysime el. paštu. Tai neturi įtakos Jūsų įstatymų numatytoms teisėms, jei failas turi trūkumų.',
       mailSent: (email: string) => `Gavimo patvirtinimas išsiųstas adresu ${email}.`,

@@ -61,6 +61,10 @@ def receipt_et(stmt, *, order, name, money, by_day, last_day, seller):
         what = [f"Selle tellimuse 14-päevane taganemistähtaeg lõppes {end}. Seetõttu oli sinu taganemisõigus avalduse "
                 f"saabumise ajaks juba lõppenud. Vaatame sinu avalduse siiski isiklikult üle ja vastame sulle "
                 f"e-kirjaga."]
+    elif stmt.get("consent_kind") == "by_terms":   # lapsed: making began on an order placed under the terms (the owner's decision of 2026-11-25, the second one of that day)
+        what = [f"Alustasime sinu faili valmistamist (algus: {_w(stmt.get('began_at'))}). Sinu tellimusele kohalduvate müügitingimuste kohaselt nõustusid makstes, et alustame kohe ja et pärast alustamist ei saa lepingust enam taganeda. Seetõttu oli sinu taganemisõigus avalduse saabumise ajaks juba lõppenud. Sinu tellimus jääb kehtima ja faili saad kätte oma tellimuse lehelt.",
+                "Vaatame sinu avalduse siiski isiklikult üle ja vastame sulle e-kirjaga. See ei mõjuta sinu seadusest "
+                "tulenevaid õigusi puudusega faili korral."]
     else:   # lapsed: making began after the consent and the confirmation
         what = [f"Tellimisel nõustusid sõnaselgelt, et hakkame sinu faili kohe valmistama, ja kinnitasid, et kaotad oma "
                 f"taganemisõiguse, kui oleme alustanud (sinu nõusoleku aeg: {_w(stmt.get('consent_at'))}). Kinnitasime "

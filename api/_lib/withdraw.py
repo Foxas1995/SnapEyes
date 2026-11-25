@@ -424,7 +424,9 @@ def _assess_paid(order, rec, paid, now):
              "market": pay.paid_market(paid),
              "session_id": paid.get("session_id"), "payment_intent": paid.get("payment_intent"),
              "consent_at": consent.get("at") if consent else None,
-             "consent_version": consent.get("version") if consent else None}
+             "consent_version": consent.get("version") if consent else None,
+             # by_terms: placed under the terms, no box (the owner's decision of 2026-11-25, the second one of that day); treated as the ticked consent was
+             "consent_kind": consent.get("kind") if consent and consent.get("kind") else None}
     mail_sent = isinstance(mail, dict) and mail.get("state") == "sent"
     mail_t = mail.get("t") if mail_sent and isinstance(mail.get("t"), (int, float)) else None
     facts["confirmation_at"] = mail_t
@@ -437,17 +439,14 @@ def _assess_paid(order, rec, paid, now):
         in_order = mail_t is None or began_at is None or mail_t <= began_at + 1
         if consent is not None and mail_sent and in_order:
             return dict(facts, outcome="lapsed", reason="making_began")
-        if consent is not None or not pay.placed_without_box(paid):
-            # making began without the express consent or before the confirmation: the right did not lapse
-            return dict(facts, outcome="withdrawn", reason="began_without_confirmation")
-        # an order placed without the consent box (the owner's decision of 2026-11-25): making that began never ends the right; the 14 days do (below)
+        # making began without the express consent or before the confirmation: the right did not lapse
+        return dict(facts, outcome="withdrawn", reason="began_without_confirmation")
     paid_at = paid.get("paid_at")
     if isinstance(paid_at, (int, float)):
         end, last_day = period_end(paid_at)
         if now >= end:
             return dict(facts, outcome="lapsed", reason="period_over", period_end=end, period_last_day=last_day)
-    # within_period: making had begun on an order placed without the consent box, so the right still held
-    return dict(facts, outcome="withdrawn", reason="within_period" if began else "nothing_made")
+    return dict(facts, outcome="withdrawn", reason="nothing_made")
 
 
 def _assess_unpaid(order, rec):
@@ -582,6 +581,8 @@ def _finish(stmt, path, repeat):
              else None, "at": stmt["received_at"], "received": stmt["received"], "mail": _mail_word(ack),
              "reason": stmt.get("reason"), "already": bool(stmt.get("already")) or repeat, "text": stmt.get("text"),
              "name": stmt.get("name"), "email": stmt.get("email")}
+    if outcome == "lapsed" and stmt.get("consent_kind") == "by_terms":
+        reply["terms"] = True       # the order page says the terms, not a ticked consent (the owner's decision of 2026-11-25, the second one)
     if outcome == "withdrawn" and stmt.get("amount"):
         reply.update(amount=stmt["amount"], currency=pay.currency_of(stmt.get("currency")).upper(), refund="due",
                      refund_by=pay.iso(stmt.get("refund_by")))
@@ -795,7 +796,7 @@ def _receipt_other(stmt, pack, lang, order, name):
             outcome, reason, money=_money(stmt, lang), by=pay.date_text(pay.iso(by_at), lang),
             end=pay.date_text(_last_day(stmt), lang) if outcome == "lapsed" and reason == "period_over" else "",
             first_when=first, consent_at=w(stmt.get("consent_at")), confirmation_at=w(stmt.get("confirmation_at")),
-            began_at=w(stmt.get("began_at")))
+            began_at=w(stmt.get("began_at")), terms=stmt.get("consent_kind") == "by_terms")
         rows = withdraw_lt.receipt_rows_lt(pay.when_text(stmt["received_at"], lang, seconds=True), order, name,
                                            stmt["email"])
         subject = withdraw_lt.RECEIPT_LT["subject"].format(order=order)
@@ -846,6 +847,17 @@ def receipt_mail(stmt, pack):
                 [f"The 14-day withdrawal period for this order ended on {end}. Your right of withdrawal had therefore "
                  f"already ended when your statement arrived. We will still look at your statement personally and "
                  f"reply to you by email."])
+    elif stmt.get("consent_kind") == "by_terms":   # lapsed: making began on an order placed under the terms (the owner's decision of 2026-11-25, the second one of that day)
+        what = ([f"Wir haben am {w(stmt.get('began_at'))} mit der Erstellung Ihrer Datei begonnen. Nach unseren AGB, die für Ihre Bestellung gelten, "
+                 f"haben Sie mit Ihrer Zahlung zugestimmt, dass wir sofort beginnen und der Vertrag nach Beginn nicht mehr widerrufen werden kann. Ihr "
+                 f"Widerrufsrecht war daher bei Eingang Ihrer Erklärung bereits erloschen. Ihre Bestellung bleibt bestehen, und Sie erhalten Ihre Datei auf "
+                 f"Ihrer Bestellseite.",
+                 "Wir sehen uns Ihre Erklärung trotzdem persönlich an und antworten Ihnen per E-Mail. Ihre gesetzlichen Rechte bei einer mangelhaften Datei "
+                 "bleiben unberührt."] if de else
+                [f"We started making your file on {w(stmt.get('began_at'))}. Under our terms of sale, which apply to your order, by paying you agreed that "
+                 f"we start at once and that the contract can no longer be withdrawn from once we have started. Your right of withdrawal had therefore "
+                 f"already ended when your statement arrived. Your order stays in place, and your file is delivered on your order page.",
+                 "We will still look at your statement personally and reply to you by email. Your statutory rights for a defective file are not affected."])
     else:   # lapsed: making began after the consent and the confirmation
         what = ([f"Bei Ihrer Bestellung haben Sie ausdrücklich zugestimmt, dass wir sofort mit der Erstellung Ihrer "
                  f"Datei beginnen, und bestätigt, dass Sie Ihr Widerrufsrecht mit diesem Beginn verlieren (Ihre "
@@ -1015,10 +1027,8 @@ def _todo(stmt):
             "Nothing is made for the order. If the payment arrives, you get a note to refund it (paid after "
             "withdrawal). Check the order in the Stripe Dashboard.")
     if outcome == "withdrawn":
-        made = ("Making had already begun (an order placed without the consent box keeps its 14 days): nothing more is made for the order."
-                if reason == "within_period" else "Nothing is made for the order.")
         return f"WITHDRAWN, refund {amount}", (
-            f"The withdrawal is effective ({reason}). {made} REFUND {amount} in the Stripe "
+            f"The withdrawal is effective ({reason}). Nothing is made for the order. REFUND {amount} in the Stripe "
             f"Dashboard (Payments, search {stmt.get('payment_intent') or stmt.get('session_id')}, Refund) by "
             f"{pay.iso(stmt.get('refund_by'))} at the latest. The order's images are deleted 14 days after the "
             f"withdrawal; its record and this statement stay.")

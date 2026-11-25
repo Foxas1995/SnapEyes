@@ -2,9 +2,8 @@
 // 2023/2673, in force since 19 June 2026; § 356a BGB): the customer gives their name, the order and an email address
 // for the receipt, confirms, and the server (api/_lib/withdraw.py, POST /api/order {action: "withdraw"}) records the
 // statement with the time it arrived, stops the order if nothing was made yet and emails the receipt. The server
-// alone decides whether the withdrawal takes effect (for an order that holds the consent the right ends once making has
-// started; one placed without the consent box keeps the 14 days, see src/legal/docs/withdrawal.ts); this module only
-// sends the statement and reads the answer. No React here.
+// alone decides whether the withdrawal takes effect (the right ends once making has started, see
+// src/legal/docs/withdrawal.ts); this module only sends the statement and reads the answer. No React here.
 import { callApi, ORDER_RE, KEY_RE, type ApiReply } from './api';
 import type { Lang } from '../try/lang';
 
@@ -37,6 +36,7 @@ export interface WithdrawDone {
   currency: string | null;        // ...and in which currency ("EUR", "AUD", "HUF")
   market: string | null;          // the order's market ("eu", "au", ...), when the server named it
   already: boolean;               // the same statement (or the order's withdrawal) was on record before
+  terms: boolean;                 // lapsed on an order placed under the terms (no box: the owner's decision of 2026-11-25, the second one of that day), not after a ticked consent
 }
 
 // no_order: api/_lib/withdraw.py 409 no_order (recorded: false). On a deployment that cannot have sold anything, a
@@ -106,6 +106,7 @@ export function readWithdrawal(v: unknown): WithdrawDone | null {
   return {
     effective: effective ? true : lapsed ? false : null,
     reason: typeof w.reason === 'string' ? w.reason : null,
+    terms: w.terms === true,
     at: num(w.at) ?? isoSeconds(w.received) ?? num(w.received_at),
     mail: receipt(w.mail),
     refundStarted: w.refund === 'started' || w.refund === 'refunded',

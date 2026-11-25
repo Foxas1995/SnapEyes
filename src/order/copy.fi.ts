@@ -143,7 +143,6 @@ export const fi: OrderCopy = {
   withdraw: {
     heading: 'Sopimuksen peruuttaminen',
     lead: 'Tilatessasi hyväksyit, että alamme tehdä tiedostoasi heti. Niin kauan kuin emme ole aloittaneet, voit peruuttaa tämän sopimuksen tässä. Kun tekeminen on alkanut, peruuttamisoikeutesi on päättynyt.',
-    leadOpen: 'Voit peruuttaa tämän sopimuksen tässä 14 päivän kuluessa tilauksestasi, vaikka olisit jo saanut tiedostosi, ja saat takaisin kaiken maksamasi.',
     acl: 'Tämä on EU:n kuluttajalainsäädännön mukainen peruuttamisoikeus siltä varalta, että muutat mielesi. Se ei vaikuta Australian kuluttajalain (Australian Consumer Law) mukaisiin oikeuksiisi: jos tiedostossasi on virhe tai se ei vastaa kuvausta, kirjoita meille ja kerro tilausnumerosi.',
     us: 'Tämä on EU:n kuluttajalainsäädännön mukainen peruuttamisoikeus siltä varalta, että muutat mielesi. Se ei vaikuta oikeuksiisi, jos tiedostossasi on virhe: jos tiedostossasi on virhe tai se ei vastaa kuvausta, kirjoita meille ja kerro tilausnumerosi.',
     info: 'Peruuttamisoikeus',
@@ -190,6 +189,7 @@ export const fi: OrderCopy = {
       settling: 'Maksuasi käsiteltiin vielä, kun peruutit sopimuksen. Jos se saapuu meille, palautamme sen kokonaan käyttämällesi maksutavalle viimeistään 14 päivän kuluessa.',
       refundStarted: (amount: string) => `Summan ${amount} palautus käyttämällesi maksutavalle on aloitettu. Pankistasi riippuen sen saapuminen voi kestää muutaman päivän.`,
       lapsed: 'Tiedostosi tekeminen oli jo alkanut. Tilatessasi hyväksyit, että aloitamme heti, ja vahvistit, että menetät peruuttamisoikeutesi, kun olemme aloittaneet, joten oikeus oli jo päättynyt. Tilauksesi pysyy voimassa: löydät tiedostosi tilaussivultasi.',
+      lapsedTerms: 'Tiedostosi tekeminen oli jo alkanut. Myyntiehtojemme mukaan hyväksyit maksamalla, että aloitamme heti ja ettei sopimusta voi enää peruuttaa, kun olemme aloittaneet, joten oikeus oli jo päättynyt. Tilauksesi pysyy voimassa: löydät tiedostosi tilaussivultasi.',
       lapsedPeriod: 'Tämän tilauksen 14 päivän peruuttamisaika oli jo päättynyt, joten peruuttamisoikeutesi oli päättynyt, kun ilmoituksesi saapui.',
       lapsedHelp: 'Katsomme ilmoituksesi silti henkilökohtaisesti ja vastaamme sinulle sähköpostitse. Tämä ei vaikuta lakisääteisiin oikeuksiisi, jos tiedostossa on virhe.',
       mailSent: (email: string) => `Vastaanottoilmoitus on matkalla osoitteeseen ${email}.`,

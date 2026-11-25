@@ -585,7 +585,7 @@
       {
         "id": "unhappy",
         "q": "Entä jos en pidä tuloksesta?",
-        "a": "Näet oman esikatselusi ilmaiseksi ennen kuin maksat, ja kun olet maksanut, alamme heti tehdä tiedostoasi. Jos tiedostossa on virhe tai se poikkeaa selvästi hyväksymästäsi esikatselusta, kirjoita meille: teemme sen uudelleen tai palautamme maksusi. Tietoa peruuttamisesta on alempana."
+        "a": "Näet oman esikatselusi ilmaiseksi ennen kuin maksat, ja kun olet maksanut, alamme heti tehdä tiedostoasi. Jos tiedostossa on virhe tai se poikkeaa selvästi hyväksymästäsi esikatselusta, kirjoita meille: teemme sen uudelleen."
       },
       {
         "id": "phone",
@@ -620,16 +620,11 @@
         "a": "Emme tallenna ilmaista esikatseluasi. Säilytämme iiriksen rajauksen ja esikatselun vain, jos aloitat tilauksen. Kun tilaat, säilytämme tilauksesi tiedostot (emme puhelinkuvaasi) 12 kuukautta, jotta voit ladata ne uudelleen, ja poistamme ne sen jälkeen. Iiristäsi ei koskaan käytetä kenenkään tunnistamiseen eikä tekoälyn kouluttamiseen. Tarkemmat tiedot ovat tietosuojaselosteessamme, jonka linkki on tämän sivun alaosassa."
       },
       {
-        "id": "withdraw",
-        "q": "Voinko peruuttaa tilauksen?",
-        "a": "Alamme tehdä tiedostoasi heti, kun tilausvahvistus on lähtenyt sähköpostiisi, yleensä minuutin kuluessa maksustasi. Sinulla on silti 14 päivän peruuttamisoikeus: voit peruuttaa sopimuksen 14 päivän kuluessa tilauksestasi, vaikka olisit jo saanut tiedostosi, ja saat takaisin kaiken maksamasi. Voit peruuttaa sopimuksen sähköpostitse tai verkossa toiminnolla ”Peruuta sopimus tästä”, joka on tämän sivun alaosassa ja tilausvahvistuksesi peruutuslinkin takana. Jos tiedostossasi on virhe tai se poikkeaa selvästi hyväksymästäsi esikatselusta, kirjoita meille: teemme sen uudelleen tai palautamme maksusi. Tarkemmat tiedot ovat myyntiehdoissamme ja peruuttamisoikeutta koskevissa tiedoissa, joiden linkit ovat tämän sivun alaosassa."
-      },
-      {
         "id": "order",
         "q": "Milloin voin tilata?",
         "a": "Tilaaminen avautuu pian. Siihen asti käytössäsi on ilmainen esikatselu. Tilaamiseen tarvitset vain sähköpostiosoitteen.",
         "qOpen": "Miten tilaan?",
-        "aOpen": "Heti ilmaisen esikatselun jälkeen, samalla sivulla: valitse tyyli ja siirry Stripen maksusivulle, jossa maksat. Tilaussivusi avautuu heti, ja saat sen linkin sähköpostiisi. Tarvitset vain sähköpostiosoitteen."
+        "aOpen": "Heti ilmaisen esikatselun jälkeen, samalla sivulla: valitse tyyli, rastita digitaalista tiedostoa koskeva ruutu ja siirry Stripen maksusivulle, jossa maksat. Tilaussivusi avautuu heti, ja saat sen linkin sähköpostiisi. Tarvitset vain sähköpostiosoitteen."
       },
       {
         "id": "pets",
@@ -641,11 +636,7 @@
   "faqAu": {
     "unhappy": {
       "q": "Entä jos en pidä tuloksesta?",
-      "a": "Näet oman esikatselusi ilmaiseksi ennen kuin maksat, ja kun olet maksanut, alamme heti tehdä tiedostoasi. Jos tiedostossa on virhe tai se poikkeaa selvästi hyväksymästäsi esikatselusta, kirjoita meille. Palveluihimme liittyy takuita, joita ei voi sulkea pois Australian kuluttajalain (Australian Consumer Law) nojalla. Tietoa tilauksen perumisesta on alempana."
-    },
-    "withdraw": {
-      "q": "Voinko perua tilauksen?",
-      "a": "Alamme tehdä tiedostoasi heti, kun tilausvahvistus on lähtenyt sähköpostiisi, yleensä minuutin kuluessa maksustasi. Tämä ei päätä tilaukseesi sovellettavan EU:n kuluttajalainsäädännön mukaista 14 päivän peruuttamisoikeutta: voit perua tilauksen 14 päivän kuluessa, myös tiedoston saatuasi, sähköpostitse tai verkossa toiminnolla ”Peruuta sopimus tästä”, joka on tämän sivun alaosassa ja tilausvahvistuksesi peruutuslinkin takana, ja palautamme maksusi kokonaan. Tämä koskee vain mielenmuutosta: palveluihimme liittyy takuita, joita ei voi sulkea pois Australian kuluttajalain (Australian Consumer Law) nojalla, joten jos tiedostossasi on virhe tai se poikkeaa selvästi hyväksymästäsi esikatselusta, kirjoita meille. Tarkemmat tiedot ovat myyntiehdoissamme (Oikeutesi Australiassa) ja peruuttamisoikeutta koskevissa tiedoissa, joiden linkit ovat tämän sivun alaosassa."
+      "a": "Näet oman esikatselusi ilmaiseksi ennen kuin maksat, ja kun olet maksanut, alamme heti tehdä tiedostoasi. Jos tiedostossa on virhe tai se poikkeaa selvästi hyväksymästäsi esikatselusta, kirjoita meille. Palveluihimme liittyy takuita, joita ei voi sulkea pois Australian kuluttajalain (Australian Consumer Law) nojalla."
     }
   },
   "final": {

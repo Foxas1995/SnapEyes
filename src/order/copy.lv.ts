@@ -142,7 +142,6 @@ export const lv: OrderCopy = {
   withdraw: {
     heading: 'Atteikšanās no līguma',
     lead: 'Pasūtot jūs piekritāt, ka jūsu failu sākam veidot uzreiz. Kamēr neesam sākuši, šeit varat atteikties no šī līguma. Tiklīdz veidošana ir sākta, jūsu atteikuma tiesības ir beigušās.',
-    leadOpen: 'Šeit varat atteikties no šī līguma 14 dienu laikā pēc pasūtījuma, pat ja fails jau ir jūsu rīcībā, un jūs saņemat atpakaļ visu samaksāto.',
     acl: 'Šīs ir atteikuma tiesības saskaņā ar ES patērētāju tiesībām gadījumam, ja pārdomājat. Tās neietekmē jūsu tiesības saskaņā ar Austrālijas patērētāju tiesību likumu (Australian Consumer Law): ja jūsu fails ir ar trūkumiem vai neatbilst aprakstam, rakstiet mums un norādiet pasūtījuma numuru.',
     us: 'Šīs ir atteikuma tiesības saskaņā ar ES patērētāju tiesībām gadījumam, ja pārdomājat. Tās neietekmē jūsu tiesības, ja fails ir ar trūkumiem: ja jūsu fails ir ar trūkumiem vai neatbilst aprakstam, rakstiet mums un norādiet pasūtījuma numuru.',
     info: 'Atteikuma tiesības',
@@ -189,6 +188,7 @@ export const lv: OrderCopy = {
       settling: 'Kad atteicāties no līguma, jūsu maksājums vēl tika apstrādāts. Ja tas mūs sasniegs, atmaksāsim to pilnībā ar to pašu maksāšanas līdzekli, ar kuru maksājāt, ne vēlāk kā 14 dienu laikā.',
       refundStarted: (amount: string) => `Summas (${amount}) atmaksa uz maksāšanas līdzekli, ar kuru maksājāt, ir sākta. Atkarībā no jūsu bankas var paiet dažas dienas, līdz tā pienāk.`,
       lapsed: 'Jūsu faila veidošana jau bija sākta. Pasūtot jūs piekritāt, ka sākam uzreiz, un apliecinājāt, ka zaudējat atteikuma tiesības, tiklīdz esam sākuši, tāpēc šīs tiesības jau bija beigušās. Jūsu pasūtījums paliek spēkā: failu atradīsiet savā pasūtījuma lapā.',
+      lapsedTerms: 'Jūsu faila veidošana jau bija sākta. Saskaņā ar mūsu pārdošanas noteikumiem, maksājot jūs piekritāt, ka sākam uzreiz un ka pēc tam, kad esam sākuši, no līguma vairs nevar atteikties, tāpēc šīs tiesības jau bija beigušās. Jūsu pasūtījums paliek spēkā: failu atradīsiet savā pasūtījuma lapā.',
       lapsedPeriod: '14 dienu atteikuma termiņš šim pasūtījumam jau bija beidzies, tāpēc jūsu atteikuma tiesības bija beigušās, kad saņēmām jūsu paziņojumu.',
       lapsedHelp: 'Jūsu paziņojumu tomēr izskatīsim personīgi un atbildēsim jums e-pastā. Tas neietekmē jūsu likumīgās tiesības, ja failam ir trūkumi.',
       mailSent: (email: string) => `Apstiprinājums par saņemšanu ir nosūtīts uz ${email}.`,

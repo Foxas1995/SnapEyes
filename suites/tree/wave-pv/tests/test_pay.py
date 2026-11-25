@@ -83,7 +83,7 @@ def draft(eye, order=None, k=None, crop=CROP, preview=PREV, ticket=_AUTO, **kw):
 
 
 def checkout(order, k, eyes, style="deep_nebula", **kw):
-    # 2026-11-25 (the owner's decision): no consent box but on the US market, so the euro checkout is sent without its tick
+    # 2026-11-25 (the owner's decision of 2026-11-25, the second one of that day): no consent box but on the US market, so the euro checkout is sent without its tick
     b = {"order": order, "k": k, "eyes": eyes, "style": style, "names": "Jūratė & Tomas", "title": "", "lang": "de"}
     b.update(kw)
     return post("/api/checkout", b)
@@ -169,7 +169,7 @@ c, j = get(f"/api/order?o=zzzz-not-an-order&k={K1}")
 check("GET status unknown order -> 403 (same answer)", c == 403 and j.get("reason") == "bad_link", (c, j))
 
 # ------------------------------------------------------------------ checkout
-# 2026-11-25 (the owner's decision): the consent box is asked only on the US market; there its tick is still required
+# 2026-11-25 (the owner's decision of 2026-11-25, the second one of that day): the consent box is asked only on the US market; there its tick is still required
 c, j = checkout(O1, K1, 2, market="us", lang="en")
 check("US checkout without consent -> 400 consent_required", c == 400 and j.get("reason") == "consent_required", (c, j))
 c, j = checkout(O1, K1, 2, market="us", lang="en", consent_digital="true")
@@ -199,10 +199,10 @@ check("success_url carries o, k and {CHECKOUT_SESSION_ID}", p["success_url"] ==
       f"https://snapeyes.com/order?o={O1}&k={K1}&lang=de&s={{CHECKOUT_SESSION_ID}}", p["success_url"])
 check("cancel_url goes back to /try, without the access key", p["cancel_url"] == f"https://snapeyes.com/try?checkout=cancelled&o={O1}&lang=de"
       and K1 not in p["cancel_url"], p["cancel_url"])
-check("metadata: order, key fingerprint (not the key), spec, how it was placed (no consent box: box none, the time, the terms' date)", p["metadata[order]"] == O1 and
+check("metadata: order, key fingerprint (not the key), spec, consent - 2026-11-25 (the owner's second decision of that day): placed under the terms of that date, no box",
+      p["metadata[order]"] == O1 and
       p["metadata[key_sha]"] == pay.key_sha(K1) and K1 not in json.dumps({k: v for k, v in p.items() if k.startswith("metadata")})
-      and p["metadata[eyes]"] == "2" and "metadata[consent_version]" not in p and p["metadata[box]"] == "none"
-      and p["metadata[terms]"] == pay.legal_day() and re.fullmatch(r"\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ", p["metadata[placed_at]"] or "")
+      and p["metadata[eyes]"] == "2" and p["metadata[consent_kind]"] == "by_terms" and p["metadata[consent_version]"] == pay.legal_day() == "2026-11-25"
       # WP12 (C16, spec 2.4): the names travel as ONE compact JSON string (ensure_ascii False), not as the old text; the plan's identity rides along (pv, ev, plan8)
       and p["metadata[names]"] == json.dumps(["Jūratė & Tomas"], ensure_ascii=False, separators=(",", ":"))
       and p["metadata[pv]"] == "1" and p["metadata[ev]"] == "0" and re.fullmatch(r"[0-9a-f]{8}", p["metadata[plan8]"]) and "metadata[date]" not in p and "metadata[opts]" not in p
@@ -213,8 +213,9 @@ check("Stripe-Version pinned and Idempotency-Key sent", hd.get("Stripe-Version")
 rec = read_json(f"orders/{O1}/order.json")
 check("expires_at sent to Stripe = order created + 24 h, kept under Stripe's 24 h", rec["created_at"] + 86400 - 130
       <= int(p["expires_at"]) <= rec["created_at"] + 86400 and int(p["expires_at"]) < time.time() + 86400, (p["expires_at"], rec))
-check("order.json records the checkout and how it was placed (no consent box, no consent)", rec["checkout"]["session_id"] == j["url"].rsplit("/", 1)[1]
-      and "consent" not in rec["checkout"] and rec["checkout"]["placed"]["box"] is False and rec["checkout"]["placed"]["terms"] == pay.legal_day()
+check("order.json records the checkout and consent - 2026-11-25 (the owner's second decision of that day): the plain facts, placed under the terms of that date, no box",
+      rec["checkout"]["session_id"] == j["url"].rsplit("/", 1)[1]
+      and rec["checkout"]["consent"] == {"kind": "by_terms", "version": "2026-11-25", "at": rec["checkout"]["created"], "lang": "de", "box": False}
       and rec["checkout"]["amount"] == 3997, rec)
 SID1 = rec["checkout"]["session_id"]
 

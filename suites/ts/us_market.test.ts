@@ -119,8 +119,11 @@ export async function run(): Promise<Row[]> {
     && sectionText(terms, 'disputes').includes('vvtat.lt') && sectionText(terms, 'disputes').includes('the consumer protection law of your state'));
   check('the US withdrawal: cancelling for a change of mind only, framed as EU law, with a link to the US rights', section(terms, 'withdrawal')?.title === 'Cancelling for a change of mind (right of withdrawal)'
     && sectionText(terms, 'withdrawal').includes('[Your rights in the United States](#united-states)')
-    // 2026-11-25 (the owner's decision): the US checkout keeps its consent box, so its section still says the right ends once making starts; the Australian one has no box and says the 14 days stay
-    && sectionText(terms, 'withdrawal').includes('we ask you to agree that we start making your file straight away') && sectionText(EDITIONS.au.terms.en!, 'withdrawal').includes('this does not end your right to cancel'));
+    // 2026-11-25 (the owner's decision, the second one of that day): the US checkout keeps its box, so its section still asks for the tick; the Australian one
+    // has none: by paying, the customer agrees to the immediate start; the second block (only a change of mind) is the same in both
+    && sectionText(terms, 'withdrawal').includes('we ask you to agree that we start making your file straight away')
+    && sectionText(EDITIONS.au.terms.en!, 'withdrawal').includes('By paying, you agree that we start making your file at once')
+    && JSON.stringify(section(terms, 'withdrawal')?.blocks[1]) === JSON.stringify(section(EDITIONS.au.terms.en!, 'withdrawal')?.blocks[1]).replace('[Your rights in Australia](#australia)', '[Your rights in the United States](#united-states)'));
   const pus = sectionText(privacy, 'united-states');
   const pids = privacy.sections.map((s) => s.id);
   check('the US privacy policy: its own section after the rights section, with the state laws, the retention schedule and no sale for advertising',

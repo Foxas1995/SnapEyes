@@ -585,7 +585,7 @@
       {
         "id": "unhappy",
         "q": "What if I do not like the result?",
-        "a": "You see your own preview free before you pay, and after you pay we start making your file at once. If the file is defective or clearly differs from the preview you approved, write to us: we render it again or refund you. Details on withdrawal are below."
+        "a": "You see your own preview free before you pay, and after you pay we start making your file at once. If the file is defective or clearly differs from the preview you approved, write to us: we render it again."
       },
       {
         "id": "phone",
@@ -620,16 +620,11 @@
         "a": "We do not store your free preview. Only if you start an order do we keep the iris crop and the preview. When you order, we keep the files of your order (not your phone photo) for 12 months so you can download them again, and then delete them. Your iris is never used to identify anyone or to train AI. The details are in our privacy policy, linked at the foot of this page."
       },
       {
-        "id": "withdraw",
-        "q": "Can I withdraw from an order?",
-        "a": "We start making your file as soon as your order confirmation email has gone out, normally within a minute of your payment. You still have the 14-day right of withdrawal: you may withdraw within 14 days of your order, even after you have received your file, and you get back everything you paid. You can withdraw by email or online with \"Withdraw from contract here\", at the foot of this page or through the withdrawal link in your order confirmation email. If your file is defective or clearly differs from the preview you approved, write to us: we render it again or refund you. The details are in our terms of sale and the withdrawal information, linked at the foot of this page."
-      },
-      {
         "id": "order",
         "q": "When can I order?",
         "a": "Ordering opens soon. Until then the free preview is available. You only need an email address to order.",
         "qOpen": "How do I order?",
-        "aOpen": "Right after your free preview, on the same page: choose your style and continue to Stripe's payment page, where you pay. Your order page opens straight away, and its link comes by email. You only need an email address."
+        "aOpen": "Right after your free preview, on the same page: choose your style, tick the box about the digital file and continue to Stripe's payment page, where you pay. Your order page opens straight away, and its link comes by email. You only need an email address."
       },
       {
         "id": "pets",
@@ -641,11 +636,7 @@
   "faqAu": {
     "unhappy": {
       "q": "What if I do not like the result?",
-      "a": "You see your own preview free before you pay, and after you pay we start making your file at once. If the file is faulty or clearly differs from the preview you approved, write to us. Our services come with guarantees that cannot be excluded under the Australian Consumer Law. Details on cancelling are below."
-    },
-    "withdraw": {
-      "q": "Can I cancel an order?",
-      "a": "We start making your file as soon as your order confirmation email has gone out, normally within a minute of your payment. This does not end the 14-day right of withdrawal under EU consumer law, which applies to your order: you can cancel within 14 days, even after you have received your file, by email or online with \"Withdraw from contract here\", at the foot of this page or through the withdrawal link in your order confirmation email, and we refund you in full. That is only about changing your mind: our services come with guarantees that cannot be excluded under the Australian Consumer Law, so if your file is faulty or clearly differs from the preview you approved, write to us. The details are in our terms of sale (Your rights in Australia) and the withdrawal information, linked at the foot of this page."
+      "a": "You see your own preview free before you pay, and after you pay we start making your file at once. If the file is faulty or clearly differs from the preview you approved, write to us. Our services come with guarantees that cannot be excluded under the Australian Consumer Law."
     }
   },
   "final": {

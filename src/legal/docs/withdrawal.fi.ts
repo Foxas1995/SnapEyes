@@ -39,9 +39,9 @@ const W = WITHDRAWAL_ONLINE_FI;
 export const fi: LegalDoc = {
   title: 'Peruuttamisoikeus',
   description:
-    'Tiedot SnapEyesin digitaalisten tiedostojen peruuttamisoikeudesta: 14 päivän peruuttamisoikeus ja malliperuuttamislomake.',
+    'Tiedot SnapEyesin digitaalisten tiedostojen peruuttamisoikeudesta: 14 päivän peruuttamisoikeus, milloin se päättyy aikaisemmin, ja malliperuuttamislomake.',
   lead:
-    'EU:n kuluttajilla on 14 päivän peruuttamisoikeus verkossa tehdyissä ostoksissa. Voitte peruuttaa tilauksenne 14 päivän kuluessa ja saada rahanne kokonaan takaisin, vaikka olisitte jo saanut tiedostonne. Tässä ovat kaikki tiedot.',
+    'Taideteoksenne on teitä varten tehty digitaalinen tiedosto, ja näette siitä maksuttoman esikatselun ennen ostoa. Maksamalla hyväksytte, että alamme tehdä tiedostoanne heti ja että kun olemme aloittaneet, sopimusta ei voi enää peruuttaa eikä hintaa palauteta. Tässä ovat kaikki tiedot ja malliperuuttamislomake peruuttamiseen ennen kuin aloitamme.',
   sections: [
     {
       id: 'right',
@@ -62,20 +62,21 @@ export const fi: LegalDoc = {
     },
     {
       id: 'expiry',
-      title: 'Kuinka kauan peruuttamisoikeus on voimassa',
+      title: 'Milloin peruuttamisoikeus päättyy aikaisemmin',
       blocks: [
-        'Alamme tehdä tiedostoanne heti maksunne jälkeen ja toimitamme sen tilaussivullenne. **Tämä ei päätä peruuttamisoikeuttanne:** voitte peruuttaa sopimuksen 14 päivän kuluessa sopimuksen tekemisestä, myös silloin, kun tiedostoanne vielä tehdään tai kun olette jo saanut sen, ja saatte takaisin kaiken maksamanne (katsokaa [Peruuttamisen vaikutukset](#effects)).',
-        'Näin 14 päivän peruuttamisaika lasketaan: maksupäiväänne ei lasketa mukaan, ja jos ajan viimeinen päivä on lauantai, sunnuntai tai yleinen vapaapäivä, aika päättyy seuraavan työpäivän päättyessä. Tämä ei vaikuta lakisääteisiin oikeuksiinne, jos tiedostossa on virhe: katsokaa myyntiehtojemme kohta [Reklamaatiot ja virheet](doc:terms#defects).',
+        '**Peruuttamisoikeutenne päättyy**, kun olemme alkaneet tehdä tiedostoanne (sopimuksen täyttäminen). Maksamalla hyväksytte, että aloitamme heti, ennen peruuttamisajan päättymistä, ja että sopimusta ei voi enää peruuttaa, kun olemme aloittaneet; näin todetaan [myyntiehdoissamme](doc:terms#withdrawal).',
+        'Aloitamme heti, kun tilausvahvistus on lähtenyt sähköpostiinne, yleensä minuutin kuluessa maksustanne, kun tilaussivunne on auki: maksusivu vie teidät suoraan sinne. Jos ette ole silloin tilaussivullanne, aloitamme, kun avaatte sen uudelleen kyseisen sähköpostin linkillä. Siitä hetkestä sopimusta ei voi enää peruuttaa eikä hintaa palauteta, vaikka tiedostoanne vielä tehtäisiin tai se odottaisi laaduntarkastustamme. Jos emme ole aloittaneet, peruuttamisoikeutenne päättyy, kun 14 päivän peruuttamisaika on kulunut: maksupäiväänne ei lasketa mukaan, ja jos ajan viimeinen päivä on lauantai, sunnuntai tai yleinen vapaapäivä, aika päättyy seuraavan työpäivän päättyessä.',
+        'Jos emme pysty toimittamaan tiedostoanne, palautamme koko maksun. Tämä ei vaikuta lakisääteisiin oikeuksiinne, jos tiedostossa on virhe: katsokaa myyntiehtojemme kohta [Reklamaatiot ja virheet](doc:terms#defects).',
       ],
     },
     {
       id: 'online',
       title: 'Peruuttaminen verkossa',
       blocks: [
-        `Niin kauan kuin peruuttamisoikeutenne on voimassa, voitte peruuttaa sopimuksen verkossa milloin tahansa toiminnolla [”${W.button}”](${withdrawFunctionHrefFi()}). Löydätte sen etusivumme ja oikeudellisten sivujemme alaosasta, tilaussivultanne ja tilausvahvistuksenne peruutuslinkin takaa. Tuo linkki avaa toiminnon tilaustanne varten käynnistämättä mitään.`,
+        `Niin kauan kuin peruuttamisoikeutenne on voimassa, voitte peruuttaa sopimuksen verkossa milloin tahansa toiminnolla [”${W.button}”](${withdrawFunctionHrefFi()}). Löydätte sen etusivumme ja juridisten sivujemme alaosasta sekä tilaussivultanne. Tilaussivun avaaminen aloittaa tiedostonne tekemisen, kun tilausvahvistus on lähtenyt sähköpostiinne, ja siitä lähtien sopimusta ei voi enää peruuttaa (katsokaa [Milloin peruuttamisoikeus päättyy aikaisemmin](#expiry)).`,
         `Näin se toimii: kirjoittakaa nimenne, tilausnumeronne (se on valmiiksi täytetty, kun tulette tilaussivultanne tai peruutuslinkin kautta) ja sähköpostiosoite vastaanottoilmoitusta varten ja lähettäkää sitten peruuttamisilmoituksenne painikkeella ”${W.confirm}”. Jos tulette ilman kumpaakaan näistä linkeistä, antakaa sähköpostiosoite, jolla maksoitte, jotta voimme yhdistää ilmoituksen tilaukseenne. Jos tiedot eivät vastaa yhtäkään tilaustamme, sivu kertoo sen teille; säilytämme ilmoituksenne silti, tarkistamme sen käsin ja lähetämme teille sähköpostitse vastaanottoilmoituksen. Sähköpostiemme väärinkäytön estämiseksi vastaanottoilmoitusten määrää on rajoitettu: ilmoituksista, jotka eivät vastaa yhtäkään tilaustamme, niitä lähetetään samaan osoitteeseen enintään kaksi päivässä ja neljä kuukaudessa; yhdestä tilauksesta yhteensä enintään kolme muihin osoitteisiin kuin siihen, jolla tilaus maksettiin (seuraavat lähetetään osoitteeseen, jolla maksoitte); ja toistuvasta ilmoituksesta, joka koskee tilausta, johon olemme jo vastanneet, enintään yksi päivässä kyseisestä tilauksesta ja viisi päivässä kaikista tilauksista yhteensä. Jos sivu ei voi ottaa ilmoitustanne vastaan, esimerkiksi teknisen vian vuoksi tai siksi, että ilmoituksia saapuu poikkeuksellisen paljon, se kertoo sen teille: lähettäkää silloin peruuttamisilmoituksenne meille sähköpostitse; sähköposti on yhtä pätevä.`,
-        'Mitä sitten tapahtuu: kirjaamme ilmoituksenne sekä päivämäärän ja kellonajan, jolloin se saapui meille. Jos tilauksenne on maksettu eikä 14 päivän peruuttamisaika ole kulunut, peruutuksenne tulee voimaan: pysäytämme tilauksenne, jos tiedostonne ei ole vielä valmis, ja palautamme maksunne kohdassa [Peruuttamisen vaikutukset](#effects) kuvatulla tavalla. Jos maksuanne käsiteltiin vielä, kun peruutitte sopimuksen, mitään ei tehdä, ja jos maksu saapuu meille, palautamme sen kokonaan. Lähetämme teille viipymättä sähköpostitse vastaanottoilmoituksen, jossa on peruutuksenne sisältö sekä sen päivämäärä ja kellonaika.',
-        'Jos 14 päivän peruuttamisaika oli kulunut, peruuttamisoikeutenne oli jo päättynyt (katsokaa [Kuinka kauan peruuttamisoikeus on voimassa](#expiry)): sivu ja vastaanottoilmoitus kertovat sen teille, ja katsomme ilmoituksenne silti henkilökohtaisesti. Jos tilaustanne ei koskaan maksettu, peruutettavaa sopimusta ei ole: sivu kertoo sen teille, eikä mitään veloitettu. Tämä ei vaikuta oikeuksiinne, jos tiedostossa on virhe.',
+        'Mitä sitten tapahtuu: kirjaamme ilmoituksenne sekä päivämäärän ja kellonajan, jolloin se saapui meille. Jos tilauksenne on maksettu, emme ole alkaneet tehdä tiedostoanne eikä 14 päivän peruuttamisaika ole kulunut, peruutuksenne tulee voimaan: pysäytämme tilauksenne, jolloin mitään ei tehdä, ja palautamme maksunne kohdassa [Peruuttamisen vaikutukset](#effects) kuvatulla tavalla. Jos maksuanne käsiteltiin vielä, kun peruutitte sopimuksen, mitään ei myöskään tehdä, ja jos maksu saapuu meille, palautamme sen kokonaan. Lähetämme teille viipymättä sähköpostitse vastaanottoilmoituksen, jossa on peruutuksenne sisältö sekä sen päivämäärä ja kellonaika.',
+        'Jos olimme suostumuksellanne jo alkaneet tehdä tiedostoanne tai 14 päivän peruuttamisaika oli kulunut, peruuttamisoikeutenne oli jo päättynyt (katsokaa [Milloin peruuttamisoikeus päättyy aikaisemmin](#expiry)): sivu ja vastaanottoilmoitus kertovat sen teille, ja katsomme ilmoituksenne silti henkilökohtaisesti. Jos tilaustanne ei koskaan maksettu, peruutettavaa sopimusta ei ole: sivu kertoo sen teille, eikä mitään veloitettu. Tämä ei vaikuta oikeuksiinne, jos tiedostossa on virhe.',
       ],
     },
     {

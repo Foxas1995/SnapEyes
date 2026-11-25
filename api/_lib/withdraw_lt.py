@@ -45,6 +45,10 @@ RECEIPT_LT = {
               "užsakymo patvirtinimo el. laiške, išsiųstame {confirmation_at}, o Jūsų failą pradėjome kurti "
               "{began_at}. Todėl, kai gavome Jūsų pareiškimą, Jūsų teisė atsisakyti sutarties jau buvo pasibaigusi. "
               "Jūsų užsakymas lieka galioti ir failą gausite savo užsakymo puslapyje."),
+    # outcome "lapsed": making began on an order placed under the terms (the owner's decision of 2026-11-25, the second one of that day)
+    "began_terms": ("Jūsų failą pradėjome kurti {began_at}. Pagal mūsų pardavimo sąlygas, taikomas Jūsų užsakymui, mokėdami sutikote, kad "
+                    "pradėtume iš karto ir kad pradėjus kurti sutarties atsisakyti nebegalima. Todėl, kai gavome Jūsų pareiškimą, Jūsų teisė "
+                    "atsisakyti sutarties jau buvo pasibaigusi. Jūsų užsakymas lieka galioti ir failą gausite savo užsakymo puslapyje."),
     "began_help": ("Jūsų pareiškimą vis tiek asmeniškai peržiūrėsime ir atsakysime el. paštu. Tai neturi įtakos Jūsų "
                    "įstatymų numatytoms teisėms, jei failas turi trūkumų."),
     # the receipt went to the payment email instead of the given address (_receipt_to)
@@ -56,7 +60,7 @@ RECEIPT_LT = {
 
 
 def receipt_what_lt(outcome, reason, money="", by="", end="", first_when=None, consent_at="", confirmation_at="",
-                    began_at=""):
+                    began_at="", terms=False):
     """The "Kas vyksta toliau" paragraphs of withdraw.receipt_mail for "lt", branch for branch the English ones.
     money: pay_lt.price_text_lt(amount); by, end: pay_lt.date_text_lt(...); first_when and the three moments:
     pay_lt.when_text_lt(...) (or RECEIPT_LT["unknown"])."""
@@ -68,6 +72,8 @@ def receipt_what_lt(outcome, reason, money="", by="", end="", first_when=None, c
         return [r["withdrawn"].format(first=first, money=money, by=by)]
     if outcome == "lapsed" and reason == "period_over":
         return [r["period_over"].format(end=end)]
+    if terms:      # placed under the terms: no ticked consent to name
+        return [r["began_terms"].format(began_at=began_at), r["began_help"]]
     return [r["began"].format(consent_at=consent_at, confirmation_at=confirmation_at, began_at=began_at),
             r["began_help"]]
 

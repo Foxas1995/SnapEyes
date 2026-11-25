@@ -376,7 +376,7 @@ export const OrderApp: React.FC = () => {
               text only: no motion there), keyed by what the card shows so a re-render of the same card never replays it; the withdrawal form keeps one key, a form is never remounted
               under the hands of the person typing in it */}
           <div key={WITHDRAW_MODE ? 'withdraw' : card} className={`flex flex-col gap-4${rec.moved && !WITHDRAW_MODE && card !== 'review' ? ' fx-step' : ''}`}>{content}</div>
-          {!WITHDRAW_MODE && LINK && st && CONTRACT_STATES.includes(st.state) && <WithdrawEntry C={C} lang={lang} link={LINK} consent={st.consent === true} />}
+          {!WITHDRAW_MODE && LINK && st && CONTRACT_STATES.includes(st.state) && <WithdrawEntry C={C} lang={lang} link={LINK} />}
           <p className="text-center text-xs text-zinc-400 mt-2">
             {C.contact.lead}{' '}
             <a href={mail} className="inline-flex items-center gap-1 underline underline-offset-4 decoration-white/30 hover:text-white">

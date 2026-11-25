@@ -161,9 +161,8 @@ export interface LogEntry { t?: number; iso?: string; action?: string; order?: s
 
 export interface OrderDetail {
   order: string; state: string; lab: boolean; paid: boolean; count: number; email: string | null;
-  consent: null | { version?: string; at?: string; lang?: string; text?: string; text_sha256?: string };
-  /** an order placed without the consent box (since 2026-11-25, the owner's decision): when, in which language, the legal texts' date */
-  placed?: null | { at?: string; lang?: string; terms?: string; box?: boolean };
+  /** kind "by_terms": placed under the terms of that date (version), no box shown (the owner's decision of 2026-11-25, the second one of that day) */
+  consent: null | { version?: string; at?: string; lang?: string; text?: string; text_sha256?: string; kind?: string; box?: boolean };
   files: { path: string; url?: string }[];
   records: Record<string, Json>;
   eyes: EyeView[]; artworks: ArtworkView[]; payments: Payment[]; refunds: Json[]; log: LogEntry[];

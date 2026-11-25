@@ -134,7 +134,6 @@ export const hu: OrderCopy = {
   withdraw: {
     heading: 'Elállás a szerződéstől',
     lead: 'A rendeléskor hozzájárultál, hogy azonnal megkezdjük a fájlod elkészítését. Amíg nem kezdtük el, itt elállhatsz ettől a szerződéstől. Amint az elkészítés megkezdődik, az elállási jogod megszűnik.',
-    leadOpen: 'A rendelésedtől számított 14 napon belül itt elállhatsz ettől a szerződéstől, akkor is, ha a fájlt már megkaptad, és a teljes kifizetett összeget visszatérítjük.',
     acl: 'Ez az uniós fogyasztóvédelmi jog szerinti elállási jog, amellyel akkor állhatsz el a szerződéstől, ha meggondolod magad. Az ausztrál fogyasztóvédelmi törvény (Australian Consumer Law) szerinti jogaidat ez nem érinti: ha a fájlod hibás, vagy nem felel meg a leírásnak, írj nekünk a rendelésszámoddal.',
     us: 'Ez az uniós fogyasztóvédelmi jog szerinti elállási jog, amellyel akkor állhatsz el a szerződéstől, ha meggondolod magad. A hibás fájl esetén fennálló jogaidat ez nem érinti: ha a fájlod hibás, vagy nem felel meg a leírásnak, írj nekünk a rendelésszámoddal.',
     info: 'Elállási tájékoztató',
@@ -179,6 +178,7 @@ export const hu: OrderCopy = {
       settling: 'Amikor elálltál, a fizetésed még feldolgozás alatt állt. Ha megérkezik hozzánk, legkésőbb 14 napon belül teljes egészében visszatérítjük arra a fizetési módra, amellyel fizettél.',
       refundStarted: (amount: string) => `Elindítottuk a visszatérítést (${amount}) arra a fizetési módra, amellyel fizettél. A bankodtól függően néhány napig tarthat, mire megérkezik.`,
       lapsed: 'A fájlod elkészítése már megkezdődött. A rendeléskor hozzájárultál, hogy azonnal elkezdjük, és tudomásul vetted, hogy a kezdéssel elveszíted az elállási jogodat, így ez a jog már megszűnt. A rendelésed érvényben marad: a fájlodat a rendelési oldaladon találod.',
+      lapsedTerms: 'A fájlod elkészítése már megkezdődött. Az ÁSZF szerint a fizetéssel hozzájárultál, hogy azonnal elkezdjük, és hogy a megkezdés után a szerződéstől már nem lehet elállni, így ez a jog már megszűnt. A rendelésed érvényben marad: a fájlodat a rendelési oldaladon találod.',
       lapsedPeriod: 'Ennek a rendelésnek a 14 napos elállási határideje már lejárt, így a nyilatkozatod beérkezésekor az elállási jogod már megszűnt.',
       lapsedHelp: 'A nyilatkozatodat ennek ellenére személyesen is megnézzük, és e-mailben válaszolunk. Hibás fájl esetén a jogszabályon alapuló jogaidat ez nem érinti.',
       mailSent: (email: string) => `Az átvételi elismervényt elküldtük erre a címre: ${email}.`,

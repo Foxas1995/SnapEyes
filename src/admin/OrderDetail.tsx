@@ -217,14 +217,14 @@ export const OrderDetailPage: React.FC<{ call: Call; order: string }> = ({ call,
           {d.paid && (
             <section className={`${CARD} flex flex-col gap-3`}>
               <h3 className="text-sm font-bold">Sutikimas ir laiškai</h3>
-              {d.consent?.text ? (
+              {d.consent?.kind === 'by_terms' ? (
+                <Notice tone="info">Pagal sąlygas, be varnelės: užsakyta pagal {d.consent.version || '-'} sąlygas, kuriose parašyta, kad mokėdamas pirkėjas sutinka, jog failą pradedame kurti iškart ir pradėjus kurti sutarties atsisakyti nebegalima.</Notice>
+              ) : d.consent?.text ? (
                 <blockquote className="border-l-2 border-[#f5c542]/60 pl-3 text-sm text-white/85 break-words">{d.consent.text}</blockquote>
-              ) : d.placed?.box === false ? (
-                <Notice tone="info">Užsakyta be sutikimo varnelės (Tavo sprendimas, 2026-11-25): teisė atsisakyti galioja 14 dienų, net ir gavus failą.</Notice>
               ) : <Notice tone="warn">Sutikimas neužfiksuotas.</Notice>}
               <Rows rows={[
-                ['Sutikimo laikas', d.consent?.at ? isoTime(d.consent.at) : d.placed?.at ? `be varnelės, užsakyta ${isoTime(d.placed.at)}` : '-'],
-                ['Teksto versija', `${d.consent?.version || '-'} (${d.consent?.lang || '-'})`],
+                ['Sutikimo laikas', d.consent?.at ? isoTime(d.consent.at) : '-'],
+                [d.consent?.kind === 'by_terms' ? 'Sąlygų versija' : 'Teksto versija', `${d.consent?.version || '-'} (${d.consent?.lang || '-'})`],
                 ['Patvirtinimo laiškas', d.records['mail_delivery.json'] ? `${s(mail.state)}${s(mail.result) ? `, ${RESULT_LT[s(mail.result)] || s(mail.result)}` : ''}, ${isoTime(mail.t)}${mail.by === 'owner' ? ' (pažymėjai ranka)' : ''}` : 'dar nesiųstas'],
                 ['Laiškai „paruošta“', d.log.filter((l) => l.action === 'release' || l.action === 'resend_ready').map((l) => `${fmtTime(l.t)} ${actionLt(l.action)} ${l.ok ? 'ok' : 'nepavyko'}`).join('; ') || '-'],
                 ['Gamybos pradžia', d.records['making.json'] ? isoTime(rec('making.json').t) : '-'],

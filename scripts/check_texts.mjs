@@ -669,46 +669,46 @@ const HONESTY = {
   en: {
     visWord: /visuali[sz]ation/i,
     printing: { re: /Printing is not part of your order/i, keys: PRINTING_KEYS },
-    soon: { re: /Ordering opens soon/i, keys: ['bar.soon', 'pricing.notice', 'faq.items.14.a'] },
+    soon: { re: /Ordering opens soon/i, keys: ['bar.soon', 'pricing.notice', 'faq.items.13.a'] },
   },
   de: {
     visWord: /visualisierung/i,
     printing: { re: /Der Druck gehört nicht zur Bestellung/i, keys: PRINTING_KEYS },
-    soon: { re: /Bestellungen sind bald möglich/i, keys: ['bar.soon', 'pricing.notice', 'faq.items.14.a'] },
+    soon: { re: /Bestellungen sind bald möglich/i, keys: ['bar.soon', 'pricing.notice', 'faq.items.13.a'] },
   },
   lt: {
     visWord: /vizualizacij/i,
     printing: { re: /Spausdinimas nėra Jūsų užsakymo dalis/i, keys: PRINTING_KEYS },
-    soon: { re: /Užsakymus pradėsime priimti netrukus/i, keys: ['bar.soon', 'pricing.notice', 'faq.items.14.a'] },
+    soon: { re: /Užsakymus pradėsime priimti netrukus/i, keys: ['bar.soon', 'pricing.notice', 'faq.items.13.a'] },
   },
   hu: {
     visWord: /vizualizáci/i,
     printing: { re: /A nyomtatás nem része a rendelésnek/i, keys: PRINTING_KEYS },
-    soon: { re: /A rendelés hamarosan indul/i, keys: ['bar.soon', 'pricing.notice', 'faq.items.14.a'] },
+    soon: { re: /A rendelés hamarosan indul/i, keys: ['bar.soon', 'pricing.notice', 'faq.items.13.a'] },
   },
   hr: {
     visWord: /vizualizacij/i,
     printing: { re: /Tisak nije dio vaše narudžbe/i, keys: PRINTING_KEYS },
-    soon: { re: /Naručivanje se otvara uskoro/i, keys: ['bar.soon', 'pricing.notice', 'faq.items.14.a'] },
+    soon: { re: /Naručivanje se otvara uskoro/i, keys: ['bar.soon', 'pricing.notice', 'faq.items.13.a'] },
   },
   fi: {
     visWord: /havainnekuv/i,
     printing: { re: /Tulostus ei kuulu tilaukseesi/i, keys: PRINTING_KEYS },
-    soon: { re: /Tilaaminen avautuu pian/i, keys: ['bar.soon', 'pricing.notice', 'faq.items.14.a'] },
+    soon: { re: /Tilaaminen avautuu pian/i, keys: ['bar.soon', 'pricing.notice', 'faq.items.13.a'] },
   },
   et: {
     visWord: /visualiseering/i,
     printing: { re: /Trükkimine ei kuulu sinu tellimuse juurde/i, keys: PRINTING_KEYS },
-    soon: { re: /Tellimine avaneb peagi/i, keys: ['bar.soon', 'pricing.notice', 'faq.items.14.a'] },
+    soon: { re: /Tellimine avaneb peagi/i, keys: ['bar.soon', 'pricing.notice', 'faq.items.13.a'] },
   },
   lv: {
     visWord: /vizualizācij/i,
     printing: { re: /Druka nav jūsu pasūtījuma daļa/i, keys: PRINTING_KEYS },
-    soon: { re: /Pasūtījumus sāksim pieņemt drīz/i, keys: ['bar.soon', 'pricing.notice', 'faq.items.14.a'] },
+    soon: { re: /Pasūtījumus sāksim pieņemt drīz/i, keys: ['bar.soon', 'pricing.notice', 'faq.items.13.a'] },
   },
 };
-// the question of the FAQ item "withdraw" is pinned to the words of src/landing/copy.ts WITHDRAW_Q (the old landing keyed its
-// Australian override on them; the landing replaces by id now, but the words are not to drift)
+// the FAQ item "withdraw" is gone since the owner's decision of 2026-11-25, the second one of that day (withdrawing and refunds are stated in the refund conditions only):
+// the check below refuses it back (its question was pinned to src/landing/copy.ts WITHDRAW_Q before)
 
 // copy paths whose value is an identifier or a file name, not a sentence: the FAQ item ids (faq.items.N.id), the demo file name
 const NOT_PROSE = /(^|\.)id$|^how\.fileName$/;
@@ -816,7 +816,8 @@ function checkLandingCopy(root, mods, strings, out) {
     // (in Hungary the one that says the order carries an obligation to pay), not a friendlier one
     if (x.how?.previewButton !== legal.CHECKOUT_LEGAL[l].continueButton) out.push(`${rel}: how.previewButton is "${x.how?.previewButton}", the checkout button of /try says "${legal.CHECKOUT_LEGAL[l].continueButton}" (src/shared/legal.ts CHECKOUT_LEGAL.${l}.continueButton)`);
     if (x.faqAu?.withdraw && !x.faqAu.withdraw.a.includes(online.button)) out.push(`${rel}: faqAu.withdraw.a does not name the online withdrawal button "${online.button}"`);
-    if (WITHDRAW_Q[l] !== undefined && w?.q !== WITHDRAW_Q[l]) out.push(`${rel}: the faq question "withdraw" is "${w?.q}", it must stay "${WITHDRAW_Q[l]}" word for word`);
+    // the owner's decision of 2026-11-25, the second one of that day: the rule is stated only in the refund conditions, so the FAQ has no item about withdrawing (and faqAu none either)
+    if (w || x.faqAu?.withdraw) out.push(`${rel}: the FAQ has an item "withdraw" again: the owner's decision of 2026-11-25 keeps withdrawing and refunds in the refund conditions only`);
     // the honesty lines, where the prototype has them
     const h = HONESTY[l];
     if (h) {

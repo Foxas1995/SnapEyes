@@ -144,7 +144,6 @@ export const et: OrderCopy = {
   withdraw: {
     heading: 'Lepingust taganemine',
     lead: 'Tellimisel nõustusid, et hakkame sinu faili kohe valmistama. Kuni me ei ole alustanud, saad sellest lepingust siin taganeda. Kui valmistamine on alanud, on sinu taganemisõigus lõppenud.',
-    leadOpen: 'Sellest lepingust saad siin taganeda 14 päeva jooksul pärast tellimust, isegi kui oled oma faili juba kätte saanud, ja saad tagasi kogu makstud summa.',
     acl: 'See on ELi tarbijaõigusest tulenev taganemisõigus juhuks, kui muudad meelt. See ei mõjuta sinu õigusi Austraalia tarbijaõiguse (Australian Consumer Law) alusel: kui sinu fail on vigane või ei vasta kirjeldusele, kirjuta meile ja lisa oma tellimuse number.',
     us: 'See on ELi tarbijaõigusest tulenev taganemisõigus juhuks, kui muudad meelt. See ei mõjuta sinu õigusi juhul, kui fail on vigane: kui sinu fail on vigane või ei vasta kirjeldusele, kirjuta meile ja lisa oma tellimuse number.',
     info: 'Taganemisõigus',
@@ -191,6 +190,7 @@ export const et: OrderCopy = {
       settling: 'Kui sa lepingust taganesid, oli sinu makse veel töötlemisel. Kui see meieni jõuab, tagastame selle täies ulatuses samale makseviisile, mida kasutasid, hiljemalt 14 päeva jooksul.',
       refundStarted: (amount: string) => `Summa ${amount} tagastamine sinu kasutatud makseviisile on algatatud. Sõltuvalt sinu pangast võib selle laekumine võtta mõne päeva.`,
       lapsed: 'Sinu faili valmistamine oli juba alanud. Tellimisel nõustusid, et alustame kohe, ja kinnitasid, et kaotad taganemisõiguse, kui oleme alustanud, seega oli see õigus juba lõppenud. Sinu tellimus jääb kehtima: faili leiad oma tellimuse lehelt.',
+      lapsedTerms: 'Sinu faili valmistamine oli juba alanud. Meie müügitingimuste kohaselt nõustusid makstes, et alustame kohe ja et pärast alustamist ei saa lepingust enam taganeda, seega oli see õigus juba lõppenud. Sinu tellimus jääb kehtima: faili leiad oma tellimuse lehelt.',
       lapsedPeriod: 'Selle tellimuse 14-päevane taganemistähtaeg oli juba lõppenud, seega oli sinu taganemisõigus avalduse saabumise ajaks lõppenud.',
       lapsedHelp: 'Vaatame sinu avalduse siiski isiklikult üle ja vastame sulle e-kirjaga. See ei mõjuta sinu seadusest tulenevaid õigusi puudusega faili korral.',
       mailSent: (email: string) => `Kättesaamise kinnitus on teel aadressile ${email}.`,

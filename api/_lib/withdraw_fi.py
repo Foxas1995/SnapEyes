@@ -79,6 +79,10 @@ def receipt_fi(stmt, *, order, name, money, by_day, last_day, seller):
         what = [f"Tämän tilauksen 14 päivän peruuttamisaika päättyi {end}. Peruuttamisoikeutesi oli siis jo päättynyt, "
                 f"kun ilmoituksesi saapui. Katsomme ilmoituksesi silti henkilökohtaisesti ja vastaamme sinulle "
                 f"sähköpostitse."]
+    elif stmt.get("consent_kind") == "by_terms":   # lapsed: making began on an order placed under the terms (the owner's decision of 2026-11-25, the second one of that day)
+        what = [f"Aloimme tehdä tiedostoasi (aloitus: {_w(stmt.get('began_at'))}). Tilaukseesi sovellettavien myyntiehtojemme mukaan hyväksyit maksamalla, että aloitamme heti ja ettei sopimusta voi enää peruuttaa, kun olemme aloittaneet. Peruuttamisoikeutesi oli siis jo päättynyt, kun ilmoituksesi saapui. Tilauksesi pysyy voimassa, ja saat tiedostosi tilaussivultasi.",
+                "Katsomme ilmoituksesi silti henkilökohtaisesti ja vastaamme sinulle sähköpostitse. Tämä ei vaikuta "
+                "lakisääteisiin oikeuksiisi, jos tiedostossa on virhe."]
     else:   # lapsed: making began after the consent and the confirmation
         what = [f"Tilatessasi annoit nimenomaisen suostumuksesi siihen, että alamme tehdä tiedostoasi heti, ja vahvistit, "
                 f"että menetät peruuttamisoikeutesi, kun olemme aloittaneet (suostumuksesi ajankohta: "

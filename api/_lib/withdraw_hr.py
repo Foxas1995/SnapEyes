@@ -61,6 +61,10 @@ def receipt_hr(stmt, *, order, name, money, by_day, last_day, seller):
         what = [f"Rok od 14 dana za jednostrani raskid ugovora za ovu narudžbu istekao je {end}, pa je vaše pravo na "
                 f"jednostrani raskid ugovora već bilo prestalo kad je stigla vaša izjava. Vašu izjavu ipak ćemo osobno "
                 f"pogledati i odgovoriti vam e-poštom."]
+    elif stmt.get("consent_kind") == "by_terms":   # lapsed: making began on an order placed under the terms (the owner's decision of 2026-11-25, the second one of that day)
+        what = [f"Izradu vaše datoteke započeli smo (početak: {_w(stmt.get('began_at'))}). Prema našim uvjetima prodaje, koji se primjenjuju na vašu narudžbu, plaćanjem ste pristali da odmah počnemo i da nakon početka izrade ugovor više nije moguće jednostrano raskinuti. Zato je vaše pravo na jednostrani raskid ugovora već bilo prestalo kad je stigla vaša izjava. Vaša narudžba ostaje na snazi, a datoteku dobivate na stranici svoje narudžbe.",
+                "Vašu izjavu ipak ćemo osobno pogledati i odgovoriti vam e-poštom. To ne utječe na vaša zakonska prava "
+                "ako datoteka ima nedostatak."]
     else:   # lapsed: making began after the consent and the confirmation
         what = [f"Pri narudžbi ste izričito pristali da odmah počnemo izrađivati vašu datoteku i potvrdili da time "
                 f"gubite pravo na jednostrani raskid ugovora čim započnemo (vrijeme vaše privole: "

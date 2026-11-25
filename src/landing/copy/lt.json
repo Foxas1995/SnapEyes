@@ -585,7 +585,7 @@
       {
         "id": "unhappy",
         "q": "Kas, jei rezultatas man nepatiks?",
-        "a": "Savo peržiūrą matote nemokamai dar prieš mokėdami, o Jums sumokėjus, failą pradedame kurti iš karto. Jei failas turi trūkumų arba aiškiai skiriasi nuo patvirtintos peržiūros, parašykite mums: sukursime jį iš naujo arba grąžinsime pinigus. Išsamiau apie sutarties atsisakymą rašoma toliau."
+        "a": "Savo peržiūrą matote nemokamai dar prieš mokėdami, o Jums sumokėjus, failą pradedame kurti iš karto. Jei failas turi trūkumų arba aiškiai skiriasi nuo patvirtintos peržiūros, parašykite mums: sukursime jį iš naujo."
       },
       {
         "id": "phone",
@@ -620,16 +620,11 @@
         "a": "Nemokamos peržiūros nesaugome. Rainelės iškarpą ir peržiūrą saugome tik tada, kai pradedate užsakymą. Jei užsisakote, Jūsų užsakymo failus (ne Jūsų telefono nuotrauką) saugome 12 mėnesių, kad galėtumėte juos vėl atsisiųsti, o tada ištriname. Jūsų rainelė niekada nenaudojama tapatybei nustatyti ar DI mokyti. Išsamiau apie tai rašoma mūsų privatumo politikoje, kurios nuoroda yra šio puslapio apačioje."
       },
       {
-        "id": "withdraw",
-        "q": "Ar galiu atsisakyti užsakymo?",
-        "a": "Jūsų failą pradedame kurti, kai tik išsiunčiamas užsakymo patvirtinimo el. laiškas, paprastai per minutę nuo apmokėjimo. Jums lieka 14 dienų teisė atsisakyti sutarties: sutarties galite atsisakyti per 14 dienų nuo užsakymo, net jei jau gavote savo failą, ir atgausite visus sumokėtus pinigus. Sutarties galite atsisakyti el. paštu arba internetu mygtuku „Atsisakyti sutarties čia“, kurį rasite šio puslapio apačioje, arba per sutarties atsisakymo nuorodą užsakymo patvirtinimo el. laiške. Jei Jūsų failas turi trūkumų arba aiškiai skiriasi nuo patvirtintos peržiūros, parašykite mums: sukursime jį iš naujo arba grąžinsime pinigus. Išsamiau apie tai rašoma mūsų pardavimo sąlygose ir informacijoje apie teisę atsisakyti sutarties, kurių nuorodos yra šio puslapio apačioje."
-      },
-      {
         "id": "order",
         "q": "Kada galėsiu užsisakyti?",
         "a": "Užsakymus pradėsime priimti netrukus. Iki tol galima nemokama peržiūra. Užsisakyti reikia tik el. pašto adreso.",
         "qOpen": "Kaip užsisakyti?",
-        "aOpen": "Iš karto po nemokamos peržiūros, tame pačiame puslapyje: pasirinkite stilių ir pereikite į „Stripe“ mokėjimo puslapį, kuriame sumokėsite. Iš karto atsidarys Jūsų užsakymo puslapis, o jo nuorodą gausite el. paštu. Reikia tik el. pašto adreso."
+        "aOpen": "Iš karto po nemokamos peržiūros, tame pačiame puslapyje: pasirinkite stilių, pažymėkite langelį dėl skaitmeninio failo ir pereikite į „Stripe“ mokėjimo puslapį, kuriame sumokėsite. Iš karto atsidarys Jūsų užsakymo puslapis, o jo nuorodą gausite el. paštu. Reikia tik el. pašto adreso."
       },
       {
         "id": "pets",
@@ -641,11 +636,7 @@
   "faqAu": {
     "unhappy": {
       "q": "Kas, jei rezultatas man nepatiks?",
-      "a": "Savo peržiūrą matote nemokamai dar prieš mokėdami, o Jums sumokėjus, failą pradedame kurti iš karto. Jei failas turi trūkumų arba aiškiai skiriasi nuo patvirtintos peržiūros, parašykite mums. Mūsų paslaugoms taikomos garantijos, kurių pagal Australijos vartotojų įstatymą (Australian Consumer Law) negalima panaikinti. Išsamiau apie atšaukimą rašoma toliau."
-    },
-    "withdraw": {
-      "q": "Ar galiu atšaukti užsakymą?",
-      "a": "Jūsų failą pradedame kurti, kai tik išsiunčiamas užsakymo patvirtinimo el. laiškas, paprastai per minutę nuo apmokėjimo. Tai nepanaikina 14 dienų teisės atsisakyti sutarties pagal ES vartotojų teisės aktus, kuri taikoma Jūsų užsakymui: per 14 dienų, net ir gavę failą, galite užsakymą atšaukti el. paštu arba internetu mygtuku „Atsisakyti sutarties čia“, kurį rasite šio puslapio apačioje, arba per sutarties atsisakymo nuorodą užsakymo patvirtinimo el. laiške, ir mes grąžinsime Jums visą sumą. Tai susiję tik su apsigalvojimu: mūsų paslaugoms taikomos garantijos, kurių pagal Australijos vartotojų įstatymą (Australian Consumer Law) negalima panaikinti, todėl jei Jūsų failas turi trūkumų arba aiškiai skiriasi nuo patvirtintos peržiūros, parašykite mums. Išsamiau apie tai rašoma mūsų pardavimo sąlygose („Jūsų teisės Australijoje“) ir informacijoje apie teisę atsisakyti sutarties, kurių nuorodos yra šio puslapio apačioje."
+      "a": "Savo peržiūrą matote nemokamai dar prieš mokėdami, o Jums sumokėjus, failą pradedame kurti iš karto. Jei failas turi trūkumų arba aiškiai skiriasi nuo patvirtintos peržiūros, parašykite mums. Mūsų paslaugoms taikomos garantijos, kurių pagal Australijos vartotojų įstatymą (Australian Consumer Law) negalima panaikinti."
     }
   },
   "final": {

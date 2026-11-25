@@ -47,7 +47,8 @@ CONSENT_TEXT_ET = ("Nõustun sõnaselgelt, et SnapEyes alustab minu digitaalse k
 
 # Stripe shows this right above its pay button, the click that makes the order binding: so the statutory words of
 # Art. 8(2) Directive 2011/83/EU in Estonian („tellimus koos maksekohustusega“) stand at that click too.
-SUBMIT_NOTE_ET = ("Alustame sinu faili valmistamist kohe pärast makset. Maksenupule vajutades esitad tellimuse koos maksekohustusega.")
+# the owner's decision of 2026-11-25, the second one of that day: only the order button sentence (its own legal role); nothing about the start or withdrawal (that is in the terms)
+SUBMIT_NOTE_ET = "Maksenupule vajutades esitad tellimuse koos maksekohustusega."
 
 ITEM_DESC_ET = "Digitaalne fail, JPEG, 4096 px."
 
@@ -192,7 +193,7 @@ def confirmation_et(*, order, spec, n, layout, price, paid_at, consent_at, conse
     blocks = [
         ("p", GREETING_ET),
         ("p", "Aitäh tellimuse eest. See e-kiri kinnitab sinu lepingut meiega. Palun hoia see alles: selles on sinu "
-              "tellimus, taganemisõiguse teave koos taganemisavalduse tüüpvormiga ja meie "
+              "tellimus, sinu nõusolek kohe alustada, taganemisõiguse teave koos taganemisavalduse tüüpvormiga ja meie "
               "müügitingimused."),
         ("h", "Sinu tellimuse leht"),
         ("link", link),

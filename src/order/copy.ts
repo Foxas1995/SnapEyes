@@ -143,7 +143,6 @@ const en = {
   withdraw: {
     heading: 'Withdraw from the contract',
     lead: 'At checkout you agreed that we start making your file right away. Until we have started, you can withdraw from this contract here. Once making has started, your right of withdrawal has ended.',
-    leadOpen: 'You can withdraw from this contract here within 14 days of your order, even after you have received your file, and you get back everything you paid.',
     // an order of the Australian market (src/shared/legal.ts legalEdition "au"): shown under the lead and under a
     // lapsed answer, so that nothing here reads as "no refunds" (the Australian Consumer Law cannot be excluded)
     acl: "This is the right of withdrawal under EU consumer law, for cancelling when you change your mind. It doesn't affect your rights under the Australian Consumer Law: if your file is faulty or not as described, write to us with your order number.",
@@ -191,6 +190,7 @@ const en = {
       settling: 'Your payment was still being processed when you withdrew. If it reaches us, we refund it in full to the payment method you used, within 14 days at the latest.',
       refundStarted: (amount: string) => `The refund of ${amount} to the payment method you used has been started. Depending on your bank it can take a few days to arrive.`,
       lapsed: 'Making your file had already started. At checkout you agreed that we start right away and confirmed that you lose your right of withdrawal once we have started, so the right had already ended. Your order stays in place: you find your file on your order page.',
+      lapsedTerms: 'Making your file had already started. Under our terms of sale, by paying you agreed that we start right away and that the contract can no longer be withdrawn from once we have started, so the right had already ended. Your order stays in place: you find your file on your order page.',
       lapsedPeriod: 'The 14-day withdrawal period for this order had already ended, so your right of withdrawal had ended when your statement arrived.',
       lapsedHelp: 'We still look at your statement personally and reply to you by email. Your statutory rights for a defective file are not affected.',
       mailSent: (email: string) => `A confirmation of receipt is on its way to ${email}.`,
@@ -339,7 +339,6 @@ const de: OrderCopy = {
   withdraw: {
     heading: 'Vertrag widerrufen',
     lead: 'Sie haben bei der Bestellung zugestimmt, dass wir sofort mit der Erstellung Ihrer Datei beginnen. Solange wir noch nicht begonnen haben, können Sie diesen Vertrag hier widerrufen. Sobald die Erstellung begonnen hat, ist Ihr Widerrufsrecht erloschen.',
-    leadOpen: 'Sie können diesen Vertrag hier binnen 14 Tagen ab Ihrer Bestellung widerrufen, auch wenn Sie Ihre Datei schon erhalten haben, und erhalten alles zurück, was Sie bezahlt haben.',
     acl: 'Das ist das Widerrufsrecht nach dem EU-Verbraucherrecht, für einen Widerruf ohne Angabe von Gründen. Ihre Rechte nach dem Australian Consumer Law bleiben davon unberührt: Ist Ihre Datei mangelhaft oder entspricht sie nicht der Beschreibung, schreiben Sie uns mit Ihrer Bestellnummer.',
     us: 'Das ist das Widerrufsrecht nach dem EU-Verbraucherrecht, für einen Widerruf ohne Angabe von Gründen. Ihre Rechte bei einer mangelhaften Datei bleiben davon unberührt: Ist Ihre Datei mangelhaft oder entspricht sie nicht der Beschreibung, schreiben Sie uns mit Ihrer Bestellnummer.',
     info: 'Widerrufsbelehrung',
@@ -383,6 +382,7 @@ const de: OrderCopy = {
       settling: 'Ihre Zahlung war bei Ihrem Widerruf noch in Bearbeitung. Falls sie eingeht, erstatten wir sie Ihnen vollständig über das Zahlungsmittel, mit dem Sie bezahlt haben, spätestens binnen 14 Tagen.',
       refundStarted: (amount: string) => `Die Erstattung von ${amount} über das Zahlungsmittel, mit dem Sie bezahlt haben, ist veranlasst. Je nach Bank kann es einige Tage dauern, bis sie ankommt.`,
       lapsed: 'Die Erstellung Ihrer Datei hatte bereits begonnen. Sie haben bei der Bestellung zugestimmt, dass wir sofort beginnen, und bestätigt, dass Sie Ihr Widerrufsrecht mit Beginn der Erstellung verlieren. Ihr Widerrufsrecht war daher bereits erloschen. Ihre Bestellung bleibt bestehen: Ihre Datei finden Sie auf Ihrer Bestellseite.',
+      lapsedTerms: 'Die Erstellung Ihrer Datei hatte bereits begonnen. Nach unseren AGB haben Sie mit Ihrer Zahlung zugestimmt, dass wir sofort beginnen und der Vertrag nach Beginn nicht mehr widerrufen werden kann. Ihr Widerrufsrecht war daher bereits erloschen. Ihre Bestellung bleibt bestehen: Ihre Datei finden Sie auf Ihrer Bestellseite.',
       lapsedPeriod: 'Die 14-tägige Widerrufsfrist für diese Bestellung war bereits abgelaufen. Ihr Widerrufsrecht war daher bei Eingang Ihrer Erklärung bereits erloschen.',
       lapsedHelp: 'Wir sehen uns Ihre Erklärung trotzdem persönlich an und antworten Ihnen per E-Mail. Ihre gesetzlichen Rechte bei einer mangelhaften Datei bleiben unberührt.',
       mailSent: (email: string) => `Eine Eingangsbestätigung ist an ${email} unterwegs.`,

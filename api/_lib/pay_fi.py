@@ -47,7 +47,8 @@ CONSENT_TEXT_FI = ("Annan nimenomaisen suostumukseni siihen, että SnapEyes alka
 
 # Stripe shows this right above its pay button, the click that makes the order binding: so the statutory words of
 # Art. 8(2) Directive 2011/83/EU in Finnish ("tilaukseen liittyy maksuvelvollisuus") stand at that click too.
-SUBMIT_NOTE_FI = ("Aloitamme tiedostosi tekemisen heti maksun jälkeen. Maksupainiketta painamalla teet tilauksen, ja tilaukseen liittyy maksuvelvollisuus.")
+# the owner's decision of 2026-11-25, the second one of that day: only the order button sentence (its own legal role); nothing about the start or withdrawal (that is in the terms)
+SUBMIT_NOTE_FI = "Maksupainiketta painamalla teet tilauksen, ja tilaukseen liittyy maksuvelvollisuus."
 
 ITEM_DESC_FI = "Digitaalinen tiedosto, JPEG, 4096 px."
 
@@ -192,7 +193,7 @@ def confirmation_fi(*, order, spec, n, layout, price, paid_at, consent_at, conse
     blocks = [
         ("p", GREETING_FI),
         ("p", "Kiitos tilauksestasi. Tämä viesti vahvistaa sopimuksesi kanssamme. Säilytä se: siinä ovat tilauksesi, "
-              "tiedot peruuttamisoikeudesta ja malliperuuttamislomake sekä "
+              "suostumuksesi välittömään aloittamiseen, tiedot peruuttamisoikeudesta ja malliperuuttamislomake sekä "
               "myyntiehtomme."),
         ("h", "Tilaussivusi"),
         ("link", link),

@@ -585,7 +585,7 @@
       {
         "id": "unhappy",
         "q": "Mi történik, ha nem tetszik az eredmény?",
-        "a": "A saját előnézetedet fizetés előtt ingyen láthatod, a fizetés után pedig azonnal megkezdjük a fájl elkészítését. Ha a fájl hibás, vagy egyértelműen eltér az általad jóváhagyott előnézettől, írj nekünk: újra elkészítjük, vagy visszatérítjük az árát. Az elállás részleteit alább találod."
+        "a": "A saját előnézetedet fizetés előtt ingyen láthatod, a fizetés után pedig azonnal megkezdjük a fájl elkészítését. Ha a fájl hibás, vagy egyértelműen eltér az általad jóváhagyott előnézettől, írj nekünk: újra elkészítjük."
       },
       {
         "id": "phone",
@@ -620,16 +620,11 @@
         "a": "Az ingyenes előnézetedet nem tároljuk. Csak ha rendelést indítasz, őrizzük meg az íriszkivágást és az előnézetet. Ha rendelsz, a rendelésed fájljait (a telefonos fotódat nem) 12 hónapig megőrizzük, hogy újra letölthesd őket, azután töröljük. Az íriszedet soha nem használjuk senki azonosítására, sem mesterséges intelligencia tanítására. A részleteket az adatkezelési tájékoztatóban találod, az oldal alján."
       },
       {
-        "id": "withdraw",
-        "q": "Elállhatok a rendeléstől?",
-        "a": "A fájlod elkészítését akkor kezdjük meg, amikor elment a rendelésed visszaigazoló e-mailje, ez általában a fizetés után egy percen belül megtörténik. A 14 napos elállási jogod ennek ellenére megmarad: a rendelésedtől számított 14 napon belül elállhatsz, akkor is, ha a fájlt már megkaptad, és a teljes kifizetett összeget visszatérítjük. E-mailben vagy online, az „Elállás a szerződéstől” funkcióval állhatsz el: megtalálod az oldal alján, és a visszaigazoló e-mailben kapott elállási link is oda vezet. Ha a fájlod hibás, vagy egyértelműen eltér a jóváhagyott előnézettől, írj nekünk: újra elkészítjük, vagy visszatérítjük az árát. A részleteket az ÁSZF-ben és az elállási tájékoztatóban találod, az oldal alján."
-      },
-      {
         "id": "order",
         "q": "Mikor rendelhetek?",
         "a": "A rendelés hamarosan indul. Addig az ingyenes előnézet elérhető. A rendeléshez csak egy e-mail-címre van szükséged.",
         "qOpen": "Hogyan rendelhetek?",
-        "aOpen": "Közvetlenül az ingyenes előnézeted után, ugyanazon az oldalon: válaszd ki a stílust, és lépj tovább a Stripe fizetési oldalára, ahol fizetsz. A rendelési oldalad azonnal megnyílik, a linkjét pedig e-mailben is elküldjük. Csak egy e-mail-címre van szükséged."
+        "aOpen": "Közvetlenül az ingyenes előnézeted után, ugyanazon az oldalon: válaszd ki a stílust, jelöld be a digitális fájlra vonatkozó négyzetet, és lépj tovább a Stripe fizetési oldalára, ahol fizetsz. A rendelési oldalad azonnal megnyílik, a linkjét pedig e-mailben is elküldjük. Csak egy e-mail-címre van szükséged."
       },
       {
         "id": "pets",
@@ -641,11 +636,7 @@
   "faqAu": {
     "unhappy": {
       "q": "Mi történik, ha nem tetszik az eredmény?",
-      "a": "A saját előnézetedet fizetés előtt ingyen láthatod, a fizetés után pedig azonnal megkezdjük a fájl elkészítését. Ha a fájl hibás, vagy egyértelműen eltér az általad jóváhagyott előnézettől, írj nekünk. Szolgáltatásainkra olyan garanciák vonatkoznak, amelyek az ausztrál fogyasztóvédelmi törvény (Australian Consumer Law) értelmében nem zárhatók ki. A lemondás részleteit alább találod."
-    },
-    "withdraw": {
-      "q": "Lemondhatom a rendelést?",
-      "a": "A fájlod elkészítését akkor kezdjük meg, amikor elment a rendelésed visszaigazoló e-mailje, ez általában a fizetés után egy percen belül megtörténik. Ez nem szünteti meg a 14 napos elállási jogot (az uniós fogyasztóvédelmi jog szerint, amely a rendelésedre vonatkozik): 14 napon belül, akkor is, ha már megkaptad a fájlt, e-mailben vagy online, az „Elállás a szerződéstől” funkcióval mondhatod le a rendelést: megtalálod az oldal alján, és a visszaigazoló e-mailben kapott elállási link is oda vezet. Ilyenkor a teljes árat visszatérítjük. Ez csak arra az esetre vonatkozik, ha meggondolod magad: szolgáltatásainkra olyan garanciák vonatkoznak, amelyek az ausztrál fogyasztóvédelmi törvény (Australian Consumer Law) értelmében nem zárhatók ki, ezért ha a fájlod hibás, vagy egyértelműen eltér a jóváhagyott előnézettől, írj nekünk. A részleteket az ÁSZF (A jogaid Ausztráliában) és az elállási tájékoztató tartalmazza, az oldal alján."
+      "a": "A saját előnézetedet fizetés előtt ingyen láthatod, a fizetés után pedig azonnal megkezdjük a fájl elkészítését. Ha a fájl hibás, vagy egyértelműen eltér az általad jóváhagyott előnézettől, írj nekünk. Szolgáltatásainkra olyan garanciák vonatkoznak, amelyek az ausztrál fogyasztóvédelmi törvény (Australian Consumer Law) értelmében nem zárhatók ki."
     }
   },
   "final": {

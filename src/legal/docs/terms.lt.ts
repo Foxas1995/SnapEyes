@@ -1,8 +1,8 @@
 // Pardavimo sąlygos: the Lithuanian twin of `en` in src/legal/docs/terms.ts, same section ids and blocks in the same
 // order, the same facts from src/landing/config.ts (through ../facts). Everything the English header says holds here
-// too: no ODR link, no VAT number, no promise the code does not keep, the right of withdrawal lasts the 14-day period
-// (counted as withdraw.py period_end counts it; since 2026-11-25, the owner's decision, no consent box: making the file
-// does not end it), the seller line has no phone (owner decision).
+// too: no ODR link, no VAT number, no promise the code does not keep, the right of withdrawal ends when making the file
+// begins (or with the 14-day period, counted as withdraw.py period_end counts it), the seller line has no phone (owner
+// decision).
 // Lithuanian law behind the wording (Civilinis kodeksas, Šeštoji knyga, nuotolinės sutartys):
 //  - 6.228(8) str. 3 d.: the order button says "užsakymas su prievole sumokėti" or an equally unambiguous wording. Our
 //    "Pereiti prie apmokėjimo" places no order; the binding order is Stripe's pay button (Stripe Checkout, locale "lt"),
@@ -77,7 +77,7 @@ export const lt: LegalDoc = {
         `Mūsų svetainėje pateiktos peržiūros ir kainos dar nėra oferta (pasiūlymas sudaryti sutartį). Prieš mokėjimą galite patikrinti savo akis, stilių, išdėstymą ir užrašą ir ištaisyti bet kokias įvesties klaidas, grįždami atgal arba iš naujo fotografuodami. Tada mūsų mygtuku „${CHECKOUT_LEGAL_LT.continueButton}“ atidarote mūsų mokėjimo paslaugų teikėjo Stripe mokėjimo puslapį; šis mygtukas dar nepateikia užsakymo. Tame puslapyje įvedate savo el. pašto adresą ir mokėjimo duomenis ir galite juos pataisyti. Užsakymą su prievole sumokėti pateikiate, kai ten patvirtinate mokėjimą mokėjimo mygtuku.`,
         'Sutartis sudaroma, kai patvirtinamas Jūsų mokėjimas. Tada atsidaro Jūsų užsakymo puslapis, o jo nuorodą kartu su užsakymo patvirtinimu atsiunčiame Jums el. paštu. Kai tik tas el. laiškas išsiųstas, ten pradedame kurti Jūsų failą.',
         'Sutarties kalbos: lietuvių, anglų, vokiečių, vengrų, kroatų, suomių, estų ir latvių.',
-        'Jūsų užsakymą saugome su sutarties duomenimis: užsakytas kūrinys, kaina, data ir Jūsų el. pašto adresas. Jūsų užsakymo puslapyje šie duomenys matomi tol, kol saugome Jūsų užsakymą. Atskiros šių sąlygų kopijos kiekvienam užsakymui nesaugome. Vietoj to Jūsų užsakymo patvirtinimo el. laiške tekstu pateikiami Jūsų užsakymo duomenys, šios sąlygos ir informacija apie teisę atsisakyti sutarties su pavyzdine sutarties atsisakymo forma, užsakymo metu galiojusios redakcijos: išsaugokite tą el. laišką. Šį puslapį taip pat bet kada galite išsaugoti arba atsispausdinti.',
+        'Jūsų užsakymą saugome su sutarties duomenimis: užsakytas kūrinys, kaina, data, Jūsų el. pašto adresas ir Jūsų sutikimas, kad pradėtume iš karto. Jūsų užsakymo puslapyje šie duomenys matomi tol, kol saugome Jūsų užsakymą. Atskiros šių sąlygų kopijos kiekvienam užsakymui nesaugome. Vietoj to Jūsų užsakymo patvirtinimo el. laiške tekstu pateikiami Jūsų užsakymo duomenys, šios sąlygos ir informacija apie teisę atsisakyti sutarties su pavyzdine sutarties atsisakymo forma, užsakymo metu galiojusios redakcijos: išsaugokite tą el. laišką. Šį puslapį taip pat bet kada galite išsaugoti arba atsispausdinti.',
       ],
     },
     {
@@ -109,7 +109,8 @@ export const lt: LegalDoc = {
       id: 'withdrawal',
       title: 'Teisė atsisakyti sutarties',
       blocks: [
-        `Jūs, kaip vartotojas, turite 14 dienų teisę atsisakyti sutarties: per 14 dienų galite atsisakyti sutarties nenurodydami priežasties. Jūsų failą pradedame kurti iš karto po Jūsų mokėjimo ir pateikiame jį Jūsų užsakymo puslapyje; tai nepanaikina Jūsų teisės atsisakyti sutarties. Jei sutarties atsisakote per 14 dienų, grąžiname visus sumokėtus pinigus, net jei jau gavote savo failą. Jūsų mokėjimo diena neskaičiuojama, o jei paskutinė termino diena yra šeštadienis, sekmadienis arba oficiali šventės diena, terminas baigiasi kitos darbo dienos pabaigoje. Sutarties galite atsisakyti el. paštu, paštu arba internetu, mygtuku „${WITHDRAWAL_ONLINE_LT.button}“; užsakymo patvirtinimo el. laiške esanti sutarties atsisakymo nuoroda atidaro šią funkciją Jūsų užsakymui. Visa informacija, internetinė funkcija ir pavyzdinė sutarties atsisakymo forma pateiktos puslapyje [Teisė atsisakyti sutarties](doc:withdrawal).`,
+        `Jūsų kūrinys yra skaitmeninis failas, kuriamas būtent Jums, o prieš pirkdami nemokamai matote jo peržiūrą. **Mokėdami sutinkate, kad Jūsų failą pradėtume kurti iš karto ir kad pradėjus kurti sutarties atsisakyti nebegalima, o sumokėta kaina negrąžinama.** Pradedame iškart po to, kai išsiunčiamas užsakymo patvirtinimo el. laiškas, paprastai per minutę nuo apmokėjimo. Jei negalime pateikti Jūsų failo, grąžiname visą sumokėtą sumą; jei failas turi trūkumų, žr. [Pretenzijos ir trūkumai](#defects).`,
+        `Kol dar nepradėjome, per 14 dienų sutarties atsisakymo terminą galite atsisakyti sutarties el. paštu, paštu arba internetu, mygtuku „${WITHDRAWAL_ONLINE_LT.button}“, ir grąžinsime visą sumokėtą sumą. Visa informacija, internetinė funkcija ir pavyzdinė sutarties atsisakymo forma pateiktos puslapyje [Teisė atsisakyti sutarties](doc:withdrawal).`,
       ],
     },
     {

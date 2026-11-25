@@ -23,12 +23,11 @@ idempotent step (the eye claims of master_eye, compose.lock, the claimed emails)
 Who starts it. Making may start once the order confirmation email went out (pay.confirmation). Whoever sends it
 (pay.deliver_mail: the Stripe webhook, the order page's status call, a resend from the admin panel) calls
 after_confirmation(), and the webhook does the same for an order that needs no email (a test order where email is
-off). The server STARTS an order (the first render; for an order that holds the consent, the moment the customer's right of
-withdrawal ends; an order placed without the consent box, since 2026-11-25, the owner's decision, keeps its 14 days) only where
+off). The server STARTS an order (the first render, the moment the customer's right of withdrawal ends) only where
 the texts the customer was given say so: the confirmation email this order got (mail_delivery.json "making":
 "server", written from the legal pack's "making_start": "after_confirmation", pay.server_starts); an email that said
 "making starts when you open your order page" keeps it that way for that order. An order the page has started
-(making.json, or a stored eye) is always finished by the server.
+(making.json, or a stored eye) is always finished by the server: the right of withdrawal has ended then.
 
 The self-call. It goes to this very deployment: on production the site (SNAPEYES_SITE, default snapeyes.com), on a
 Vercel Preview its own deployment URL (with VERCEL_AUTOMATION_BYPASS_SECRET as x-vercel-protection-bypass when
