@@ -561,7 +561,7 @@ async function checkMenu() {
   await page.eval("document.getElementById('menuBtn').focus(); document.getElementById('menuBtn').click()");
   await sleep(700);
   const o1 = JSON.parse(await page.eval("JSON.stringify({ open: document.getElementById('menu').open, links: document.querySelectorAll('#menu nav a').length, scroll: getComputedStyle(document.documentElement).overflow })"));
-  expect('menu', o1.open && o1.links === 6 && o1.scroll === 'hidden', `live: ${JSON.stringify(o1)} (want open, six links, the page behind locked)`);
+  expect('menu', o1.open && o1.links === 7 && o1.scroll === 'hidden', `live: ${JSON.stringify(o1)} (want open, seven links: the six sections and the gift voucher page since 2026-11-25, the page behind locked)`);
   await key('Escape');
   const o2 = JSON.parse(await page.eval("JSON.stringify({ open: document.getElementById('menu').open, focus: document.activeElement.id, exp: document.getElementById('menuBtn').getAttribute('aria-expanded'), scroll: getComputedStyle(document.documentElement).overflow })"));
   expect('menu', !o2.open && o2.focus === 'menuBtn' && o2.exp === 'false' && o2.scroll !== 'hidden', `live: after Escape ${JSON.stringify(o2)}`);
