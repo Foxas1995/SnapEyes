@@ -1596,6 +1596,172 @@ check("the order confirmation of an order with a print says that print's own tim
       ct == 200 and PR.time_text("canvas40", "LT", "lt") in txt_t and "Gamyba trunka apie 3 darbo dienas, o pristatymas" not in txt_t and "nuo 2 iki 9" not in txt_t
       and all(t_[l_]["p1"].count("{time}") == 1 and t_[l_]["p1"].count("{producer}") == 1 and not re.search(r"\d", t_[l_]["p1"]) for t_ in (PR.CONF, PR.ADDON_CONF) for l_ in PR.LANGS),
       (ct, txt_t[:300]))
+section("14. value vouchers on prints (the owner's decision of 2026-11-25): the balance after the artwork, a code typed into the offer, no-cost print sessions")
+from _lib import voucher as V  # noqa: E402
+from urllib.parse import parse_qs as _pqs  # noqa: E402
+COUPONS = {}
+_POST0, _GET0 = H.StubHandler.do_POST, H.StubHandler.do_GET
+
+
+def _cpost(self):
+    """Stripe's coupons in the stub (as in test_gift.py): made once by id, read back, counted at completion (finish)."""
+    if urlsplit(self.path).path != "/v1/coupons":
+        return _POST0(self)
+    p_ = {k_: v_[0] for k_, v_ in _pqs(self.rfile.read(int(self.headers.get("content-length") or 0)).decode("utf-8"), keep_blank_values=True).items()}
+    if p_.get("id") in COUPONS:
+        return self._send(400, {"error": {"type": "invalid_request_error", "code": "resource_already_exists"}})
+    cp_ = {"id": p_["id"], "object": "coupon", "amount_off": int(p_["amount_off"]), "currency": p_["currency"], "max_redemptions": int(p_["max_redemptions"]),
+           "redeem_by": int(p_["redeem_by"]), "times_redeemed": 0, "valid": True, "metadata": {k_[9:-1]: v_ for k_, v_ in p_.items() if k_.startswith("metadata[")}}
+    COUPONS[cp_["id"]] = cp_
+    return self._send(200, cp_)
+
+
+def _cget(self):
+    path_ = urlsplit(self.path).path
+    if not path_.startswith("/v1/coupons/"):
+        return _GET0(self)
+    cp_ = COUPONS.get(path_.rsplit("/", 1)[1])
+    return self._send(200, cp_) if cp_ else self._send(404, {"error": {"type": "invalid_request_error", "code": "resource_missing"}})
+
+
+H.StubHandler.do_POST, H.StubHandler.do_GET = _cpost, _cget
+
+
+def params_for(sid_):
+    want = H.Fake.sessions[sid_]["metadata"]
+    return next(p_ for p_, _h in reversed(H.Fake.creates) if {k_[9:-1]: v_ for k_, v_ in p_.items() if k_.startswith("metadata[")} == want)
+
+
+def finish(sid_, cc="LT", email="kunde@example.com"):
+    """Stripe completes a session as it would: every line item and the shipping rate, its coupon off the LINE ITEMS only (never off a shipping rate), counted once;
+    a total of 0 is a no-cost session (no PaymentIntent)."""
+    p_ = params_for(sid_)
+    items = sum(int(v_) for k_, v_ in p_.items() if re.fullmatch(r"line_items\[\d+\]\[price_data\]\[unit_amount\]", k_))
+    ship = int(p_.get("shipping_options[0][shipping_rate_data][fixed_amount][amount]") or 0)
+    off = 0
+    if p_.get("discounts[0][coupon]"):
+        cp_ = COUPONS[p_["discounts[0][coupon]"]]
+        assert cp_["times_redeemed"] < cp_["max_redemptions"], cp_
+        off = min(cp_["amount_off"], items)
+        cp_["times_redeemed"] += 1
+    total_ = items - off + ship
+    s_ = H.Fake.sessions[sid_]
+    s_.update(status="complete", amount_total=total_, payment_status="paid" if total_ else "no_payment_required", customer_details={"email": email},
+              payment_intent=("pi_test_" + os.urandom(6).hex()) if total_ else None, total_details={"amount_discount": off, "amount_shipping": ship, "amount_tax": 0})
+    if p_.get("shipping_address_collection[allowed_countries][0]"):
+        s_["collected_information"] = {"shipping_details": {"name": "SnapEyes Test", "address": {"line1": "Gedimino pr. 1", "line2": "", "city": "Vilnius",
+                                                                                                "postal_code": "01100", "state": "", "country": cc}}}
+    return s_
+
+
+def buy_value(amount):
+    c_, j_ = post("/api/checkout", {"gift": {"amount": amount}, "market": "lt", "lang": "lt"})
+    assert c_ == 200, (c_, j_)
+    sid_ = next(s_ for s_, x_ in H.Fake.sessions.items() if x_["url"] == j_["url"])
+    c2_, j2_ = webhook(H.pay_session(sid_, "pirkejas@example.com"))
+    assert c2_ == 200, (c2_, j2_)
+    return V.code_for(sid_)
+
+
+def ledger(code_):
+    return [e_["state"] for e_ in V.view(V.coupon_id(code_))]
+
+
+price1 = pay.price_cents(1, STYLE, "lt")
+code100 = buy_value(10000)
+cid100 = V.coupon_id(code100)
+ov, kv = draft(lang="lt")
+c, j = co(ov, kv, lang="lt", market="lt", voucher=code100)
+cw, jw = webhook(finish(rj(f"orders/{ov}/order.json")["checkout"]["session_id"]))
+deliver(ov)
+c, stv = get(f"/api/order?o={ov}&k={kv}")
+left = 10000 - price1
+check("an artwork paid with a 100.00 voucher: paid at 0, and its delivered order's print offer carries the voucher's balance (100.00 less the artwork) and its last day",
+      cw == 200 and (rj(f"orders/{ov}/paid.json") or {}).get("amount_total") == 0 and (stv.get("print_offer") or {}).get("voucher", {}).get("balance") == left
+      and (stv["print_offer"]["voucher"].get("valid_until") or "") >= time.strftime("%Y-%m-%d"), (c, stv.get("print_offer", {}).get("voucher")))
+c, ja = addon(ov, kv, product="acrylic30", cc="LT", lang="lt")
+p = H.Fake.creates[-1][0]
+sa1 = addon_sid(ov)
+check("its print (a 30 cm acrylic to Lithuania, 59.00 + 8.49) with nothing typed: the voucher is applied by itself, all of it is paid by the voucher: a fresh coupon (s002), "
+      "the metadata of the spend, the shipping as a LINE ITEM (a coupon takes nothing off a shipping rate), no shipping rate, the address form for Lithuania, no PaymentIntent",
+      c == 200 and ja.get("voucher") == {"value": left, "discount": 6749, "pay": 0} and ja.get("total") == 6749 and p.get("discounts[0][coupon]") == f"{cid100}_s002"
+      and p.get("metadata[voucher]") == f"{cid100}_s002" and p.get("metadata[voucher_base]") == cid100 and p.get("metadata[voucher_n]") == "2"
+      and p.get("metadata[voucher_value]") == "6749" and p.get("line_items[0][price_data][unit_amount]") == "5900" and p.get("line_items[1][price_data][unit_amount]") == "849"
+      and p.get("line_items[1][price_data][product_data][name]") == PR.SHIP_LABEL["lt"].format(country=PR.country_name("LT", "lt"))
+      and not any(k_.startswith("shipping_options") for k_ in p) and p.get("shipping_address_collection[allowed_countries][0]") == "LT"
+      and not any(k_.startswith("payment_intent_data") for k_ in p) and (rj(f"orders/{ov}/print_checkout.json") or {}).get("voucher", {}).get("base") == cid100,
+      (c, ja, {k_: v_ for k_, v_ in p.items() if not k_.startswith("metadata[c")}))
+c, ja2 = addon(ov, kv, product="acrylic30", cc="LT", lang="lt")
+sa2 = addon_sid(ov)
+check("the customer opens the print's payment page again: the earlier one is expired and its reservation released, the new one reserves anew (s003)",
+      c == 200 and sa1 in H.Fake.expires and ledger(code100) == ["paid", "released", "reserved"] and H.Fake.creates[-1][0].get("discounts[0][coupon]") == f"{cid100}_s003",
+      ledger(code100))
+H.Fake.emails.clear()
+KICKS.clear()
+cw, jw = webhook(finish(sa2, "LT", "kunde@example.com"))
+ppd = rj(f"orders/{ov}/print_paid.json") or {}
+check("Stripe completes it as a NO-COST session (no_payment_required, 0): the print is recorded (print_paid.json, no mismatch), with the voucher; print.json waits for "
+      "merchOne and the server's step is asked for; the voucher's entry is PAID and 7.54 is left",
+      cw == 200 and jw.get("state") == "new" and ppd.get("paid") is True and ppd.get("amount_total") == 0 and ppd.get("payment_intent") is None
+      and not ppd.get("print", {}).get("mismatch") and ppd.get("voucher", {}).get("discount") == 6749 and ppd["voucher"].get("base") == cid100
+      and (rj(f"orders/{ov}/print.json") or {}).get("state") in (None, "waiting") and exists(f"orders/{ov}/print.json") and (ov, "print") in KICKS
+      and ledger(code100) == ["paid", "released", "paid"] and get(f"/api/checkout?voucher={code100}&m=lt")[1].get("value") == left - 6749,
+      (cw, jw, ppd.get("voucher"), ppd.get("print", {}).get("mismatch"), ledger(code100)))
+pconf = next((m_ for m_, _i in H.Fake.emails if ov in m_.get("subject", "") and m_.get("to") == ["kunde@example.com"]), {})
+pt = pconf.get("text", "").replace(" ", " ")
+check("the print's own confirmation: the total row says the price, the gift voucher and 0 paid; the payment row names the voucher (no card was charged)",
+      "dovanų kuponas −67,49 €" in pt and "sumokėta 0,00 €" in pt and V.COUPON_NAME["lt"] in pt and PR.ADDON_CONF["lt"]["paid"] not in pt, pt[:900])
+check("the owner's note of the print names the voucher and what it paid", any("Gift voucher: " + cid100 in x_.get("text", "") for x_, _i in H.Fake.emails), "")
+paid_v = pay.get_paid(ov)
+r_step = PR.step(ov, rj(f"orders/{ov}/order.json"), paid_v)
+check("the no-cost print goes to merchOne like any other (its payment is the voucher: no PaymentIntent, nothing refunded)", r_step == "created"
+      and any(x_.get("external_id") == ov for x_ in MO.creates) and PR.due(ov, paid_v) == "", (r_step, PR.due(ov, paid_v)))
+# a code typed into the offer of an order paid without one; the voucher pays part of the print
+code30 = buy_value(3000)
+ow, kw, _sw = paid_file_order(lang="lt")
+c, stw = get(f"/api/order?o={ow}&k={kw}")
+cv_, jv_ = get(f"/api/checkout?voucher={code30}&m=lt&o={ow}&u=print")
+c, jt = addon(ow, kw, product="acrylic40", cc="DE", voucher=V.shown(code30))
+p = H.Fake.creates[-1][0]
+check("an order paid without a voucher: no balance in its offer; a code typed into the offer is checked for a print (30.00) and pays 30.00 of a 40 cm acrylic to Germany "
+      "(79.00 + 4.99): the rest by card, the shipping stays Stripe's shipping rate, the PaymentIntent too",
+      "voucher" not in (stw.get("print_offer") or {}) and cv_ == 200 and jv_.get("value") == 3000 and c == 200
+      and jt.get("voucher") == {"value": 3000, "discount": 3000, "pay": 8399 - 3000} and p.get("shipping_options[0][shipping_rate_data][fixed_amount][amount]") == "499"
+      and not any(k_.startswith("line_items[1]") for k_ in p) and any(k_.startswith("payment_intent_data") for k_ in p) and p.get("discounts[0][coupon]") == f"{V.coupon_id(code30)}_s001",
+      (jv_, jt))
+cw, jw = webhook(finish(addon_sid(ow), "DE"))
+ppw = rj(f"orders/{ow}/print_paid.json") or {}
+check("paid by card for the rest: recorded with 53.99, no mismatch, the voucher used up", cw == 200 and ppw.get("amount_total") == 5399 and not ppw.get("print", {}).get("mismatch")
+      and ledger(code30) == ["paid"] and get(f"/api/checkout?voucher={code30}&m=lt")[1].get("why") == "used", (ppw.get("amount_total"), ppw.get("print", {}).get("mismatch")))
+# a voucher of an old kind pays for an artwork only
+sid_old = "cs_test_" + os.urandom(12).hex()
+H.Fake.sessions[sid_old] = {"id": sid_old, "object": "checkout.session", "mode": "payment", "status": "open", "payment_status": "unpaid", "currency": "eur", "amount_total": 2497,
+                            "metadata": {"kind": "voucher", "voucher_kind": "one", "voucher_value": "2497", "market": "lt", "currency": "eur", "lang": "lt", "ref": "gift-old"},
+                            "url": "https://checkout.stripe.test/c/pay/x", "livemode": False, "customer_details": None, "payment_intent": None, "expires_at": int(time.time()) + 3600}
+webhook(H.pay_session(sid_old, "old@example.com"))
+ox, kx, _sx = paid_file_order(lang="lt")
+n0 = len(H.Fake.creates)
+c, jo = addon(ox, kx, voucher=V.code_for(sid_old))
+check("a voucher of an old kind typed into a print's offer: 409 voucher_invalid, why artwork; nothing created, and the voucher is still unused",
+      c == 409 and jo.get("reason") == "voucher_invalid" and jo.get("why") == "artwork" and len(H.Fake.creates) == n0 and not exists(f"orders/{ox}/print_checkout.json")
+      and COUPONS[V.coupon_id(V.code_for(sid_old))]["times_redeemed"] == 0, (c, jo))
+c, jb = addon(ox, kx, voucher="ABCD-EFGH-JKLM")
+check("an unknown code typed into the offer: 409 voucher_invalid unknown, nothing created", c == 409 and jb.get("why") == "unknown" and len(H.Fake.creates) == n0, (c, jb))
+# the first checkout with a print and a voucher worth more than the artwork and the print
+code170 = buy_value(17000)
+of_, kf_ = draft(lang="lt")
+c, jf = co(of_, kf_, lang="lt", market="lt", print={"product": "poster50", "country": "LT"}, consent_print=True, voucher=code170)
+p = H.Fake.creates[-1][0]
+tot = price1 + 3500 + 849
+cw, jw = webhook(finish(rj(f"orders/{of_}/order.json")["checkout"]["session_id"], "LT"))
+pjf = rj(f"orders/{of_}/paid.json") or {}
+check("the artwork's own checkout with a print and a 170.00 voucher: the voucher pays the artwork, the print AND its shipping (the shipping a line item), a no-cost session; "
+      "the order is paid with no mismatch and its print recorded without one; the rest stays on the voucher",
+      c == 200 and jf.get("voucher") == {"value": 17000, "discount": tot, "pay": 0} and p.get("line_items[2][price_data][unit_amount]") == "849"
+      and not any(k_.startswith("shipping_options") for k_ in p) and not any(k_.startswith("payment_intent_data") for k_ in p)
+      and cw == 200 and pjf.get("amount_total") == 0 and "amount_mismatch" not in pjf and not (pjf.get("print") or {}).get("mismatch")
+      and get(f"/api/checkout?voucher={code170}&m=lt")[1].get("value") == 17000 - tot, (jf, pjf.get("amount_mismatch"), (pjf.get("print") or {}).get("mismatch")))
+H.StubHandler.do_POST, H.StubHandler.do_GET = _POST0, _GET0
 maker.kick = real_kick
 pay._stripe = real_stripe
 

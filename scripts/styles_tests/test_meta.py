@@ -303,9 +303,9 @@ c, j = webhook(s4)
 MODE["m"] = "ok"
 check("Meta down at the payment: the webhook still answers 200, the order is paid and its confirmation goes out", c == 200 and j.get("new") is True and len(SENT) == 1
       and (rj(f"orders/{o4}/paid.json") or {}).get("paid") is True and j.get("mail") in ("sent", "done"), (c, j))
-# the voucher
+# the voucher (1125: a value voucher, the owner's decision of 2026-11-25: the Purchase's value is its amount)
 SENT.clear()
-c, j = post("/api/checkout", {"gift": {"kind": "one"}, "market": "lt", "lang": "lt", "fbp": FBP}, {"User-Agent": UA, "X-Real-IP": "203.0.113.8"})
+c, j = post("/api/checkout", {"gift": {"amount": 10000}, "market": "lt", "lang": "lt", "fbp": FBP}, {"User-Agent": UA, "X-Real-IP": "203.0.113.8"})
 vsid = next((x for x, v in H.Fake.sessions.items() if v["url"] == j.get("url")), None)
 vm = meta_of(vsid) if vsid else {}
 check("a gift voucher's session carries fbp, cip and cua too (with the token)", c == 200 and vm.get("fbp") == FBP and vm.get("cip") == "203.0.113.8" and vm.get("cua") == UA, (c, vm))
@@ -315,7 +315,7 @@ c, j = webhook(vs)
 ev = SENT[0]["payload"]["data"][0] if SENT else {}
 check("the voucher's payment sends one Purchase: the hashed event id (never the session, which shows the code), category voucher, /gift, the voucher's value",
       c == 200 and len(SENT) == 1 and ev.get("event_id") == MC.event_id(vsid, "voucher") and vsid not in json.dumps(SENT[0]["payload"])
-      and ev["custom_data"] == {"value": V.value_of("one", "lt") / 100, "currency": "EUR", "content_category": "voucher"} and ev["event_source_url"].endswith("/gift")
+      and ev["custom_data"] == {"value": 10000 / 100, "currency": "EUR", "content_category": "voucher"} and ev["event_source_url"].endswith("/gift")
       and ev["user_data"]["country"] == [hashlib.sha256(b"lt").hexdigest()], (c, j, ev))
 webhook(vs)
 get(f"/api/checkout?gift={vsid}")

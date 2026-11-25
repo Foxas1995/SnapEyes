@@ -137,7 +137,7 @@ check("no country header on the euro market: the card and Link only", c == 200 a
 o, k = order()
 c, j = post("/api/checkout", {"order": o, "k": k, "eyes": 1, "style": STYLE, "names": "", "title": "", "lang": "en", "consent_digital": True, "market": "lt"})
 check("no header, the Lithuanian market: its country, the card, Link and Revolut Pay", c == 200 and methods(H.Fake.creates[-1][0]) == ["card", "link", "revolut_pay"], methods(H.Fake.creates[-1][0]))
-c, j = post("/api/checkout", {"gift": {"kind": "one"}, "market": "eu", "lang": "en"}, {"X-Vercel-Ip-Country": "AT"})
+c, j = post("/api/checkout", {"gift": {"amount": 10000}, "market": "eu", "lang": "en"}, {"X-Vercel-Ip-Country": "AT"})
 check("a gift voucher's session from Austria: the card, Link, Revolut Pay and EPS", c == 200 and methods(H.Fake.creates[-1][0]) == ["card", "link", "revolut_pay", "eps"], methods(H.Fake.creates[-1][0]))
 src = open(os.path.join(API, "_lib", "prints.py"), encoding="utf-8").read()
 check("the print bought later asks for its session the same way (prints.addon_buy)", "pay.create_checkout_session(params, f\"snapeyes-print-" in src and "pay.payment_methods(pay.visitor_country(market), currency)" in src)

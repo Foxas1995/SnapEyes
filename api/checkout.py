@@ -265,7 +265,8 @@ def checkout(body):
     amount = abtest.price_cents(exp, n, spec["style"], spec["market"]) if exp else pay.price_cents(n, spec["style"], spec["market"])
     abtest.check_shown(body, spec["market"], amount, exp)
     # a gift voucher the customer entered (api/_lib/voucher.py): checked at Stripe before anything is closed or stored (409 voucher_invalid touches nothing)
-    gift = voucher.lookup(body.get("voucher"), spec["market"]) if body.get("voucher") not in (None, "") else None
+    # (a value voucher's balance without this order's own reservation for its artwork, which close_open_sessions below gives back)
+    gift = voucher.lookup(body.get("voucher"), spec["market"], order, "artwork") if body.get("voucher") not in (None, "") else None
     folder = f"orders/{order}"
     found = pay.parallel([lambda: store.exists(f"{folder}/paid.json", timeout=8.0),
                           lambda: store.exists(f"{folder}/withdrawn.json", timeout=8.0)] +
@@ -314,8 +315,19 @@ def checkout(body):
     # the Meta Conversions API's identifiers of this visit (api/_lib/meta.py checkout_meta: the _fbp and _fbc values the page sent, the IP address and
     # the user agent of this request), only while it is configured; they travel in the session's metadata and are stored nowhere else
     ad = MC.checkout_meta(body)
-    sess = pay.create_session(order, k, spec, amount, consent, expires, exp=exp, plan=plan, camp=camp, part=part, gift=gift, ad=ad)
+    total = amount + (prints.total(part) if part else 0)
+    # a value voucher (the owner's decision of 2026-11-25 (value vouchers)): what it pays of this session is reserved in its ledger now and gets a
+    # fresh single-use coupon of its own (voucher.spend); an old voucher's own coupon is attached as it was sold
+    used = voucher.spend(gift, order, "artwork", total, int(expires), lang) if gift and gift.get("ledger") else gift
+    try:
+        sess = pay.create_session(order, k, spec, amount, consent, expires, exp=exp, plan=plan, camp=camp, part=part, gift=used, ad=ad)
+    except Exception:
+        if gift and gift.get("ledger"):
+            voucher.unspend(used, "session_failed")
+        raise
     sid = sess["id"]
+    if gift and gift.get("ledger"):
+        voucher.bind(used, sid)
     rec = dict(rec, lang=lang, sessions=(list(rec.get("sessions") or [])[-9:] + [sid]),
                checkout={"session_id": sid, "created_at": int(now), "created": pay.iso(now), "amount": amount,
                          "currency": currency, "market": market, "spec": spec, "consent": consent,
@@ -328,9 +340,10 @@ def checkout(body):
         rec["checkout"]["camp"] = camp
     if part:
         rec["checkout"]["print"] = part          # the print, its shipping country and the print box the customer ticked (consent: version, time, text)
-    total = amount + (prints.total(part) if part else 0)
     if gift:
-        rec["checkout"]["voucher"] = {"coupon": gift["coupon"], "value": gift["value"], "discount": min(gift["value"], total)}
+        rec["checkout"]["voucher"] = {"coupon": used["coupon"], "value": used["value"], "discount": min(used["value"], total)}
+        if gift.get("ledger"):
+            rec["checkout"]["voucher"].update(base=used["base"], n=used["n"], balance=gift["value"])
     if note:
         # the page's plan8 was not the server's but its plan8_core was (freeze_plan): the plan stored is the server's, and the owner can see that and what the page showed
         rec["checkout"].update(plan8_note=note, plan8_page=_page8(body))
@@ -341,7 +354,7 @@ def checkout(body):
             + (f" (the page showed {_page8(body)}: same plan but for the choices the pixels decide)" if note else "")
             + (f" experiment {exp['key']}/{exp['variant']}" if exp else "")
             + (f" print {part['product']} to {part['country']} {part['price']}+{part['ship']}" if part else "")
-            + (f" voucher {gift['coupon']} -{min(gift['value'], total)}" if gift else ""))
+            + (f" voucher {used['coupon']} -{min(used['value'], total)}" if gift else ""))
     abtest.note_checkout(exp, market, n, spec["style"], amount)
     pay.note_checkout("start", spec, rec, gate=gate)
     out = {"ok": True, "url": sess["url"], "order": order, "amount": amount, "currency": currency.upper(),
@@ -349,7 +362,7 @@ def checkout(body):
     if part:
         out.update(print={k: part[k] for k in ("product", "country", "price", "ship")}, total=total)
     if gift:
-        out["voucher"] = {"value": gift["value"], "discount": min(gift["value"], total), "pay": max(0, total - gift["value"])}
+        out["voucher"] = {"value": gift["value"], "discount": min(used["value"], total), "pay": max(0, total - used["value"])}
     return out
 
 
@@ -357,7 +370,7 @@ def handle_get(req):
     q = {k: v[0] for k, v in parse_qs(urlsplit(getattr(req, "path", "") or "").query).items() if v}
     if "voucher" in q:
         # the checkout's look at a typed gift voucher code (api/_lib/voucher.py check)
-        return pay.serve(req, "voucher", lambda body: voucher.check(q["voucher"], q.get("m")), gate=False)
+        return pay.serve(req, "voucher", lambda body: voucher.check(q["voucher"], q.get("m"), q.get("o"), q.get("u")), gate=False)
     if "gift" in q:
         # the gift page after the voucher's payment: its code once it is paid (api/_lib/voucher.py status)
         return pay.serve(req, "gift", lambda body: voucher.status(q["gift"]), gate=False)

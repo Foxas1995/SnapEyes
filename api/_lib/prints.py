@@ -30,8 +30,14 @@ yet, a market that offers prints, the switch on, merchOne configured). The order
 everything on that page. POST /api/checkout {addon: {order, key}, print: {product, country}, consent_print: true[, print_shown], lang}
 (addon_buy) makes a Checkout Session OF ITS OWN: the print as its only line item, the country's shipping rate, the address form for that one
 country, the print's own note above the pay button, metadata kind "print_addon" with order, key_sha, print, print_sku, print_amount,
-ship_amount, ship_cc, lang, market, currency, consent_version and consent_at; no voucher and no price experiment. One payable add-on session
+ship_amount, ship_cc, lang, market, currency, consent_version and consent_at; no price experiment. One payable add-on session
 per order: the earlier ones are expired at Stripe first, and one that turns out paid is recorded instead.
+A VALUE VOUCHER pays for it too (the owner's decision of 2026-11-25 (value vouchers), api/_lib/voucher.py): the one the artwork was paid with, while
+it has a balance (the offer says voucher {balance}, and the checkout applies it without the customer typing anything), or a code typed into the
+offer (voucher). Its spend is reserved in the voucher's ledger and its fresh coupon is the session's discount (metadata voucher, voucher_value,
+voucher_base, voucher_n); the shipping is then a line item when the voucher pays more than the print. A print the voucher pays in full is a
+no-cost session (no PaymentIntent): it is recorded and sent to merchOne like any other; the amount checked is the print and its shipping less the
+voucher. A voucher of the old kinds (one, two) pays for an artwork only: here it is refused (409 voucher_invalid, why artwork).
   orders/<order>/print_checkout.json   the latest add-on checkout: its session, the earlier ones, the print with the print box the customer
                                        ticked (version, time, text, fingerprint)
   orders/<order>/print_paid.json       created once (upsert False), by the Stripe webhook or by the order page's own check of the session
@@ -406,15 +412,33 @@ def total(part):
     return (part["price"] + part["ship"]) if part else 0
 
 
-def stripe_params(part, lang, item=1):
+def stripe_params(part, lang, item=1, ship_item=False):
     """The Stripe parameters a print adds to the Checkout Session: its line item (item 1, after the artwork's line item 0; item 0 in the
-    session of a print bought after the artwork, where it is the only one), the address form and the shipping rate."""
+    session of a print bought after the artwork, where it is the only one), the address form and the shipping rate.
+    ship_item: the shipping is a line item of its own (the next one) instead of Stripe's shipping rate, for a session whose gift voucher pays more
+    than its line items: a coupon takes nothing off a shipping rate (the owner's decision of 2026-11-25 (value vouchers): a voucher pays the shipping
+    too). The amount is the same; only Stripe's delivery estimate is not shown then."""
     lang = lang_of(lang)
     cc = part["country"]
     country = country_name(cc, lang)
     made, way = production_days(part["product"]), transit_days(cc)      # Stripe's estimate: this print's production and this country's delivery
     lo, hi = made + way[0], made + way[1]
     li = f"line_items[{int(item)}]"
+    if ship_item:
+        si = f"line_items[{int(item) + 1}]"
+        return [
+            (f"{li}[quantity]", "1"),
+            (f"{li}[price_data][currency]", PRINT_OFFER["currency"]),
+            (f"{li}[price_data][unit_amount]", str(int(part["price"]))),
+            (f"{li}[price_data][product_data][name]", product_name(part["product"], lang)),
+            (f"{li}[price_data][product_data][description]", ITEM_DESC_PRINT[lang]),
+            (f"{si}[quantity]", "1"),
+            (f"{si}[price_data][currency]", PRINT_OFFER["currency"]),
+            (f"{si}[price_data][unit_amount]", str(int(part["ship"]))),
+            (f"{si}[price_data][product_data][name]", SHIP_LABEL[lang].format(country=country)),
+            ("shipping_address_collection[allowed_countries][0]", cc),
+            ("custom_text[shipping_address][message]", SHIP_ADDRESS_NOTE[lang].format(country=country)),
+        ]
     return [
         (f"{li}[quantity]", "1"),
         (f"{li}[price_data][currency]", PRINT_OFFER["currency"]),
@@ -1561,7 +1585,13 @@ def addon_offer(order, paid, f=None):
         info = public_info()
         if not info.get("on"):
             return None
-        return {"currency": info["currency"], "products": info["products"], "consent": dict(PRINT_CONSENT_TEXT)}
+        out = {"currency": info["currency"], "products": info["products"], "consent": dict(PRINT_CONSENT_TEXT)}
+        # the balance of the value voucher the artwork was paid with (the owner's decision of 2026-11-25): the checkout applies it by itself
+        from . import voucher
+        vb = voucher.offer_balance(paid, order)
+        if vb:
+            out["voucher"] = vb
+        return out
     except Exception as e:  # noqa: the order's status never depends on the offer
         pay.log(f"order {order}: print offer not worked out: {type(e).__name__}")
         return None
@@ -1599,6 +1629,9 @@ def _addon_close(order, rec, pc):
             pay.log(f"order {order}: earlier print checkout {sid} {'expired' if gone else 'was no longer open'}")
             if not _addon_ours(sess, order, rec):
                 continue
+        if sess.get("status") == "expired":
+            from . import voucher
+            voucher.release_session(sess, "replaced")      # its value voucher's reservation is given back: the new session reserves anew
         if pay.session_paid(sess) and pay.session_counts(sess):
             paid = paid or sess
         elif sess.get("status") == "complete" and pay.session_counts(sess):
@@ -1641,6 +1674,7 @@ def addon_buy(body):
     # the language of the page the customer ticked the print box on (the Stripe page and the recorded box are in it); the e-mails stay in the order's
     lang = pay.lang_for(market, body.get("lang"))
     part = checkout_part(body, {"market": market, "lang": lang})
+    gift = _addon_voucher(body, paid, order, market)
     pc = _addon_checkout(order)
     # one payable add-on session per order: the earlier ones are expired at Stripe first; one that turns out paid is recorded, and the order has its print
     paid_sess, settling = _addon_close(order, rec, pc)
@@ -1656,6 +1690,10 @@ def addon_buy(body):
     currency = PRINT_OFFER["currency"]
     site = pay.site()
     back = f"{site}/order?o={order}&k={k}&lang={lang}"
+    # a value voucher (the owner's decision of 2026-11-25): what it pays of this print is reserved in its ledger now, with a fresh coupon of its own
+    from . import voucher
+    sp = voucher.spend(gift, order, "print", total(part), expires, lang) if gift else None
+    free = bool(sp) and sp["value"] >= total(part)
     params = [
         ("mode", "payment"),
         # the order page again (its link is the order's key, as in every e-mail): ps names this session, so the page can confirm the payment
@@ -1670,32 +1708,75 @@ def addon_buy(body):
         ("payment_intent_data[description]", f"SnapEyes print for order {order}"),
         ("payment_intent_data[metadata][order]", order),
         ("payment_intent_data[metadata][kind]", ADDON),
-    ] + stripe_params(part, lang, item=0)
+    ] + stripe_params(part, lang, item=0, ship_item=bool(sp) and sp["value"] > part["price"])
+    if sp:
+        params.append(("discounts[0][coupon]", sp["coupon"]))
+        if free:
+            # the voucher pays for everything: Stripe makes no PaymentIntent for a no-cost session
+            params = [(x, v) for x, v in params if not x.startswith("payment_intent_data[")]
     meta = dict({"kind": ADDON, "order": order, "key_sha": pay.key_sha(k), "lang": lang, "market": market, "currency": currency,
                  "consent_version": part["consent"]["version"], "consent_at": part["consent"]["at"]}, **metadata(part))
     # the Meta Conversions API's identifiers of this visit (api/_lib/meta.py checkout_meta), only while it is configured
     from . import meta as MC
     meta.update(MC.checkout_meta(body))
+    if sp:
+        meta.update(voucher=sp["coupon"], voucher_value=str(int(sp["value"])), **voucher.metadata(sp))
     params += [(f"metadata[{name}]", v) for name, v in meta.items()]
-    r = pay.create_checkout_session(params, f"snapeyes-print-{order}-{secrets.token_hex(8)}", "stripe create print session",
-                                    pay.payment_methods(pay.visitor_country(market), currency))
-    if r.status_code != 200:
-        pay._raise_for(r, "stripe create print session")
     try:
-        sess = r.json()
-    except ValueError:
-        raise pay.PayBusy("stripe create print session: unreadable reply") from None
-    sid, url = (sess.get("id"), sess.get("url")) if isinstance(sess, dict) else (None, None)
-    if not (isinstance(sid, str) and pay.SID_RE.fullmatch(sid) and isinstance(url, str) and url.startswith("https://")):
-        raise pay.PayError("stripe create print session: the reply has no session id or no https url")
+        r = pay.create_checkout_session(params, f"snapeyes-print-{order}-{secrets.token_hex(8)}", "stripe create print session",
+                                        None if free else pay.payment_methods(pay.visitor_country(market), currency))
+        if r.status_code != 200:
+            pay._raise_for(r, "stripe create print session")
+        try:
+            sess = r.json()
+        except ValueError:
+            raise pay.PayBusy("stripe create print session: unreadable reply") from None
+        sid, url = (sess.get("id"), sess.get("url")) if isinstance(sess, dict) else (None, None)
+        if not (isinstance(sid, str) and pay.SID_RE.fullmatch(sid) and isinstance(url, str) and url.startswith("https://")):
+            raise pay.PayError("stripe create print session: the reply has no session id or no https url")
+    except Exception:
+        if sp:
+            voucher.unspend(sp, "session_failed")
+        raise
+    if sp:
+        voucher.bind(sp, sid)
     earlier = [s for s in (pc.get("sessions") if isinstance(pc, dict) and isinstance(pc.get("sessions"), list) else []) if isinstance(s, str)]
-    store.put(_path(order, ADDON_CHECKOUT), store.json_bytes({
-        "v": 1, "order": order, "session_id": sid, "sessions": earlier[-9:] + [sid], "created_at": now, "created": pay.iso(now),
-        "amount": total(part), "currency": currency, "market": market, "lang": lang, "expires_at": expires,
-        "livemode": bool(sess.get("livemode")), "print": part}), "application/json", upsert=True)
-    pay.log(f"order {order}: print checkout {sid} {part['product']} to {part['country']} {part['price']}+{part['ship']} {currency} ({market}) {lang}")
-    return {"ok": True, "url": url, "order": order, "print": {x: part[x] for x in ("product", "country", "price", "ship")},
-            "total": total(part), "currency": currency.upper(), "expires_at": expires}
+    pcrec = {"v": 1, "order": order, "session_id": sid, "sessions": earlier[-9:] + [sid], "created_at": now, "created": pay.iso(now),
+             "amount": total(part), "currency": currency, "market": market, "lang": lang, "expires_at": expires,
+             "livemode": bool(sess.get("livemode")), "print": part}
+    if sp:
+        pcrec["voucher"] = {"coupon": sp["coupon"], "value": sp["value"], "discount": sp["value"], "base": sp["base"], "n": sp["n"], "balance": gift["value"]}
+    store.put(_path(order, ADDON_CHECKOUT), store.json_bytes(pcrec), "application/json", upsert=True)
+    pay.log(f"order {order}: print checkout {sid} {part['product']} to {part['country']} {part['price']}+{part['ship']} {currency} ({market}) {lang}"
+            + (f" voucher {sp['coupon']} -{sp['value']}" if sp else ""))
+    out = {"ok": True, "url": url, "order": order, "print": {x: part[x] for x in ("product", "country", "price", "ship")},
+           "total": total(part), "currency": currency.upper(), "expires_at": expires}
+    if sp:
+        out["voucher"] = {"value": gift["value"], "discount": sp["value"], "pay": total(part) - sp["value"]}
+    return out
+
+
+def _addon_voucher(body, paid, order, market):
+    """The value voucher that pays for this print (the owner's decision of 2026-11-25 (value vouchers)): a code the customer typed into the offer
+    (body voucher: 409 voucher_invalid when it cannot pay; an old kind's why is artwork, it pays for an artwork only), else the one the artwork was
+    paid with while it has a balance (nothing is typed; one that cannot pay any more, for example withdrawn meanwhile, is simply not applied), else
+    None. Its balance leaves out this order's own reservation for a print, which _addon_close gives back before the new one is made."""
+    from . import voucher
+    code = body.get("voucher")
+    if code not in (None, ""):
+        g = voucher.lookup(code, market, order, "print")
+        if not g.get("ledger"):
+            raise store.Answer(409, "voucher_invalid", "This gift voucher is for an artwork.", False, None, why="artwork")
+        return g
+    cid = voucher.of_order(paid)
+    if not cid:
+        return None
+    try:
+        g = voucher.by_coupon(cid, market, order, "print")
+    except store.Answer:
+        pay.log(f"order {order}: the voucher the artwork was paid with cannot pay for the print now: not applied")
+        return None
+    return g if g.get("ledger") else None
 
 
 def _addon_extra(order, cur, sess, source):
@@ -1742,6 +1823,8 @@ def addon_record(order, rec, sess, source, event_id=None):
     sid = sess.get("id")
 
     def again(now_paid):
+        from . import voucher
+        voucher.commit(sess, source)   # a voucher's coupon on this session was redeemed all the same: its reservation is spent
         pa = now_paid.get("print_addon") if isinstance(now_paid.get("print_addon"), dict) else None
         if pa and pa.get("session_id") == sid:
             return now_paid, "known"
@@ -1755,12 +1838,20 @@ def addon_record(order, rec, sess, source, event_id=None):
     if pp is None:
         raise pay.PayError(f"order {order}: the paid print session names no print")
     amount, currency = sess.get("amount_total"), str(sess.get("currency") or "").lower()
-    if amount != pp["price"] + pp["ship"] or currency != PRINT_OFFER["currency"]:
+    meta = sess.get("metadata") if isinstance(sess.get("metadata"), dict) else {}
+    # a value voucher's spend (the owner's decision of 2026-11-25): the amount paid is the print and its shipping less what the voucher took
+    from . import voucher
+    gv = _digits(meta.get("voucher_value")) if voucher.spend_of(sess) else None
+    vrec = None
+    if gv is not None:
+        td = sess.get("total_details") if isinstance(sess.get("total_details"), dict) else {}
+        vrec = {"coupon": meta["voucher"], "base": meta["voucher_base"], "value": gv, "price": pp["price"] + pp["ship"],
+                "discount": min(gv, pp["price"] + pp["ship"]), "stripe_discount": td.get("amount_discount") if isinstance(td.get("amount_discount"), int) else None}
+    if amount != pp["price"] + pp["ship"] - (vrec["discount"] if vrec else 0) or currency != PRINT_OFFER["currency"]:
         # only the server makes a session, so this is a price that changed under an open session or a conversion at Stripe: the money is
         # recorded as it came, and the print is held for the owner (never sent on an amount nobody priced)
         pp["mismatch"] = list(pp.get("mismatch") or []) + ["amount"]
         pay.log(f"order {order}: the print was paid {amount} {currency}, priced {pp['price']}+{pp['ship']} {PRINT_OFFER['currency']}: held for the owner")
-    meta = sess.get("metadata") if isinstance(sess.get("metadata"), dict) else {}
     cd = sess.get("customer_details") if isinstance(sess.get("customer_details"), dict) else {}
     email = cd.get("email") or sess.get("customer_email") or None
     email = email.strip() if isinstance(email, str) and pay._EMAIL.fullmatch(email.strip()) else None
@@ -1770,6 +1861,9 @@ def addon_record(order, rec, sess, source, event_id=None):
              "amount_total": amount, "currency": currency, "paid_at": now, "at": pay.iso(now), "livemode": bool(sess.get("livemode")),
              "email": email, "lang": meta.get("lang") if meta.get("lang") in LANGS else None, "source": source,
              "event_id": event_id if isinstance(event_id, str) else None, "print": pp}
+    if vrec:
+        addon["voucher"] = vrec
+    voucher.commit(sess, source)       # the voucher's reservation of this session is spent (never raises)
     try:
         store.put(_path(order, ADDON_PAID), store.json_bytes(addon), "application/json", upsert=False)
     except store.StorageExists:
@@ -1800,8 +1894,9 @@ def addon_mail(order, paid, k, pack, docs):
             (c["print"], f"{product_name(pp.get('product'), lang)}, {pay.price_text(pp.get('price') or 0, lang, cur)}"),
             (c["ship"], f"{country}, {pay.price_text(pp.get('ship') or 0, lang, cur)}"),
             (c["address"], address_text(pp) + (f", {country}" if pp.get("country") else "")),
-            (w["total"], f"{pay.price_text(pa.get('amount_total') or 0, lang, cur)}. {w['note']}"),
-            (w["payment"], w["paid"])]
+            (w["total"], f"{_addon_total(pa, lang, cur)}. {w['note']}"),
+            # a print the gift voucher paid in full had no payment at Stripe (the owner's decision of 2026-11-25): the voucher's name stands there
+            (w["payment"], w["paid"] if (pa.get("amount_total") or 0) > 0 else _voucher_name(lang))]
     subject = w["subject"].format(order=order)
     blocks = [("p", SHIPPED[lang]["hello"]), ("p", w["intro"]), ("rows", rows),
               ("h", c["h"]), ("p", w["p1"].format(time=time_text(pp.get("product"), pp.get("country"), lang), producer=f"{PRODUCER}, {PRODUCER_COUNTRY[lang]}")), ("p", c["p2"])]
@@ -1816,6 +1911,19 @@ def addon_mail(order, paid, k, pack, docs):
                ("p", SHIPPED[lang]["bye"]), ("p", pay.seller_lines(lang, pack)), ("rule",), ("doc", docs["terms"]["text"])]
     text, html_body = pay.render_mail(blocks, lang, subject)
     return subject, text, html_body
+
+
+def _addon_total(pa, lang, cur):
+    """The add-on confirmation's total: what was paid, or, when a gift voucher paid for it in part or entirely, the price, the voucher and what was
+    paid (api/_lib/voucher.py PRICE_ROW, the row the artwork's confirmation has)."""
+    from . import voucher
+    row = voucher.price_row(pa, lang, cur, pay.price_text) if isinstance(pa.get("voucher"), dict) else None
+    return row or pay.price_text(pa.get("amount_total") or 0, lang, cur)
+
+
+def _voucher_name(lang):
+    from . import voucher
+    return voucher.COUPON_NAME[voucher.lang_of(lang)]
 
 
 def addon_mail_once(order, rec, paid):
@@ -1876,7 +1984,10 @@ def addon_after(order, rec, paid, state):
               f"Print: {pp.get('product')} to {pp.get('country')} ({pay.amount_text(pp.get('price') or 0, 'en', cur)} + shipping "
               f"{pay.amount_text(pp.get('ship') or 0, 'en', cur)}){', HELD: ' + ', '.join(pp['mismatch']) if pp.get('mismatch') else ''}; "
               f"it goes to merchOne now (admin: Spaudiniai)\n"
-              f"Customer: {print_email(paid) or 'no email'}\nStripe session: {pa.get('session_id')}\nPayment: {pa.get('payment_intent')}\n")
+              f"Customer: {print_email(paid) or 'no email'}\nStripe session: {pa.get('session_id')}\nPayment: {pa.get('payment_intent')}\n"
+              # a value voucher paid for it, in part or entirely (api/_lib/voucher.py)
+              + (f"Gift voucher: {gv.get('base')} paid {pay.amount_text(gv.get('discount') or 0, 'en', cur)} of "
+                 f"{pay.amount_text(gv.get('price') or 0, 'en', cur)}\n" if isinstance((gv := pa.get("voucher")), dict) else ""))
     except Exception as e:  # noqa: a note never costs the print
         pay.log(f"order {order}: print note failed: {type(e).__name__}")
     mail = addon_mail_once(order, rec, paid)

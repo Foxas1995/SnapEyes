@@ -3,8 +3,9 @@
 later and enters the code at the checkout of /try.
 
 What a voucher is
-  - Two kinds: "one" (the price of a one-eye artwork in any style, the market's one_eye_art) and "two" (the price of a two-eye artwork, two_eyes).
-    The value is taken from the market's standard price list when the voucher is bought (api/_lib/markets.py), never from the page.
+  - Until the owner's decision of 2026-11-25 (value vouchers), two kinds: "one" (the price of a one-eye artwork in any style, the market's one_eye_art)
+    and "two" (the price of a two-eye artwork, two_eyes), the value taken from the market's standard price list. Since then an amount (VALUE VOUCHERS
+    below); the lines of this section about one order and the rest not paid out describe the old kinds.
   - Sold and redeemed in euros only, on the markets that read the EU edition of the legal texts (VOUCHER_MARKETS: eu, lt, hr). The legal texts of
     that edition say what a voucher is (src/legal/docs/vouchers.ts); the Australian, the US and the Hungarian (forint) editions sell none.
   - Valid for 12 months (VALID_DAYS), for one order. When the order costs less than the voucher, the rest is not paid out; when it costs more, the
@@ -14,7 +15,8 @@ What a voucher is
 
 How it works at Stripe
   - Buying: a Checkout Session (mode payment, euros, one line item, the buyer's email collected by Stripe) whose metadata says kind "voucher",
-    voucher_kind, voucher_value, market and lang. No order, no order key. It is made by POST /api/checkout {gift: {kind}, market, lang}.
+    voucher_kind, voucher_value, market and lang. No order, no order key. It is made by POST /api/checkout {gift: {amount}, market, lang} (until
+    2026-11-25 {gift: {kind}}).
   - Paid (the webhook's checkout.session.completed, or the success page asking GET /api/checkout?gift=<session id>): the code is derived from the
     session id with the server's secret (code_for: the same code every time, so a retried webhook and the success page agree without storing it),
     a Stripe coupon is made for it (amount_off the value, the currency, max_redemptions 1, redeem_by the last day; its id is coupon_id(code), a
@@ -26,7 +28,33 @@ How it works at Stripe
     the voucher pays entirely is a no-cost session (payment_status no_payment_required, no PaymentIntent): pay.session_paid accepts it, and
     pay.record_paid checks the amount against the price less the voucher.
   - The code the customer types is never sent to Stripe as a code: only its coupon id is. Codes are 12 characters of a 32-letter alphabet without
-    0, O, 1 and I (60 bits): they cannot be guessed, and a malformed one is refused before anything is asked of Stripe."""
+    0, O, 1 and I (60 bits): they cannot be guessed, and a malformed one is refused before anything is asked of Stripe.
+
+VALUE VOUCHERS (the owner's decision of 2026-11-25 (value vouchers): "not every person wants acrylic, not every one canvas, not every one a print at all")
+  - Every voucher sold from now on is an AMOUNT (AMOUNTS: 30, 60, 100, 120 or 170 EUR), kind "value", and a balance: the person who has the code spends it
+    on as many orders as they like (an artwork, a print of it bought later on the order page, another artwork) until it is used up or its 12 months end.
+    What is left at the end is not paid out; an order that costs more than the balance is paid for the difference on Stripe's page.
+  - The vouchers of the kinds "one" and "two" sold before keep working exactly as they were sold: single use, their coupon applied as it is (a record
+    without "ledger" is one of them; nothing of them is migrated). They pay for an artwork only, never for a print bought later.
+  - The record vouchers/<coupon id>.json of a value voucher holds kind "value", value and ledger 1. The base coupon is made at Stripe as before (so the
+    owner's withdrawal, deleting it in the Dashboard, still makes the code "unknown" at once), but it is never attached to a session.
+  - THE LEDGER: the store has no compare-and-swap, only write-once objects, so the spends are an append-only log of write-once entries beside the record:
+      vouchers/<coupon id>/s<NNN>.json           a reservation: {n, voucher, coupon, amount, order, use: artwork | print, at, until}, n counted from 1.
+                                                 It is written with upsert False: of two checkouts that race for the same n exactly one wins, and the
+                                                 other reads the log again and computes the balance anew. Every entry is therefore made by a writer who
+                                                 saw every entry before it, so two sessions can never spend the same balance twice.
+      vouchers/<coupon id>/s<NNN>.session.json   the Stripe session the reservation was made for (written once the session exists)
+      vouchers/<coupon id>/s<NNN>.paid.json      committed: the session was paid (the webhook or the page's own check, record_paid and addon_record)
+      vouchers/<coupon id>/s<NNN>.released.json  released: the session expired, was replaced by a newer one of the same order (the checkouts expire the
+                                                 earlier sessions first: pay.close_open_sessions, prints._addon_close), or could not be made
+    The balance is the value less every entry that is not released: a reservation counts against it until it is committed or released. A reservation
+    that is neither past its session's end (until, plus SETTLE_GRACE) is settled when the log is read: its own coupon is asked at Stripe (redeemed: paid;
+    not redeemed or gone: released), so a lost webhook or an expiry nobody saw never keeps the balance away for good.
+  - Each checkout that uses a value voucher gets a FRESH single-use coupon gift_<24 hex>_sNNN (amount_off = min(balance, the session's total), one
+    redemption, redeem_by just after the session's end), attached to that one session. The session's metadata says voucher (that coupon), voucher_value
+    (its amount), voucher_base (the voucher's own coupon id) and voucher_n. A coupon applies to the line items only, never to Stripe's shipping rate: when
+    the amount is more than the line items, the shipping of the print is made a line item of its own (prints.stripe_params ship_item), so the voucher
+    can pay it too. A session the voucher pays in full is a no-cost session (payment_status no_payment_required), for the artwork as for a print."""
 import calendar
 import hashlib
 import hmac
@@ -39,8 +67,14 @@ from . import store
 from . import pay
 from . import counter
 
-KINDS = {"one": 1, "two": 2}                 # the kind and the number of eyes its value pays for
+KINDS = {"one": 1, "two": 2}                 # the old kinds (sold until 2026-11-25) and the number of eyes their value pays for: read, never sold again
 KIND_PRICE = {"one": "one_eye_art", "two": "two_eyes"}
+VALUE = "value"                              # the kind of every voucher sold since the owner's decision of 2026-11-25 (value vouchers): an amount, a balance
+AMOUNTS = (3000, 6000, 10000, 12000, 17000)  # the five amounts the gift page sells, in euro cents (src/shared/gift.ts GIFT_AMOUNTS says the same)
+SPEND_TRIES = 8                              # how often a checkout reads the ledger again after another checkout took the entry it wanted
+SPEND_MAX = 60                               # the most entries one voucher's ledger holds (a voucher is spent long before)
+SETTLE_GRACE = 300                           # how long after its session's end a reservation that nobody committed or released is asked about at Stripe
+COUPON_MARGIN = 120                          # a fresh coupon stays redeemable this long after its session's end (the session ends first)
 VALID_DAYS = 365
 ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 CODE_RE = re.compile(r"^[A-Z2-9]{12}$")
@@ -59,8 +93,12 @@ def market_ok(market):
 
 
 def value_of(kind, market):
-    """The value of a voucher of this kind in this market (the standard price list, the market's smallest unit)."""
+    """The value of a voucher of an old kind in this market (the standard price list, the market's smallest unit)."""
     return int(pay.price_list(market)[KIND_PRICE[kind]])
+
+
+def amount_ok(v):
+    return isinstance(v, int) and not isinstance(v, bool) and v in AMOUNTS
 
 
 # ----------------------------------------------------------------------------- the code
@@ -111,6 +149,20 @@ NAME = {
             "fi": "SnapEyes-lahjakortti: iiristaideteos kahdesta silmästä",
             "et": "SnapEyesi kinkekaart: kahe silma iirisekunstiteos",
             "lv": "SnapEyes dāvanu karte: divu acu varavīksnenes mākslas darbs"},
+    # a value voucher (the owner's decision of 2026-11-25): its amount is the price Stripe shows beside it
+    VALUE: {"en": "SnapEyes gift voucher", "de": "SnapEyes-Geschenkgutschein", "lt": "SnapEyes dovanų kuponas", "hu": "SnapEyes ajándékutalvány",
+            "hr": "SnapEyes poklon-bon", "fi": "SnapEyes-lahjakortti", "et": "SnapEyesi kinkekaart", "lv": "SnapEyes dāvanu karte"},
+}
+# the line item's description of a value voucher (the owner's decision of 2026-11-25): what it pays for, how long, who photographs the eye
+DESC_VALUE = {
+    "en": "For artworks and prints on snapeyes.com, valid for 12 months. The person you give it to photographs their own eye.",
+    "de": "Für Kunstwerke und Drucke auf snapeyes.com, 12 Monate gültig. Die beschenkte Person fotografiert ihr eigenes Auge.",
+    "lt": "Kūriniams ir spaudiniams snapeyes.com, galioja 12 mėnesių. Apdovanotas žmogus nusifotografuoja savo akį pats.",
+    "hu": "Alkotásokra és nyomatokra a snapeyes.com oldalon, 12 hónapig érvényes. A megajándékozott a saját szemét fotózza le.",
+    "hr": "Za umjetničke slike i ispise na snapeyes.com, vrijedi 12 mjeseci. Osoba kojoj ga darujete sama fotografira svoje oko.",
+    "fi": "Taideteoksiin ja tulosteisiin sivustolla snapeyes.com, voimassa 12 kuukautta. Lahjan saaja kuvaa oman silmänsä.",
+    "et": "Kunstiteoste ja trükitud piltide jaoks lehel snapeyes.com, kehtib 12 kuud. Kingisaaja pildistab oma silma ise.",
+    "lv": "Mākslas darbiem un izdrukām vietnē snapeyes.com, derīga 12 mēnešus. Apdāvinātais pats nofotografē savu aci.",
 }
 DESC = {
     "en": "A code for one order on snapeyes.com, valid for 12 months. The person you give it to photographs their own eye.",
@@ -304,25 +356,76 @@ MAIL = {
 }
 
 
+# the e-mail of a value voucher (the owner's decision of 2026-11-25): MAIL's words, with the third step of "how", the rules and the "For" row of its own
+MAIL_VALUE = {
+    "en": {"step3": ("3. At the checkout they tap \"I have a gift voucher\" and enter the code. What is left on the voucher pays for a print of the artwork "
+                     "on their order page, or for another order."),
+           "rules": ("The voucher can be used for several orders, artworks and prints, until its value is spent, within 12 months. What is left after 12 "
+                     "months is not paid out. If an order costs more, only the difference is paid. Please keep the code safe: anyone who has it can use it."),
+           "kind": "artworks and prints on snapeyes.com"},
+    "de": {"step3": ("3. An der Kasse tippt sie auf „Ich habe einen Geschenkgutschein“ und gibt den Code ein. Was auf dem Gutschein bleibt, bezahlt auf "
+                     "der Bestellseite einen Druck des Kunstwerks oder eine weitere Bestellung."),
+           "rules": ("Der Gutschein gilt für mehrere Bestellungen, Kunstwerke und Drucke, bis sein Wert aufgebraucht ist, innerhalb von 12 Monaten. Was nach "
+                     "12 Monaten übrig ist, wird nicht ausgezahlt. Kostet eine Bestellung mehr, wird nur die Differenz bezahlt. Bitte bewahren Sie den Code "
+                     "sicher auf: Wer ihn hat, kann ihn einlösen."),
+           "kind": "Kunstwerke und Drucke auf snapeyes.com"},
+    "lt": {"step3": ("3. Kasoje paspaudžia „Turiu dovanų kuponą“ ir įveda kodą. Kas lieka kupone, užsakymo puslapyje apmoka kūrinio spaudinį arba "
+                     "kitą užsakymą."),
+           "rules": ("Kuponu galima mokėti už kelis užsakymus, kūrinius ir spaudinius, kol išnaudojama jo vertė, per 12 mėnesių. Po 12 mėnesių likutis "
+                     "negrąžinamas. Jei užsakymas kainuoja daugiau, primokamas tik skirtumas. Saugokite kodą: juo gali pasinaudoti bet kas, kas jį žino."),
+           "kind": "kūriniai ir spaudiniai snapeyes.com"},
+    "hu": {"step3": ("3. A pénztárnál a „Van ajándékutalványom” gombra koppint, és beírja a kódot. Ami az utalványon marad, abból a rendelési oldalon az "
+                     "alkotás nyomatát vagy egy újabb rendelést fizetheti ki."),
+           "rules": ("Az utalvány több rendeléshez, alkotásokhoz és nyomatokhoz is felhasználható, amíg az értéke el nem fogy, 12 hónapon belül. Ami 12 "
+                     "hónap után megmarad, azt nem fizetjük ki. Ha egy rendelés többe kerül, csak a különbözetet kell kifizetni. Kérjük, őrizd meg "
+                     "biztonságban a kódot: bárki felhasználhatja, akinél megvan."),
+           "kind": "alkotások és nyomatok a snapeyes.com oldalon"},
+    "hr": {"step3": ("3. Na blagajni dodirne „Imam poklon-bon” i upiše kod. Ono što ostane na bonu plaća ispis slike na stranici narudžbe ili "
+                     "sljedeću narudžbu."),
+           "rules": ("Bon se može koristiti za više narudžbi, umjetničke slike i ispise, dok se njegova vrijednost ne potroši, u roku od 12 mjeseci. Ono što "
+                     "ostane nakon 12 mjeseci ne isplaćuje se. Ako narudžba košta više, plaća se samo razlika. Čuvajte kod: svatko tko ga ima može ga iskoristiti."),
+           "kind": "umjetničke slike i ispisi na snapeyes.com"},
+    "fi": {"step3": ("3. Kassalla hän napauttaa ”Minulla on lahjakortti” ja kirjoittaa koodin. Lahjakortille jäävällä summalla voi maksaa taideteoksen "
+                     "tulosteen tilaussivulla tai uuden tilauksen."),
+           "rules": ("Lahjakorttia voi käyttää useaan tilaukseen, taideteoksiin ja tulosteisiin, kunnes sen arvo on käytetty, 12 kuukauden kuluessa. Mitä "
+                     "12 kuukauden jälkeen jää jäljelle, ei makseta takaisin. Jos tilaus maksaa enemmän, maksetaan vain erotus. Pidä koodi tallessa: kuka "
+                     "tahansa, jolla se on, voi käyttää sen."),
+           "kind": "taideteokset ja tulosteet sivustolla snapeyes.com"},
+    "et": {"step3": ("3. Tellimisel puudutab ta valikut „Mul on kinkekaart“ ja sisestab koodi. Kinkekaardile jäänud summaga saab tellimuse lehel tasuda "
+                     "kunstiteose trükitud pildi või järgmise tellimuse eest."),
+           "rules": ("Kinkekaarti saab kasutada mitme tellimuse, kunstiteoste ja trükitud piltide jaoks, kuni selle väärtus on ära kasutatud, 12 kuu jooksul. "
+                     "Mis 12 kuu pärast alles jääb, seda välja ei maksta. Kui tellimus maksab rohkem, tasutakse ainult vahe. Palun hoia koodi kindlas kohas: "
+                     "igaüks, kellel see on, saab seda kasutada."),
+           "kind": "kunstiteosed ja trükitud pildid lehel snapeyes.com"},
+    "lv": {"step3": ("3. Pasūtot viņš pieskaras „Man ir dāvanu karte” un ievada kodu. Ar to, kas paliek kartē, pasūtījuma lapā var samaksāt par "
+                     "mākslas darba izdruku vai nākamo pasūtījumu."),
+           "rules": ("Karti var izmantot vairākiem pasūtījumiem, mākslas darbiem un izdrukām, līdz tās vērtība ir iztērēta, 12 mēnešu laikā. Tas, kas "
+                     "paliek pēc 12 mēnešiem, netiek izmaksāts. Ja pasūtījums maksā vairāk, jāpiemaksā tikai starpība. Lūdzu, glabājiet kodu drošībā: "
+                     "ikviens, kam tas ir, var to izmantot."),
+           "kind": "mākslas darbi un izdrukas vietnē snapeyes.com"},
+}
+
+
 def lang_of(v):
     return v if v in pay.LANGS else "en"
 
 
 # ----------------------------------------------------------------------------- buying
 def buy(body):
-    """POST /api/checkout {gift: {kind}, market, lang}: the Stripe payment page of a voucher. {ok, url, kind, value, currency, market}."""
+    """POST /api/checkout {gift: {amount}, market, lang}: the Stripe payment page of a value voucher (amount: one of AMOUNTS, in cents; the owner's
+    decision of 2026-11-25 (value vouchers): the old kinds one and two are not sold any more). {ok, url, kind, value, currency, market}."""
     why = pay.ordering_problem()
     if why:
         raise pay.PayNotConfigured(why)
     g = body.get("gift") if isinstance(body.get("gift"), dict) else {}
-    kind = g.get("kind")
-    if kind not in KINDS:
-        raise L.ClientError("Choose a voucher: one or two eyes.")
+    value = g.get("amount")
+    if not amount_ok(value):
+        raise L.ClientError("Choose the voucher's amount: " + ", ".join(str(a // 100) for a in AMOUNTS) + " EUR.")
+    kind = VALUE
     market = body.get("market") if body.get("market") is not None else pay.DEFAULT_MARKET
     if not market_ok(market):
         raise store.Answer(409, "voucher_market", "Gift vouchers are sold in euros only.", False, markets=list(markets()))
     lang = lang_of(body.get("lang"))
-    value = value_of(kind, market)
     now = int(time.time())
     ref = "gift-" + secrets.token_hex(8)
     site = pay.site()
@@ -338,7 +441,7 @@ def buy(body):
         ("line_items[0][price_data][currency]", pay.market_currency(market)),
         ("line_items[0][price_data][unit_amount]", str(value)),
         ("line_items[0][price_data][product_data][name]", NAME[kind][lang]),
-        ("line_items[0][price_data][product_data][description]", DESC[lang]),
+        ("line_items[0][price_data][product_data][description]", DESC_VALUE[lang]),
         ("custom_text[submit][message]", SUBMIT[lang]),
         ("payment_intent_data[description]", f"SnapEyes gift voucher {ref}"),
         ("payment_intent_data[metadata][voucher]", ref),
@@ -377,11 +480,14 @@ def _session_terms(sess):
     """(kind, value, market, lang) the server wrote into a voucher session, or None when they do not hold together."""
     meta = sess.get("metadata") if isinstance(sess.get("metadata"), dict) else {}
     kind, market = meta.get("voucher_kind"), meta.get("market")
-    if kind not in KINDS or not market_ok(market):
+    # an old kind is still read: a session of it opened before the owner's decision of 2026-11-25 (value vouchers) may be paid after it
+    if (kind not in KINDS and kind != VALUE) or not market_ok(market):
         return None
     try:
         value = int(meta.get("voucher_value"))
     except (TypeError, ValueError):
+        return None
+    if kind == VALUE and value not in AMOUNTS:
         return None
     if value <= 0 or str(meta.get("currency") or "") != pay.market_currency(market):
         return None
@@ -449,6 +555,8 @@ def on_paid(sess, source):
         rec = {"voucher": True, "coupon": cid, "session_id": sid, "kind": kind, "value": value, "currency": currency, "market": market,
                "lang": lang, "paid_at": now, "paid_iso": pay.iso(now), "valid_until": day, "livemode": bool(sess.get("livemode")),
                "source": source, "code_end": code[-4:]}
+        if kind == VALUE:
+            rec["ledger"] = 1           # a balance: its spends are the write-once entries of vouchers/<coupon id>/ (the module's VALUE VOUCHERS)
         meta = sess.get("metadata") if isinstance(sess.get("metadata"), dict) else {}
         camp = counter.parse(meta.get("src"))
         if camp:
@@ -515,10 +623,15 @@ def mail(rec, code, docs):
     w = MAIL[lang]
     money = pay.price_text(rec["value"], lang, rec["currency"])
     subject = w["subject"].format(code=shown(code))
+    how, rules, kind = w["how"], w["rules"], w["kind"].get(rec["kind"])
+    if rec["kind"] == VALUE:
+        # a value voucher (the owner's decision of 2026-11-25): the same first two steps, its own third step, its own rules and "For" row
+        v = MAIL_VALUE[lang]
+        how, rules, kind = "\n".join(w["how"].split("\n")[:2] + [v["step3"]]), v["rules"], v["kind"]
     blocks = [("p", w["hello"]), ("p", w["thanks"]),
-              ("rows", list(zip(w["rows"], (shown(code), money, w["kind"][rec["kind"]], pay.date_text(rec["valid_until"], lang))))),
+              ("rows", list(zip(w["rows"], (shown(code), money, kind, pay.date_text(rec["valid_until"], lang))))),
               ("link", f"{pay.site()}/try?lang={lang}"),
-              ("h", w["how_h"]), ("p", w["how"]), ("p", w["rules"]),
+              ("h", w["how_h"]), ("p", how), ("p", rules),
               ("h", w["wd_h"]), ("p", w["wd"]),
               ("p", w["bye"]), ("p", w["legal"]),
               ("rule",), ("doc", docs["withdrawal"]["text"]), ("rule",), ("doc", docs["terms"]["text"])]
@@ -545,16 +658,28 @@ def status(sid):
 
 
 # ----------------------------------------------------------------------------- redeeming
-def lookup(code, market):
-    """The voucher of a typed code for an order in this market: {coupon, value, currency, valid_until}. Raises store.Answer 409 voucher_invalid
-    {why: format, unknown, used, expired, currency} when it cannot pay for this order."""
+def _invalid(why, text):
+    return store.Answer(409, "voucher_invalid", text, False, why=why)
+
+
+def lookup(code, market, order=None, use=None):
+    """The voucher of a typed code for an order in this market: {coupon, value, currency, valid_until, ledger}. Raises store.Answer 409 voucher_invalid
+    {why: format, unknown, used, expired, currency} when it cannot pay for this order. An old voucher (no ledger): value is its coupon's amount, as
+    sold. A value voucher (ledger True, with its record as rec): value is its BALANCE now, without the reservations of this very order and use (order,
+    use: "artwork" or "print"), which the checkout releases before it reserves again (it closes the order's earlier sessions first)."""
     c = normal(code)
     if c is None:
-        raise store.Answer(409, "voucher_invalid", "This is not a voucher code. Please check it.", False, why="format")
-    cid = coupon_id(c)
+        raise _invalid("format", "This is not a voucher code. Please check it.")
+    return by_coupon(coupon_id(c), market, order, use)
+
+
+def by_coupon(cid, market, order=None, use=None):
+    """lookup for a voucher known by its coupon id (the print offer reads it from the order's payment)."""
+    if not isinstance(cid, str) or not CID_RE.fullmatch(cid):
+        raise _invalid("unknown", "We do not know this voucher code. Please check it.")
     r = pay._stripe("GET", f"/v1/coupons/{cid}", timeout=10.0)
     if r.status_code == 404:
-        raise store.Answer(409, "voucher_invalid", "We do not know this voucher code. Please check it.", False, why="unknown")
+        raise _invalid("unknown", "We do not know this voucher code. Please check it.")
     if r.status_code != 200:
         pay._raise_for(r, "stripe retrieve voucher coupon")
     try:
@@ -562,28 +687,249 @@ def lookup(code, market):
     except ValueError:
         raise pay.PayBusy("stripe retrieve voucher coupon: unreadable reply") from None
     if not isinstance(cp, dict) or cp.get("id") != cid or not isinstance(cp.get("amount_off"), int):
-        raise store.Answer(409, "voucher_invalid", "We do not know this voucher code. Please check it.", False, why="unknown")
+        raise _invalid("unknown", "We do not know this voucher code. Please check it.")
+    rb = cp.get("redeem_by")
+    until = time.strftime("%Y-%m-%d", time.gmtime(rb)) if isinstance(rb, int) else None
+    if (cp.get("metadata") if isinstance(cp.get("metadata"), dict) else {}).get("voucher_kind") == VALUE:
+        # a value voucher (the owner's decision of 2026-11-25): its record and its ledger say what is left; its own coupon is never redeemed
+        rec = store.get_json(record_path(cid), timeout=8.0)
+        if not isinstance(rec, dict) or rec.get("kind") != VALUE or not isinstance(rec.get("value"), int):
+            raise pay.PayBusy(f"voucher {cid}: the coupon exists but its record cannot be read yet")
+        if cp.get("valid") is False or (isinstance(rb, int) and rb < time.time()) or expired(rec):
+            raise _invalid("expired", "This voucher has expired.")
+        if str(cp.get("currency") or "").lower() != pay.market_currency(market) or not market_ok(market):
+            raise _invalid("currency", "This voucher can be used for orders in euros only.")
+        left = balance(rec, settle(cid, entries(cid)), skip=(order, use) if order and use else None)
+        if left <= 0:
+            raise _invalid("used", "This voucher has already been used.")
+        return {"coupon": cid, "value": left, "currency": pay.market_currency(market), "valid_until": rec.get("valid_until") or until,
+                "ledger": True, "rec": rec}
     times, cap = cp.get("times_redeemed") or 0, cp.get("max_redemptions")
     if isinstance(cap, int) and times >= cap:
-        raise store.Answer(409, "voucher_invalid", "This voucher has already been used.", False, why="used")
-    rb = cp.get("redeem_by")
+        raise _invalid("used", "This voucher has already been used.")
     if cp.get("valid") is False or (isinstance(rb, int) and rb < time.time()):
-        raise store.Answer(409, "voucher_invalid", "This voucher has expired.", False, why="expired")
+        raise _invalid("expired", "This voucher has expired.")
     if str(cp.get("currency") or "").lower() != pay.market_currency(market) or not market_ok(market):
-        raise store.Answer(409, "voucher_invalid", "This voucher can be used for orders in euros only.", False, why="currency")
-    until = time.strftime("%Y-%m-%d", time.gmtime(rb)) if isinstance(rb, int) else None
-    return {"coupon": cid, "value": int(cp["amount_off"]), "currency": pay.market_currency(market), "valid_until": until}
+        raise _invalid("currency", "This voucher can be used for orders in euros only.")
+    return {"coupon": cid, "value": int(cp["amount_off"]), "currency": pay.market_currency(market), "valid_until": until, "ledger": False}
 
 
-def check(code, market):
-    """GET /api/checkout?voucher=<code>&m=<market>: the checkout's look at a typed code before it opens Stripe. {ok, valid, value, currency,
-    valid_until} or the 409 voucher_invalid of lookup."""
+def check(code, market, order=None, use=None):
+    """GET /api/checkout?voucher=<code>&m=<market>[&o=<order>[&u=print]]: the checkout's look at a typed code before it opens Stripe. {ok, valid, value,
+    currency, valid_until} or the 409 voucher_invalid of lookup. value is what the voucher can pay now (a value voucher's balance); o names the order on
+    the page, whose own reservation is not counted (a customer who came back from Stripe's page enters the code again); u=print asks for a print of
+    that order (the order page's offer), which a voucher of the old kinds cannot pay (why artwork)."""
     if market is None:
         market = pay.DEFAULT_MARKET
     if not pay.stripe_key():
         raise pay.PayNotConfigured("STRIPE_SECRET_KEY is not set")
-    v = lookup(code, market)
+    order = order if isinstance(order, str) and store.ORDER_RE.fullmatch(order) else None
+    use = "print" if use == "print" else "artwork"
+    v = lookup(code, market, order, use if order else None)
+    if use == "print" and not v.get("ledger"):
+        raise _invalid("artwork", "This gift voucher is for an artwork.")
     return {"ok": True, "valid": True, "value": v["value"], "currency": v["currency"].upper(), "valid_until": v["valid_until"]}
+
+
+# ----------------------------------------------------------------------------- the ledger of a value voucher (see VALUE VOUCHERS above)
+def expired(rec):
+    """Has the voucher's last day (UTC) passed?"""
+    day = rec.get("valid_until") if isinstance(rec, dict) else None
+    return not isinstance(day, str) or time.strftime("%Y-%m-%d", time.gmtime()) > day
+
+
+def _entry_path(cid, n, mark=""):
+    return f"{TOP}/{cid}/s{int(n):03d}{('.' + mark) if mark else ''}.json"
+
+
+def entries(cid):
+    """The ledger of a value voucher, oldest first, each entry with its state (reserved, paid or released) read from its marks. A storage error is
+    raised: a balance is never guessed."""
+    out = []
+    for n in range(1, SPEND_MAX + 1):
+        e = store.get_json(_entry_path(cid, n), timeout=6.0)
+        if not isinstance(e, dict):
+            break
+        out.append(dict(e, n=n))
+    if out:
+        marks = pay.parallel([lambda n=e["n"], m=m: store.exists(_entry_path(cid, n, m), timeout=6.0) for e in out for m in ("paid", "released")])
+        for i, e in enumerate(out):
+            e["state"] = "paid" if marks[2 * i] else "released" if marks[2 * i + 1] else "reserved"
+    return out
+
+
+def _mark(cid, n, mark, info):
+    """A mark of an entry, written once (a second writer of the same mark changes nothing). True when this call wrote it."""
+    try:
+        store.put(_entry_path(cid, n, mark), store.json_bytes(dict(info, t=int(time.time()), iso=pay.iso())), "application/json", upsert=False, timeout=8.0)
+        return True
+    except store.StorageExists:
+        return False
+
+
+def settle(cid, es):
+    """A reservation whose session ended more than SETTLE_GRACE ago and that nobody committed or released (a lost webhook, an expiry nobody saw) is
+    decided by its own coupon at Stripe, which is final once the session cannot be paid any more: redeemed, it was paid; not redeemed or gone, it is
+    released. Stripe not answering leaves it reserved (it keeps counting against the balance, so it is never spent twice). Returns es."""
+    now = time.time()
+    for e in es:
+        if e.get("state") != "reserved" or not isinstance(e.get("until"), int) or now < e["until"] + SETTLE_GRACE:
+            continue
+        try:
+            r = pay._stripe("GET", f"/v1/coupons/{e.get('coupon')}", timeout=8.0)
+            cp = r.json() if r.status_code == 200 else None
+        except Exception as ex:  # noqa: the reservation stays as it is and is asked about again at the next read
+            pay.log(f"voucher {cid}: entry {e['n']} not settled ({type(ex).__name__})")
+            continue
+        if r.status_code == 200 and isinstance(cp, dict) and (cp.get("times_redeemed") or 0) >= 1:
+            _mark(cid, e["n"], "paid", {"source": "settle"})
+            e["state"] = "paid"
+        elif r.status_code in (200, 404):
+            _mark(cid, e["n"], "released", {"why": "settle"})
+            e["state"] = "released"
+    return es
+
+
+def balance(rec, es, skip=None):
+    """What is left of a value voucher: its value less every entry that is not released (a reservation counts until it is paid or released). skip
+    (order, use): the reservations of that order and use are left out (the checkout releases them before it reserves again)."""
+    used = sum(int(e.get("amount") or 0) for e in es if e.get("state") != "released"
+               and not (skip and e.get("state") == "reserved" and e.get("order") == skip[0] and e.get("use") == skip[1]))
+    return max(0, int(rec.get("value") or 0) - used)
+
+
+def spend(gift, order, use, total, until, lang="en"):
+    """Reserve what a value voucher pays of one checkout (min(balance, total)) and make the fresh single-use coupon of that session. gift: lookup's
+    answer (ledger True); until: the session's end (epoch seconds). Returns the spend {coupon, value, base, n, until} that pay.create_session and
+    prints.addon_buy attach to the session; 409 voucher_invalid used when nothing is left. The entry is claimed write-once: a checkout that loses the
+    race for an entry reads the ledger again and computes the balance anew (at most SPEND_TRIES times; then it is busy)."""
+    cid, rec = gift["coupon"], gift["rec"]
+    currency = rec.get("currency") or "eur"
+    for _ in range(SPEND_TRIES):
+        es = settle(cid, entries(cid))
+        amount = min(balance(rec, es), int(total))
+        n = len(es) + 1
+        if amount <= 0 or n > SPEND_MAX:
+            raise _invalid("used", "This voucher has already been used.")
+        now = int(time.time())
+        entry = {"v": 1, "n": n, "voucher": cid, "coupon": f"{cid}_s{n:03d}", "amount": amount, "currency": currency, "order": order, "use": use,
+                 "at": now, "iso": pay.iso(now), "until": int(until)}
+        try:
+            store.put(_entry_path(cid, n), store.json_bytes(entry), "application/json", upsert=False, timeout=8.0)
+            break
+        except store.StorageExists:
+            continue        # another checkout took entry n a moment ago: read the ledger again
+    else:
+        raise pay.PayBusy(f"voucher {cid}: the ledger is busy")
+    params = [("id", entry["coupon"]), ("amount_off", str(amount)), ("currency", currency), ("duration", "once"), ("max_redemptions", "1"),
+              ("redeem_by", str(int(until) + COUPON_MARGIN)), ("name", COUPON_NAME[lang_of(lang)]),
+              ("metadata[voucher]", cid), ("metadata[spend]", str(n)), ("metadata[order]", str(order)), ("metadata[use]", str(use))]
+    try:
+        r = pay._stripe("POST", "/v1/coupons", params, idem=f"snapeyes-voucher-spend-{cid}-{n}")
+        ok = r.status_code == 200
+        if not ok:
+            try:
+                err = (r.json() or {}).get("error") or {}
+            except (ValueError, AttributeError):
+                err = {}
+            ok = r.status_code == 400 and err.get("code") == "resource_already_exists"
+        if not ok:
+            pay._raise_for(r, "stripe create voucher spend coupon")
+    except Exception:
+        _mark(cid, n, "released", {"why": "coupon_failed"})
+        raise
+    pay.log(f"voucher {cid}: entry {n} reserves {amount} for the {use} of order {order} until {int(until)}")
+    return {"coupon": entry["coupon"], "value": amount, "base": cid, "n": n, "until": int(until)}
+
+
+def unspend(sp, why):
+    """Give a reservation back (its session could not be made). Never raises: a reservation left is settled after its end anyway."""
+    try:
+        _mark(sp["base"], sp["n"], "released", {"why": why})
+    except Exception as e:  # noqa
+        pay.log(f"voucher {sp.get('base')}: entry {sp.get('n')} not released now ({type(e).__name__}); it is settled after its end")
+
+
+def bind(sp, sid):
+    """Note the Stripe session a reservation was made for (the ledger's view shows it). Never raises."""
+    try:
+        _mark(sp["base"], sp["n"], "session", {"session": sid})
+    except Exception as e:  # noqa
+        pay.log(f"voucher {sp.get('base')}: entry {sp.get('n')} session not noted ({type(e).__name__})")
+
+
+def metadata(sp):
+    """The session metadata of a value voucher's spend beside voucher and voucher_value: the voucher's own coupon and the entry."""
+    return {"voucher_base": sp["base"], "voucher_n": str(int(sp["n"]))} if isinstance(sp, dict) and sp.get("base") else {}
+
+
+def spend_of(sess):
+    """(the voucher's coupon id, entry n) of a session made with a value voucher's spend, or None. The three keys must agree (the server wrote them)."""
+    meta = sess.get("metadata") if isinstance(sess, dict) and isinstance(sess.get("metadata"), dict) else {}
+    base, n = meta.get("voucher_base"), meta.get("voucher_n")
+    if (isinstance(base, str) and CID_RE.fullmatch(base) and isinstance(n, str) and re.fullmatch(r"[0-9]{1,3}", n)
+            and meta.get("voucher") == f"{base}_s{int(n):03d}"):
+        return base, int(n)
+    return None
+
+
+def commit(sess, source):
+    """A PAID session that spent a value voucher: its entry is marked paid, once (pay.record_paid for the artwork, prints.addon_record for a print).
+    Never raises: a mark that could not be written now is settled from the coupon at Stripe after the session's end."""
+    s = spend_of(sess)
+    if not s:
+        return
+    try:
+        meta = sess.get("metadata") or {}
+        if _mark(s[0], s[1], "paid", {"session": sess.get("id"), "order": meta.get("order"), "source": source, "amount_total": sess.get("amount_total")}):
+            pay.log(f"voucher {s[0]}: entry {s[1]} PAID via {source} (session {sess.get('id')})")
+    except Exception as e:  # noqa
+        pay.log(f"voucher {s[0]}: entry {s[1]} not marked paid now ({type(e).__name__}); it is settled after its end")
+
+
+def release_session(sess, why="replaced"):
+    """An EXPIRED session that held a value voucher's reservation gives it back (the checkouts expire an order's earlier sessions before they make a
+    new one; a paid session is never expired). Never raises."""
+    s = spend_of(sess)
+    if not s or sess.get("status") != "expired":
+        return
+    try:
+        if _mark(s[0], s[1], "released", {"why": why, "session": sess.get("id")}):
+            pay.log(f"voucher {s[0]}: entry {s[1]} released ({why}, session {sess.get('id')})")
+    except Exception as e:  # noqa
+        pay.log(f"voucher {s[0]}: entry {s[1]} not released now ({type(e).__name__}); it is settled after its end")
+
+
+def of_order(paid):
+    """The value voucher an order's artwork was paid with (paid.json's voucher.base), or None (no voucher, or an old one: it paid once)."""
+    v = paid.get("voucher") if isinstance(paid, dict) else None
+    base = v.get("base") if isinstance(v, dict) else None
+    return base if isinstance(base, str) and CID_RE.fullmatch(base) else None
+
+
+def offer_balance(paid, order):
+    """What the order page's print offer says of the voucher the order was paid with: {balance, valid_until} while something is left and it has not
+    expired, else None. Reads the record and the ledger only (the checkout asks Stripe about the voucher itself). Never raises."""
+    cid = of_order(paid)
+    if not cid:
+        return None
+    try:
+        rec = store.get_json(record_path(cid), timeout=6.0)
+        if not isinstance(rec, dict) or rec.get("kind") != VALUE or expired(rec):
+            return None
+        left = balance(rec, settle(cid, entries(cid)), skip=(order, "print"))
+        return {"balance": left, "valid_until": rec.get("valid_until")} if left > 0 else None
+    except Exception as e:  # noqa: the offer is the offer without it
+        pay.log(f"order {order}: the voucher's balance not read ({type(e).__name__})")
+        return None
+
+
+def view(cid):
+    """The ledger as the record's spends: [{n, order, use, amount, state, session, at, until}] (the tests and the owner read it)."""
+    es = entries(cid)
+    ss = pay.parallel([lambda n=e["n"]: store.get_json(_entry_path(cid, n, "session"), timeout=6.0) for e in es]) if es else []
+    return [{"n": e["n"], "order": e.get("order"), "use": e.get("use"), "amount": e.get("amount"), "state": e["state"],
+             "session": s.get("session") if isinstance(s, dict) else None, "at": e.get("iso"), "until": e.get("until")} for e, s in zip(es, ss)]
 
 
 def price_row(paid, lang, currency, price_text):

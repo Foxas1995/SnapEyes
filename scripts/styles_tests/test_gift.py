@@ -16,6 +16,12 @@ the legal texts src/legal/docs/vouchers.ts).
   6.  pay.session_paid: a no-cost session only with amount 0
   7.  the legal texts: the EU terms (every language) with the section and its prices, the Hungarian edition's terms without euro prices, the Australian and
       the US ones without vouchers; the privacy policy and the withdrawal page; the server files hold no dash
+  8.  value vouchers (the owner's decision of 2026-11-25): an amount and a balance. The ledger (a reservation per checkout, write-once entries, a fresh
+      single-use coupon per session), the balance across two orders, the release when a checkout is replaced, the commit when it is paid, the settling of a
+      reservation nobody closed (expired: released; redeemed: paid), two checkouts at once never spend the same balance, a voucher more and less than the
+      total, an expired one, another currency, the check of the page with its own order left out; the voucher's own coupon is never redeemed
+Since the owner's decision of 2026-11-25 (value vouchers) the gift page sells amounts only; a voucher of the old kinds (one, two) is made here as a payment page
+opened before that day and paid after it (old_voucher), and sections 3 to 5 hold that such a voucher works exactly as it was sold.
 
 No network (Stripe and Resend are the harness's stub, with coupons added here), no image model. Run by suites/run_main.sh as v3gift (in the world before the
 catalogue switch: a legacy style is the vehicle of the checkout, as in the payment suites).
@@ -204,12 +210,31 @@ def co(o, k, eyes=1, style=None, **kw):
     return post("/api/checkout", body)
 
 
-def buy_voucher(kind="one", market="lt", lang="lt", email="pirkejas@example.com"):
-    c, j = post("/api/checkout", {"gift": {"kind": kind}, "market": market, "lang": lang})
+def buy_value(amount=10000, market="lt", lang="lt", email="pirkejas@example.com"):
+    """A value voucher bought on the gift page and paid (the owner's decision of 2026-11-25): (session id, code)."""
+    c, j = post("/api/checkout", {"gift": {"amount": amount}, "market": market, "lang": lang})
     assert c == 200, (c, j)
     sid = next(s for s, x in H.Fake.sessions.items() if x["url"] == j["url"])
-    sess = H.pay_session(sid, email)
-    c2, j2 = webhook(sess)
+    c2, j2 = webhook(H.pay_session(sid, email))
+    assert c2 == 200, (c2, j2)
+    return sid, V.code_for(sid)
+
+
+def old_session(kind="one", market="lt", lang="lt"):
+    """The Stripe session of a voucher of an OLD kind, as the server made it before the owner's decision of 2026-11-25 (still open at the release, paid after it)."""
+    value = V.value_of(kind, market)
+    sid = "cs_test_" + os.urandom(12).hex()
+    meta = {"kind": "voucher", "voucher_kind": kind, "voucher_value": str(value), "market": market, "currency": "eur", "lang": lang, "ref": "gift-" + os.urandom(8).hex()}
+    H.Fake.sessions[sid] = {"id": sid, "object": "checkout.session", "mode": "payment", "status": "open", "payment_status": "unpaid", "currency": "eur",
+                            "amount_total": value, "metadata": meta, "url": f"https://checkout.stripe.test/c/pay/{sid}", "livemode": False, "customer_details": None,
+                            "payment_intent": None, "expires_at": int(time.time()) + 3600}
+    return sid
+
+
+def buy_voucher(kind="one", market="lt", lang="lt", email="pirkejas@example.com"):
+    """A voucher of an old kind, paid after the change (old_session): (session id, code)."""
+    sid = old_session(kind, market, lang)
+    c2, j2 = webhook(H.pay_session(sid, email))
     assert c2 == 200, (c2, j2)
     return sid, V.code_for(sid)
 
@@ -225,41 +250,49 @@ check("a typed code is read with dashes, spaces and in lower case; a code with 0
       and V.normal("ABCD-EFGH-JKL0") is None and V.normal("ABCD-EFGH-JKLO") is None and V.normal(None) is None and V.normal("x" * 50) is None, V.shown(c1))
 check("the coupon id is a one-way hash of the code (gift_ and 24 hex), not the code", re.fullmatch(r"gift_[0-9a-f]{24}", V.coupon_id(c1)) is not None
       and c1.lower() not in V.coupon_id(c1), V.coupon_id(c1))
-check("vouchers are sold in the euro markets of the EU edition only (eu, lt, hr), at the standard one-eye art and two-eye prices",
+check("vouchers are sold in the euro markets of the EU edition only (eu, lt, hr), at the standard one-eye art and two-eye prices"
+      " - 1125 (value vouchers): the old kinds keep their values (read for the vouchers sold before); what is sold now is one of five amounts",
       V.markets() == ("eu", "lt", "hr") and V.value_of("one", "lt") == pay.price_list("lt")["one_eye_art"] == 2497
-      and V.value_of("two", "eu") == pay.price_list("eu")["two_eyes"] == 3997, (V.markets(), V.value_of("one", "lt")))
+      and V.value_of("two", "eu") == pay.price_list("eu")["two_eyes"] == 3997 and V.AMOUNTS == (3000, 6000, 10000, 12000, 17000), (V.markets(), V.value_of("one", "lt")))
 src = "\n".join(open(os.path.join(API, f), encoding="utf-8").read() for f in ("_lib/voucher.py", "checkout.py", "stripe_webhook.py"))
 check("the new server code holds no dash", not re.search(DASH, src), re.findall(DASH, src)[:3])
 
 # ============================================================================================ 2. buying
 section("2. buying a voucher: the Stripe session")
 n0 = len(H.Fake.creates)
-c, j = post("/api/checkout", {"gift": {"kind": "one"}, "market": "lt", "lang": "lt"})
+c, j = post("/api/checkout", {"gift": {"amount": 10000}, "market": "lt", "lang": "lt"})
 p = H.Fake.creates[-1][0] if len(H.Fake.creates) > n0 else {}
-check("POST /api/checkout {gift: one} opens a Stripe page: mode payment, euros, the one-eye art price, the Lithuanian name and note, the voucher metadata, no discount, no order",
-      c == 200 and j.get("url", "").startswith("https://") and j.get("value") == 2497 and p.get("mode") == "payment"
-      and p.get("line_items[0][price_data][currency]") == "eur" and p.get("line_items[0][price_data][unit_amount]") == "2497"
-      and p.get("line_items[0][price_data][product_data][name]") == V.NAME["one"]["lt"] and p.get("custom_text[submit][message]") == V.SUBMIT["lt"]
-      and p.get("metadata[kind]") == "voucher" and p.get("metadata[voucher_kind]") == "one" and p.get("metadata[voucher_value]") == "2497"
+check("POST /api/checkout {gift: one} opens a Stripe page: mode payment, euros, the one-eye art price, the Lithuanian name and note, the voucher metadata, no discount, no order"
+      " - 1125 (value vouchers): {gift: {amount: 10000}}, the amount as the price, the voucher's name and its description (artworks and prints, 12 months), kind value",
+      c == 200 and j.get("url", "").startswith("https://") and j.get("value") == 10000 and j.get("kind") == "value" and p.get("mode") == "payment"
+      and p.get("line_items[0][price_data][currency]") == "eur" and p.get("line_items[0][price_data][unit_amount]") == "10000"
+      and p.get("line_items[0][price_data][product_data][name]") == V.NAME["value"]["lt"] == "SnapEyes dovanų kuponas"
+      and p.get("line_items[0][price_data][product_data][description]") == V.DESC_VALUE["lt"] and "spaudiniams" in V.DESC_VALUE["lt"]
+      and p.get("custom_text[submit][message]") == V.SUBMIT["lt"]
+      and p.get("metadata[kind]") == "voucher" and p.get("metadata[voucher_kind]") == "value" and p.get("metadata[voucher_value]") == "10000"
       and p.get("metadata[market]") == "lt" and "metadata[order]" not in p and not any(k.startswith("discounts") for k in p) and p.get("locale") == "lt", (c, j, p))
 check("its success page is /gift with the session id and the language (and the market), its cancel page says cancelled",
       p.get("success_url", "").endswith("/gift?lang=lt&s={CHECKOUT_SESSION_ID}&m=lt") and "/gift?lang=lt&cancelled=1" in p.get("cancel_url", ""), p.get("success_url"))
-c, j = post("/api/checkout", {"gift": {"kind": "two"}, "market": "eu", "lang": "en"})
-p = H.Fake.creates[-1][0]
-check("a two-eye voucher costs the two-eye price, in English on the default market", c == 200 and p.get("line_items[0][price_data][unit_amount]") == "3997"
-      and p.get("line_items[0][price_data][product_data][name]") == V.NAME["two"]["en"] and "&m=" not in p.get("success_url", ""), (c, p.get("success_url")))
-c, j = post("/api/checkout", {"gift": {"kind": "three"}, "market": "lt", "lang": "lt"})
-check("an unknown kind: 400", c == 400, (c, j))
+got = []
+for a in (3000, 6000, 12000, 17000):
+    c, j = post("/api/checkout", {"gift": {"amount": a}, "market": "eu", "lang": "en"})
+    got.append((c, H.Fake.creates[-1][0].get("line_items[0][price_data][unit_amount]"), "&m=" in H.Fake.creates[-1][0].get("success_url", "")))
+check("a two-eye voucher costs the two-eye price, in English on the default market - 1125: every one of the five amounts is sold at its amount (the default market: no m)",
+      got == [(200, "3000", False), (200, "6000", False), (200, "12000", False), (200, "17000", False)], got)
+bad = [post("/api/checkout", {"gift": g, "market": "lt", "lang": "lt"})[0] for g in ({"kind": "three"}, {"kind": "one"}, {"kind": "two"}, {"amount": 5000}, {"amount": "10000"},
+                                                                                   {"amount": 10000.0}, {"amount": True}, {})]
+check("an unknown kind: 400 - 1125: the old kinds are not sold any more, and an amount that is not one of the five (or not a whole number of cents): 400",
+      bad == [400] * 8, bad)
 for m in ("au", "us", "hu", "uk"):
-    c, j = post("/api/checkout", {"gift": {"kind": "one"}, "market": m, "lang": "en"})
+    c, j = post("/api/checkout", {"gift": {"amount": 3000}, "market": m, "lang": "en"})
     check(f"market {m}: 409 voucher_market (vouchers are sold in euros only)", c == 409 and j.get("reason") == "voucher_market" and j.get("markets") == ["eu", "lt", "hr"], (c, j))
 
 # ============================================================================================ 3. paid
 section("3. paid: the coupon, the record, the email, the note")
 H.Fake.emails.clear()
 COUPON_CREATES.clear()
-c, j = post("/api/checkout", {"gift": {"kind": "one"}, "market": "lt", "lang": "lt"})
-sid = next(s for s, x in H.Fake.sessions.items() if x["url"] == j["url"])
+# 1125: a voucher of the old kind "one" (a payment page opened before the owner's decision of 2026-11-25, paid after it): it is made as it was sold
+sid = old_session("one", "lt", "lt")
 code = V.code_for(sid)
 cid = V.coupon_id(code)
 c0, j0 = get(f"/api/checkout?gift={sid}")
@@ -300,8 +333,7 @@ osid = rj(f"orders/{o}/order.json")["checkout"]["session_id"]
 c, j = get(f"/api/checkout?gift={osid}")
 check("an ORDER's session id asked as a voucher: unknown (no code is ever derived for it)", c == 200 and j.get("state") == "unknown" and "code" not in j, j)
 # a busy email is retried by Stripe
-c, j = post("/api/checkout", {"gift": {"kind": "two"}, "market": "hr", "lang": "hr"})
-sid_b = next(s for s, x in H.Fake.sessions.items() if x["url"] == j["url"])
+sid_b = old_session("two", "hr", "hr")
 H.Fake.fail_mail[:] = [503, 503]      # the owner's note and the buyer's email
 cb, jb = webhook(H.pay_session(sid_b, "kupac@example.com"))
 H.Fake.fail_mail[:] = []
@@ -311,14 +343,40 @@ check("Resend busy: the webhook answers 503 (Stripe retries), the retry sends th
       and jb2.get("mail") == "sent" and len(mails_b) == 1 and "poklon-bon" in mails_b[0].get("subject", "").lower()
       and sum(1 for x, _i in H.Fake.emails if "gift voucher sold" in x.get("subject", "") and sid_b in x.get("text", "")) == 1, (cb, jb, cb2, jb2, len(mails_b)))
 # a voucher session paid at another amount: no code
-c, j = post("/api/checkout", {"gift": {"kind": "one"}, "market": "eu", "lang": "en"})
-sid_x = next(s for s, x in H.Fake.sessions.items() if x["url"] == j["url"])
+sid_x = old_session("one", "eu", "en")
 sx = H.pay_session(sid_x, "odd@example.com")
 sx["amount_total"] = 100
 n_cp = len(COUPONS)
 c, j = webhook(sx)
 check("a voucher session paid at another amount: refused, no coupon, the owner told to check and refund", c == 200 and j.get("state") == "refused" and len(COUPONS) == n_cp
       and any("does not match its price" in x.get("subject", "") for x, _i in H.Fake.emails), (c, j))
+check("the record of a voucher of an old kind has no ledger (it is used once, as it was sold), its coupon pays its value", "ledger" not in rec and rec.get("kind") == "one"
+      and (COUPONS.get(cid) or {}).get("metadata", {}).get("voucher_kind") == "one", rec)
+# 1125: a value voucher (the owner's decision of 2026-11-25), paid
+H.Fake.emails.clear()
+c, j = post("/api/checkout", {"gift": {"amount": 12000}, "market": "lt", "lang": "lt"})
+sid_v = next(s for s, x in H.Fake.sessions.items() if x["url"] == j["url"])
+vcode = V.code_for(sid_v)
+vcid = V.coupon_id(vcode)
+cv, jv = webhook(H.pay_session(sid_v, "dovana@example.com"))
+vrec = rj(f"vouchers/{vcid}.json") or {}
+vcp = COUPONS.get(vcid) or {}
+check("a value voucher paid: its own coupon (the amount, kind value, one redemption, a year), its record with kind value, the amount and ledger 1 (no email, no code)",
+      cv == 200 and jv.get("state") == "ready" and vcp.get("amount_off") == 12000 and vcp.get("metadata", {}).get("voucher_kind") == "value" and vcp.get("max_redemptions") == 1
+      and vrec.get("kind") == "value" and vrec.get("value") == 12000 and vrec.get("ledger") == 1 and "dovana" not in json.dumps(vrec) and vcode not in json.dumps(vrec), (vrec, vcp))
+vm = next((m for m, _i in H.Fake.emails if m.get("to") == ["dovana@example.com"]), {})
+vt = vm.get("text", "")
+check("its e-mail in Lithuanian: the code, the amount, \"Kam\" artworks and prints, the third step (what is left pays for a print or another order), the rules of a balance, "
+      "the 14 days, the terms; never the rule of the old kinds (once, the rest not paid out)",
+      V.shown(vcode) in vt and pay.price_text(12000, "lt", "eur") in vt and V.MAIL_VALUE["lt"]["kind"] in vt and V.MAIL_VALUE["lt"]["step3"] in vt
+      and V.MAIL_VALUE["lt"]["rules"] in vt and "kelis užsakymus" in vt and "vieną kartą" not in vt.split("_____")[0] and "Turiu dovanų kuponą" in vt and "14 dienų" in vt
+      and "Dovanų kuponai" in vt, [V.shown(vcode) in vt, V.MAIL_VALUE["lt"]["kind"] in vt, V.MAIL_VALUE["lt"]["step3"] in vt, V.MAIL_VALUE["lt"]["rules"] in vt, "vieną kartą" not in vt.split("_____")[0], vt[600:1800]])
+cg, jg = get(f"/api/checkout?gift={sid_v}")
+check("GET /api/checkout?gift=<session> of a value voucher: ready, kind value, the amount", cg == 200 and jg.get("state") == "ready" and jg.get("kind") == "value"
+      and jg.get("value") == 12000 and jg.get("code") == V.shown(vcode), jg)
+check("every language has the value voucher's e-mail words, without dashes", set(V.MAIL_VALUE) == set(V.MAIL) and all(
+    v["step3"].startswith("3. ") and v["rules"] and v["kind"] and not re.search(DASH, json.dumps(v, ensure_ascii=False)) for v in V.MAIL_VALUE.values())
+      and all(not re.search(DASH, x) for x in list(V.DESC_VALUE.values()) + list(V.NAME["value"].values())), "")
 
 # ============================================================================================ 4. checking a code
 section("4. checking a code at the checkout")
@@ -429,12 +487,13 @@ def text(doc, lang, edition=None):
     return (d.get(doc) or {}).get("text", "")
 
 
-words = {l: (t, pay.price_text(2497, l, "eur").replace("\u00a0", " "), pay.price_text(3997, l, "eur").replace("\u00a0", " ")) for l, t in
+# 1125 (value vouchers): the terms list the five amounts the gift page sells (30 and 170 are looked for), no more the two prices of the old kinds
+words = {l: (t, pay.price_text(3000, l, "eur").replace("\u00a0", " "), pay.price_text(17000, l, "eur").replace("\u00a0", " ")) for l, t in
          (("en", "Gift vouchers"), ("de", "Geschenkgutscheine"), ("lt", "Dovanų kuponai"), ("hu", "Ajándékutalványok"), ("hr", "Poklon-bonovi"),
           # 2026-11-13: the Finnish, Estonian and Latvian terms of the EU edition
           ("fi", "Lahjakortit"), ("et", "Kinkekaardid"), ("lv", "Dāvanu kartes"))}
 check("the EU terms in every language have the voucher section with the two prices, 12 months and the 14 days"
-      " - 1113: every language is eight (Finnish, Estonian, Latvian), exactly the languages of the pack", set(words) == set(docs) and len(words) == 8 and all(
+      " - 1113: every language is eight (Finnish, Estonian, Latvian), exactly the languages of the pack - 1125: the amounts 30 and 170 instead of the two prices", set(words) == set(docs) and len(words) == 8 and all(
     w[0] in text("terms", l).replace("\u00a0", " ") and w[1] in text("terms", l).replace("\u00a0", " ") and w[2] in text("terms", l).replace("\u00a0", " ")
     and "12" in text("terms", l) and "14" in text("terms", l) for l, w in words.items()), [l for l, w in words.items() if w[0] not in text("terms", l)])
 hu_t = text("terms", "hu", "hu").replace("\u00a0", " ")
@@ -447,5 +506,182 @@ priv = json.dumps(PACK, ensure_ascii=False)
 check("the privacy policy's voucher section is in the build (no email address kept in the record, the code derived)", "Our own record of the voucher holds no email address" in priv
       or os.path.isfile(os.path.join(REPO, "src", "legal", "docs", "vouchers.ts")), "")
 
+
+# ============================================================================================ 8. value vouchers
+section("8. value vouchers (the owner's decision of 2026-11-25): the balance, the ledger, the races")
+import threading  # noqa: E402
+price1 = pay.price_cents(1, STYLE, "lt")
+
+
+def sid_of(o_):
+    return (rj(f"orders/{o_}/order.json") or {}).get("checkout", {}).get("session_id")
+
+
+def states(cid_):
+    return [e["state"] for e in V.view(cid_)]
+
+
+sid30, code30 = buy_value(3000, "lt", "lt", "v30@example.com")
+c30 = V.coupon_id(code30)
+oa, ka = draft(lang="lt")
+n0 = len(H.Fake.creates)
+c, j = co(oa, ka, lang="lt", market="lt", voucher=V.shown(code30))
+p = H.Fake.creates[-1][0] if len(H.Fake.creates) > n0 else {}
+fresh = COUPONS.get(f"{c30}_s001") or {}
+check(f"a 30 EUR voucher at the checkout of a {price1} cent artwork: a FRESH single-use coupon of its own (gift_<24 hex>_s001, the amount it pays, redeemable a little after the "
+      "session ends), the metadata voucher, voucher_value, voucher_base, voucher_n, nothing to pay and no payment_intent_data; the voucher's own coupon is never the discount",
+      c == 200 and price1 <= 3000 and p.get("discounts[0][coupon]") == f"{c30}_s001" and p.get("metadata[voucher]") == f"{c30}_s001"
+      and p.get("metadata[voucher_value]") == str(price1) and p.get("metadata[voucher_base]") == c30 and p.get("metadata[voucher_n]") == "1"
+      and j.get("voucher") == {"value": 3000, "discount": price1, "pay": 0} and not any(k_.startswith("payment_intent_data") for k_ in p)
+      and fresh.get("amount_off") == price1 and fresh.get("max_redemptions") == 1 and 0 < fresh.get("redeem_by", 0) - int(p.get("expires_at", 0)) <= V.COUPON_MARGIN
+      and fresh.get("metadata", {}).get("voucher") == c30 and fresh.get("metadata", {}).get("order") == oa, (c, j, {k_: v for k_, v in p.items() if "voucher" in k_ or "discount" in k_}, fresh))
+led = V.view(c30)
+first = sid_of(oa)
+check("the ledger: entry 1 reserved for the artwork of that order, its amount, its session; order.json's checkout names the voucher, the entry and the balance it saw",
+      len(led) == 1 and led[0]["state"] == "reserved" and led[0]["order"] == oa and led[0]["use"] == "artwork" and led[0]["amount"] == price1 and led[0]["session"] == first
+      and (rj(f"orders/{oa}/order.json") or {}).get("checkout", {}).get("voucher") == {"coupon": f"{c30}_s001", "value": price1, "discount": price1, "base": c30, "n": 1,
+                                                                                      "balance": 3000}, led)
+cc1, jc1 = get(f"/api/checkout?voucher={code30}&m=lt")
+cc2, jc2 = get(f"/api/checkout?voucher={code30}&m=lt&o={oa}")
+check("the page's check: a reservation counts against the balance for everyone else (30.00 less the artwork left), but not for the order that holds it (o: all 30.00)",
+      cc1 == 200 and jc1.get("value") == 3000 - price1 and cc2 == 200 and jc2.get("value") == 3000, (jc1, jc2))
+c, j = co(oa, ka, lang="lt", market="lt", voucher=code30)
+second = sid_of(oa)
+check("the customer comes back from Stripe and checks out again: the earlier session is expired at Stripe and its reservation RELEASED; a new entry reserves anew, with a new coupon (s002)",
+      c == 200 and first in H.Fake.expires and states(c30) == ["released", "reserved"] and H.Fake.creates[-1][0].get("discounts[0][coupon]") == f"{c30}_s002"
+      and j.get("voucher") == {"value": 3000, "discount": price1, "pay": 0}, (c, j, states(c30)))
+H.Fake.emails.clear()
+cw, jw = webhook(complete(second, "pirmas@example.com"))
+pj = rj(f"orders/{oa}/paid.json") or {}
+check("paid as a no-cost session: the order is PAID with amount 0 and no mismatch, paid.json's voucher names the voucher (base) and its fresh coupon, entry 2 is PAID, "
+      "and the voucher's own coupon was never redeemed",
+      cw == 200 and pj.get("paid") is True and pj.get("amount_total") == 0 and "amount_mismatch" not in pj and pj.get("voucher", {}).get("base") == c30
+      and pj["voucher"].get("coupon") == f"{c30}_s002" and pj["voucher"].get("discount") == price1 and states(c30) == ["released", "paid"]
+      and COUPONS[c30]["times_redeemed"] == 0, (cw, jw, pj.get("voucher"), states(c30)))
+conf = next((m for m, _i in H.Fake.emails if oa in m.get("subject", "") and m.get("to") == ["pirmas@example.com"]), {})
+check("its confirmation's price row: the price, the gift voucher and 0 paid", "dovanų kuponas −" in conf.get("text", "") and "sumokėta 0,00" in conf.get("text", "").replace(" ", " "),
+      conf.get("text", "")[:600])
+cw2, _ = webhook(H.Fake.sessions[second])
+check("a replayed webhook changes nothing in the ledger", cw2 == 200 and states(c30) == ["released", "paid"], states(c30))
+cc, jc = get(f"/api/checkout?voucher={code30}&m=lt")
+left = 3000 - price1
+check("what is left stays on the voucher: the check says 30.00 less the artwork", cc == 200 and jc.get("value") == left, (cc, jc))
+ob, kb = draft(lang="en")
+c, j = co(ob, kb, voucher=code30)
+pb = H.Fake.creates[-1][0]
+check("a second order with the rest: the voucher pays what is left, the card the difference (payment_intent_data stays), the next entry and coupon (s003)",
+      c == 200 and j.get("voucher") == {"value": left, "discount": left, "pay": price1 - left} and any(k_.startswith("payment_intent_data") for k_ in pb)
+      and pb.get("discounts[0][coupon]") == f"{c30}_s003" and pb.get("metadata[voucher_value]") == str(left), (c, j))
+webhook(complete(sid_of(ob)))
+pjb = rj(f"orders/{ob}/paid.json") or {}
+check("paid by card for the rest: amount_total is the price less the rest of the voucher, no mismatch; the voucher is spent (entry 3 paid)",
+      pjb.get("paid") is True and pjb.get("amount_total") == price1 - left and "amount_mismatch" not in pjb and states(c30) == ["released", "paid", "paid"], (pjb, states(c30)))
+cc, jc = get(f"/api/checkout?voucher={code30}&m=lt")
+oc, kc = draft()
+n0 = len(H.Fake.creates)
+c, j = co(oc, kc, voucher=code30)
+check("spent: the check says used, and a third order's checkout is 409 voucher_invalid used with no Stripe session and no order record touched",
+      cc == 409 and jc.get("why") == "used" and c == 409 and j.get("why") == "used" and len(H.Fake.creates) == n0 and "checkout" not in (rj(f"orders/{oc}/order.json") or {}), (jc, j))
+
+# more than the total, less than the total
+s170, code170 = buy_value(17000, "hr", "hr", "v170@example.com")
+od_, kd_ = draft(lang="hr")
+c, j = co(od_, kd_, lang="hr", market="hr", voucher=code170)
+webhook(complete(sid_of(od_)))
+cc, jc = get(f"/api/checkout?voucher={code170}&m=lt")
+check("a voucher worth more than the order (170.00 on an artwork): the artwork is free, the rest stays (170.00 less the artwork), in any euro market of the EU edition",
+      c == 200 and j.get("voucher") == {"value": 17000, "discount": price1, "pay": 0} and (rj(f"orders/{od_}/paid.json") or {}).get("amount_total") == 0
+      and jc.get("value") == 17000 - price1, (j, jc))
+s30b, code30b = buy_value(3000, "eu", "en", "two@example.com")
+oe, ke = draft(lang="en", n=2)
+c, j = 0, {}
+for s2 in LEGACY:
+    c, j = co(oe, ke, eyes=2, style=s2, voucher=code30b)
+    if c == 200:
+        break
+if c != 200:
+    check("a voucher worth less than the order: the checkout opens", False, (c, j))
+else:
+    price2 = j.get("amount")
+    webhook(complete(sid_of(oe)))
+    pje = rj(f"orders/{oe}/paid.json") or {}
+    check("a voucher worth less than the order (30.00 on two eyes): all of it is taken, the difference paid by card, no mismatch, nothing left",
+          j.get("voucher") == {"value": 3000, "discount": 3000, "pay": price2 - 3000} and pje.get("amount_total") == price2 - 3000 and "amount_mismatch" not in pje
+          and get(f"/api/checkout?voucher={code30b}&m=eu")[1].get("why") == "used", (j, pje))
+
+# two checkouts at the same moment never spend the same balance twice
+s60, code60 = buy_value(6000, "lt", "lt", "race@example.com")
+c60 = V.coupon_id(code60)
+g60 = V.lookup(code60, "lt")
+got, errs = [], []
+
+
+def racer(i):
+    try:
+        got.append(V.spend(g60, f"261125-race{i:02d}aaaaaaaaaaa", "artwork", 2497, int(time.time()) + 3600, "lt"))
+    except Exception as e:  # noqa
+        errs.append((getattr(e, "body", None) or {}).get("why") or type(e).__name__)
+
+
+ts = [threading.Thread(target=racer, args=(i,)) for i in range(6)]
+for t in ts:
+    t.start()
+for t in ts:
+    t.join()
+amounts = sorted(x["value"] for x in got)
+check("six checkouts reserve a 60.00 voucher at once (a one-eye artwork each): exactly 60.00 is reserved (two artworks and the 10.06 left), each in an entry of its own; the other three are "
+      "refused used; no balance is spent twice",
+      amounts == [1006, 2497, 2497] and sorted(x["n"] for x in got) == [1, 2, 3] and errs == ["used"] * 3
+      and sum(e["amount"] for e in V.view(c60) if e["state"] != "released") == 6000 and len({x["coupon"] for x in got}) == 3, (amounts, errs))
+s30c, code30c = buy_value(3000, "lt", "lt", "race2@example.com")
+o1, k1 = draft()
+o2, k2 = draft()
+both = []
+th = [threading.Thread(target=lambda o_, k_: both.append(co(o_, k_, voucher=code30c)), args=a) for a in ((o1, k1), (o2, k2))]
+for t in th:
+    t.start()
+for t in th:
+    t.join()
+disc = sorted((j_.get("voucher") or {}).get("discount", 0) for c_, j_ in both if c_ == 200)
+check("two orders check out with one 30.00 voucher at the same moment: together they take exactly 30.00 (an artwork and the rest)", disc == [3000 - price1, price1]
+      and sum(e["amount"] for e in V.view(V.coupon_id(code30c)) if e["state"] != "released") == 3000, (both, disc))
+
+# a reservation nobody closed is settled after its session's end from its own coupon
+s30d, code30d = buy_value(3000, "lt", "lt", "settle@example.com")
+c30d = V.coupon_id(code30d)
+g = V.lookup(code30d, "lt")
+past = int(time.time()) - V.SETTLE_GRACE - 30
+sp_a = V.spend(g, "261125-settleaaaaaaaaaaaa", "artwork", 2000, past, "lt")
+sp_b = V.spend(g, "261125-settlebbbbbbbbbbbb", "artwork", 500, past, "lt")
+COUPONS[sp_b["coupon"]]["times_redeemed"] = 1         # Stripe counted its redemption: that session was paid (the webhook was lost)
+sp_c = V.spend(g, "261125-settlecccccccccccc", "artwork", 300, int(time.time()) + 3600, "lt")
+cc, jc = get(f"/api/checkout?voucher={code30d}&m=lt")
+check("a reservation whose session ended and nobody closed: its own coupon decides (not redeemed: released, redeemed: paid); one still open keeps counting",
+      [e["state"] for e in V.view(c30d)] == ["released", "paid", "reserved"] and jc.get("value") == 3000 - 500 - 300, (V.view(c30d), jc))
+V.unspend(sp_c, "test")
+check("a reservation whose session could not be made is given back (unspend)", states(c30d)[-1] == "released" and get(f"/api/checkout?voucher={code30d}&m=lt")[1].get("value") == 2500)
+
+# expired, another currency, a print asked with an old voucher
+s30e, code30e = buy_value(3000, "lt", "lt", "exp@example.com")
+c30e = V.coupon_id(code30e)
+rec_e = rj(f"vouchers/{c30e}.json")
+store_path = os.path.join(STORE, "vouchers", f"{c30e}.json")
+with open(store_path, "w", encoding="utf-8") as f:
+    json.dump(dict(rec_e, valid_until="2025-11-24"), f)
+ce, je = get(f"/api/checkout?voucher={code30e}&m=lt")
+of_, kf_ = draft()
+ce2, je2 = co(of_, kf_, voucher=code30e)
+ca, ja = get(f"/api/checkout?voucher={code170}&m=au")
+cau, jau = co(*draft(), market="au", voucher=code170)
+check("an expired value voucher (its last day passed): 409 voucher_invalid expired, at the check and at the checkout; one of another market's currency (au): why currency",
+      ce == 409 and je.get("why") == "expired" and ce2 == 409 and je2.get("why") == "expired" and ca == 409 and ja.get("why") == "currency"
+      and cau == 409 and jau.get("why") == "currency", (je, je2, ja, jau))
+s_old, code_old = buy_voucher("one", "lt", "lt", "old2@example.com")
+cp1, jp1 = get(f"/api/checkout?voucher={code_old}&m=lt&o={oa}&u=print")
+cp2, jp2 = get(f"/api/checkout?voucher={code30d}&m=lt&o={oa}&u=print")
+check("the print offer's check (u=print): a voucher of an old kind pays for an artwork only (why artwork); a value voucher answers its balance",
+      cp1 == 409 and jp1.get("why") == "artwork" and cp2 == 200 and jp2.get("value") == 2500, (jp1, jp2))
+src_v = open(os.path.join(API, "_lib", "voucher.py"), encoding="utf-8").read()
+check("the voucher's server code holds no dash (with the ledger)", not re.search(DASH, src_v), re.findall(DASH, src_v)[:3])
 print(f"\n{sum(RESULTS)} of {len(RESULTS)} passed")
 sys.exit(0 if all(RESULTS) else 1)

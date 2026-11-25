@@ -1315,6 +1315,9 @@ def create_session(order, k, spec, amount, consent, expires, exp=None, plan=None
     gift: a gift voucher the customer entered (api/_lib/voucher.py lookup: {coupon, value}) or None: its coupon as the session's one discount
     (discounts[0][coupon]) and the metadata voucher (the coupon id) and voucher_value. When it pays for everything the session is a no-cost one
     (no PaymentIntent is made, so payment_intent_data is left out). Without a voucher the session is exactly what it was before vouchers.
+    A value voucher's spend (voucher.spend: {coupon, value, base, n}, the owner's decision of 2026-11-25 (value vouchers)) is attached the same way, its
+    fresh coupon and amount as voucher and voucher_value, and voucher_base and voucher_n beside them. A coupon takes nothing off Stripe's shipping
+    rate: when its amount is more than the line items, the print's shipping is made a line item (prints.stripe_params ship_item) so it pays that too.
     ad: what the Meta Conversions API needs at the payment (api/_lib/meta.py checkout_meta: fbp, fbc, cip, cua), {} while it is not configured;
     written to the metadata beside src (the owner's decision of 2026-11-25). Without it the session is exactly what it was before.
     Returns Stripe's session object (id, url, ...)."""
@@ -1348,7 +1351,7 @@ def create_session(order, k, spec, amount, consent, expires, exp=None, plan=None
         swap = {"custom_text[submit][message]": prints.SUBMIT_NOTE_PRINT[prints.lang_of(lang)],
                 "line_items[0][price_data][product_data][description]": prints.ITEM_DESC_FILE[prints.lang_of(lang)]}
         params = [(k_, swap.get(k_, v)) for k_, v in params]
-        params += prints.stripe_params(part, lang)
+        params += prints.stripe_params(part, lang, ship_item=bool(gift) and int(gift["value"]) > int(amount) + int(part["price"]))
     # no note where none is left (English and German since the owner's second decision of 2026-11-25): Stripe refuses an empty message
     params = [(k_, v) for k_, v in params if not (k_ == "custom_text[submit][message]" and not v)]
     if gift:
@@ -1374,6 +1377,8 @@ def create_session(order, k, spec, amount, consent, expires, exp=None, plan=None
         meta.update(prints.metadata(part))
     if gift:
         meta.update(voucher=gift["coupon"], voucher_value=str(int(gift["value"])))
+        from . import voucher
+        meta.update(voucher.metadata(gift))
     if ad:
         meta.update({name: str(v) for name, v in ad.items()})
     for name, v in meta.items():
@@ -1463,6 +1468,10 @@ def close_open_sessions(order, rec):
             log(f"order {order}: earlier checkout {sid} {'expired' if gone else 'was no longer open'}")
             if not session_matches(sess, order, rec):
                 continue
+        if sess.get("status") == "expired":
+            # a value voucher's reservation of that session is given back (the owner's decision of 2026-11-25 (value vouchers)): the new session reserves anew
+            from . import voucher
+            voucher.release_session(sess, "replaced")
         if session_paid(sess) and session_counts(sess):
             paid = paid or sess
         elif sess.get("status") == "complete" and session_counts(sess):
@@ -1544,7 +1553,10 @@ def merge_addon(paid, addon):
     own = paid.get("print")
     if not (isinstance(pp, dict) and pp.get("product")) or (isinstance(own, dict) and own.get("product")):
         return paid
-    return dict(paid, print=pp, print_addon={k: addon.get(k) for k in ("session_id", "payment_intent", "amount_total", "at", "livemode", "email")})
+    pa = {k: addon.get(k) for k in ("session_id", "payment_intent", "amount_total", "at", "livemode", "email")}
+    if isinstance(addon.get("voucher"), dict):
+        pa["voucher"] = addon["voucher"]      # a value voucher paid for the print, in part or entirely (the owner's decision of 2026-11-25)
+    return dict(paid, print=pp, print_addon=pa)
 
 
 def paid_market(paid):
@@ -1708,6 +1720,10 @@ def record_paid(order, rec, sess, source, event_id=None):
         td = sess.get("total_details") if isinstance(sess.get("total_details"), dict) else {}
         paid["voucher"] = {"coupon": meta["voucher"], "value": gv, "price": expected, "discount": min(gv, expected),
                            "stripe_discount": td.get("amount_discount") if isinstance(td.get("amount_discount"), int) else None}
+        from . import voucher
+        if voucher.spend_of(sess):
+            # a value voucher (the owner's decision of 2026-11-25): which voucher it was, so the order page can offer its balance for a print
+            paid["voucher"]["base"] = meta["voucher_base"]
         expected = max(0, expected - gv)
     if amount != expected or paid["currency"] != want_cur:
         paid["amount_mismatch"] = {"expected": expected, "currency": want_cur, "market": market}
@@ -1717,6 +1733,9 @@ def record_paid(order, rec, sess, source, event_id=None):
         log(f"order {order}: priced {priced} at checkout, the {market} price list says {want} now (a price change)")
     if pp and pp.get("mismatch"):
         log(f"order {order}: the print's {', '.join(pp['mismatch'])} does not match what was priced: the print is held for the owner")
+    # a value voucher's reservation of this session is spent (never raises; also for a second payment: its coupon was redeemed all the same)
+    from . import voucher
+    voucher.commit(sess, source)
     try:
         store.put(order_path(order, "paid.json"), store.json_bytes(paid), "application/json", upsert=False)
         log(f"order {order} PAID via {source}: {amount} {paid['currency']} ({market}) {spec['eyes']} eye(s) "
