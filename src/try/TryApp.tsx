@@ -1208,8 +1208,10 @@ export const TryApp: React.FC = () => {
         )}
       </main>
 
-      {/* the four legal pages (the Impressum must be one click away from every page), opened in a new tab so a
-          capture or an artwork is never lost */}
+      {/* the four legal pages, opened in a new tab so a capture or an artwork is never lost. Only under the result and the photo check (the owner's
+          decision of 2026-11-25: on the capture and processing screens the four links sat right under the spinner and pulled people away at the most
+          sensitive moment); the capture screen's photo notice still links the terms and the privacy policy in its sentence, the buy card its own */}
+      {(step === 'result' || step === 'quality') && (
       <footer className="max-w-3xl mx-auto px-4 pb-24">
         <nav aria-label={LEGAL_LABELS[lang].nav} className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-zinc-400">
           {LEGAL_DOCS.map((d) => (
@@ -1219,6 +1221,7 @@ export const TryApp: React.FC = () => {
           ))}
         </nav>
       </footer>
+      )}
 
       {step === 'result' && undo && (
         <div role="status" className="fx-toast fixed bottom-4 inset-x-4 z-40 mx-auto max-w-sm bg-zinc-900 border border-white/15 rounded-xl pl-4 pr-1 flex items-center justify-between gap-3 text-sm text-zinc-100 shadow-lg shadow-black/50">

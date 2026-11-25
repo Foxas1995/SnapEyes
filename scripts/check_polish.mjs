@@ -105,7 +105,8 @@ try {
     // the language switch is a menu since the eight languages of 2026-11-13 (src/landing/Header.tsx, src/shared/LangMenu.tsx): its pill is measured closed, its
     // list of languages once it is open (below)
     ['landing', '/?lang=en', 390, [['.lp-hdr .lp-lang summary', 44], ['.lp-hdr .lp-logo', 44], ['a.lp-link-quiet', 44], ['.lp-ftr .lp-logo', 44], ['.lp-ftr address a', 24]]],
-    ['try', '/try?lang=en', 360, [['header summary', 44], ['header a', 44], ['footer nav a, nav a', 24]]],
+    // (2026-11-25, the owner's decision: /try's footer of legal links shows only under the result and the photo check, so the capture screen measured here has none)
+    ['try', '/try?lang=en', 360, [['header summary', 44], ['header a', 44]]],
   ]) {
     const page = await fresh(width, 780);
     await page.goto(origin + url);
