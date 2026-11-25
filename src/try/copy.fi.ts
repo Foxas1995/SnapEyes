@@ -324,7 +324,7 @@ export const fi: TryCopy = {
     lines: {
       'line.solo_clean': 'Entisöity iiriksesi yksin puhtaalla mustalla.',
       'line.solo_powder': 'Reuna hajoaa rakeiksi silmäsi omissa väreissä.',
-      'line.solo_universe': 'Oma iiriksesi täyttää suurennettuna koko kankaan.',
+      'line.solo_universe': 'Tarkka iiriksesi saman iiriksen edessä, suurennettuna ja pehmeästi epätarkkana.',
       'line.solo_splash': 'Reuna nousee nestekruunuksi.',
       'line.solo_gold': 'Hieno kultarengas ja sädekehä iiriksen ympärillä.',
       'line.solo_radiance': 'Hienoja valonsäteitä oman iiriksesi väreissä.',

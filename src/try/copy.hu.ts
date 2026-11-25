@@ -337,7 +337,7 @@ export const hu: TryCopy = {
     lines: {
       'line.solo_clean': 'A helyreállított íriszed egyedül, tiszta fekete háttéren.',
       'line.solo_powder': 'A perem szemcsékre bomlik, a szemed saját színeiben.',
-      'line.solo_universe': 'A saját íriszed felnagyítva tölti ki az egész képet.',
+      'line.solo_universe': 'Éles íriszed ugyanannak az íriszednek a felnagyított, lágyan elmosódott képe előtt.',
       'line.solo_splash': 'A perem folyadékkoronává emelkedik.',
       'line.solo_gold': 'Finom aranygyűrű és fénykoszorú az írisz körül.',
       'line.solo_radiance': 'Finom fénysugarak a saját íriszed színeiben.',

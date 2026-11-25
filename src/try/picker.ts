@@ -157,7 +157,7 @@ export const lookOf = (t: ServerTile | undefined, want: string | null): string |
 export const soonChoice = (t: ServerTile | undefined, look: string | null): boolean => !!t && (isSoon(t) || (look !== null && t.looks[look] === 'preview'));
 
 /** The proper names of the Universe looks (English in every language, like every style name). A code that is not listed is shown as it came. */
-const LOOK_NAMES: Record<string, string> = { echo: 'Echo', vortex: 'Vortex', deepfield: 'Deep Field', starfield: 'Starfield' };
+const LOOK_NAMES: Record<string, string> = { echo: 'Echo', vortex: 'Vortex', deepfield: 'Deep Field', starfield: 'Starfield', lens: 'Lens' };   // since 2026-11-25 Universe offers one look (Lens): no chips
 export const lookName = (code: string): string => LOOK_NAMES[code] ?? code;
 
 // ------------------------------------------------------------------------------------------------ the selected style

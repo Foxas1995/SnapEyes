@@ -327,7 +327,7 @@ export const hr: TryCopy = {
     lines: {
       'line.solo_clean': 'Vaša obnovljena šarenica, sama na čistoj crnoj podlozi.',
       'line.solo_powder': 'Rub se raspada u zrnca u bojama vašeg oka.',
-      'line.solo_universe': 'Vaša vlastita šarenica, uvećana, ispunjava cijelo platno.',
+      'line.solo_universe': 'Vaša oštra šarenica ispred iste šarenice, uvećane i blago zamućene.',
       'line.solo_splash': 'Rub se uzdiže u krunu od tekućine.',
       'line.solo_gold': 'Tanki zlatni prsten i aureola oko šarenice.',
       'line.solo_radiance': 'Tanke zrake svjetla u bojama vaše šarenice.',

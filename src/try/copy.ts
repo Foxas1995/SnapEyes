@@ -384,7 +384,7 @@ const en = {
     lines: {
       'line.solo_clean': 'Your restored iris alone on pure black.',
       'line.solo_powder': 'The rim breaks into grains in your eye\'s own colours.',
-      'line.solo_universe': 'Your own iris, enlarged, fills the whole canvas.',
+      'line.solo_universe': 'Your sharp iris in front of the same iris, enlarged and softly out of focus.',
       'line.solo_splash': 'The rim lifts into a crown of liquid.',
       'line.solo_gold': 'A fine gold ring and a halo around the iris.',
       'line.solo_radiance': 'Fine rays of light in the colours of your own iris.',
@@ -872,7 +872,7 @@ const de: TryCopy = {
     lines: {
       'line.solo_clean': 'Ihre restaurierte Iris allein auf reinem Schwarz.',
       'line.solo_powder': 'Der Rand löst sich in Körner in den Farben Ihres Auges auf.',
-      'line.solo_universe': 'Ihre eigene Iris, vergrößert, füllt die ganze Fläche.',
+      'line.solo_universe': 'Ihre Iris gestochen scharf vor derselben Iris, vergrößert und sanft unscharf.',
       'line.solo_splash': 'Der Rand hebt sich zu einer Krone aus Flüssigkeit.',
       'line.solo_gold': 'Ein feiner Goldring und ein Lichthof um die Iris.',
       'line.solo_radiance': 'Feine Lichtstrahlen in den Farben Ihrer eigenen Iris.',

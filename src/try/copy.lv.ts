@@ -329,7 +329,7 @@ export const lv: TryCopy = {
     lines: {
       'line.solo_clean': 'Jūsu atjaunotā varavīksnene viena pati uz tīri melna fona.',
       'line.solo_powder': 'Mala sabirst graudiņos jūsu acs krāsās.',
-      'line.solo_universe': 'Jūsu pašu varavīksnene, palielināta, piepilda visu attēlu.',
+      'line.solo_universe': 'Jūsu asā varavīksnene tās pašas varavīksnenes priekšā, palielinātas un maigi izplūdušas.',
       'line.solo_splash': 'Mala paceļas šķidruma kronī.',
       'line.solo_gold': 'Smalks zelta gredzens un oreols ap varavīksneni.',
       'line.solo_radiance': 'Smalki gaismas stari jūsu pašu varavīksnenes krāsās.',

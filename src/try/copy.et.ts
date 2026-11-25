@@ -331,7 +331,7 @@ export const et: TryCopy = {
     lines: {
       'line.solo_clean': 'Sinu taastatud iiris üksi puhtal mustal taustal.',
       'line.solo_powder': 'Serv laguneb teradeks sinu silma enda värvides.',
-      'line.solo_universe': 'Sinu enda iiris täidab suurendatuna kogu lõuendi.',
+      'line.solo_universe': 'Sinu terav iiris sama iirise ees, mis on suurendatud ja pehmelt hägune.',
       'line.solo_splash': 'Serv kerkib vedelikust krooniks.',
       'line.solo_gold': 'Peen kuldne rõngas ja kuma iirise ümber.',
       'line.solo_radiance': 'Peened valguskiired sinu enda iirise värvides.',

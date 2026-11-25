@@ -311,7 +311,7 @@ export const lt: TryCopy = {
     lines: {
       'line.solo_clean': 'Tik Jūsų atkurta rainelė grynai juodame fone.',
       'line.solo_powder': 'Kraštas skyla į grūdelius Jūsų akies spalvomis.',
-      'line.solo_universe': 'Padidinta Jūsų rainelė užpildo visą kūrinio plotą.',
+      'line.solo_universe': 'Ryški Jūsų rainelė, o už jos ta pati rainelė, padidinta ir švelniai neryški.',
       'line.solo_splash': 'Kraštas iškyla kaip skysčio karūna.',
       'line.solo_gold': 'Plonas auksinis žiedas ir šviesos aureolė aplink rainelę.',
       'line.solo_radiance': 'Ploni šviesos spinduliai Jūsų rainelės spalvomis.',
