@@ -218,6 +218,7 @@ export const lt: TryCopy = {
     // the owner's own language (2026-10-20): colourOff, pupilWide, how and did are new sentences, for his read
     colourOff: 'Spalvos gali šiek tiek skirtis nuo Jūsų akies. Tikriausios jos dienos šviesoje arba su žibintuvėliu iš šono, be blykstės; jei patinka, galite tęsti.',
     pupilWide: 'Daugiau šviesos sumažins vyzdį ir parodys daugiau rainelės.',
+    pupilLarge: 'Vyzdys didelis: prie lango jis susitrauks ir matysis daugiau rainelės rašto.',
     how: 'Kaip tai veikia?',
     did: {
       title: 'Ką padarėme',

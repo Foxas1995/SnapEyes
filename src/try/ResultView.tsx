@@ -9,7 +9,7 @@ import { useRevealFrame } from '../reveal/useRevealFrame';
 import { AI_MATERIAL_PUBLISHED } from '../shared/aiMaterial';
 import { T, layoutLabel } from './copy';
 import { NO_SAVE, NO_SAVE_BOX } from './noSave';
-import { type Art, type Eye, MAX_EYES, canvasSize, pupilWide } from './multi';
+import { type Art, type Eye, MAX_EYES, canvasSize, pupilLarge, pupilWide } from './multi';
 import { CalmRetake, ManualRoute, StylePicker, type PickerModel } from './StylePicker';
 import { Words, type WordsModel } from './Words';
 import { FeedbackBox } from './Feedback';
@@ -146,7 +146,14 @@ export const ResultView: React.FC<Props> = (p) => {
       {hero}
       {colourWarning}
       {/* one line, only for a wide pupil: the studio keeps the photo's pupil, more light is what makes it smaller */}
-      {pupilWide(eye) && (
+      {/* a LARGE pupil (more than 45 % of the iris, multi.ts PUPIL_LARGE; the owner's decision of 2026-11-25): a visible, friendly note with the way to take
+          this eye again. Advice only: the artwork can still be bought */}
+      {pupilLarge(eye) ? (
+        <div data-testid="pupil-large" role="note" className="text-xs text-amber-50 mt-3 bg-amber-950/30 border border-amber-500/40 rounded-xl p-3 flex flex-col gap-2">
+          <p className="flex gap-1.5"><Info aria-hidden="true" className="w-4 h-4 shrink-0 text-amber-300" /> <span>{T.result.pupilLarge}</span></p>
+          <button onClick={() => p.onRetake(eye.id)} className="self-start min-h-[44px] px-4 rounded-xl border border-amber-400/50 text-amber-50 font-semibold hover:bg-amber-400/10">{retakeLabel}</button>
+        </div>
+      ) : pupilWide(eye) && (
         <p data-testid="pupil-hint" className="text-[11px] text-zinc-300 mt-3 flex gap-1.5"><Info aria-hidden="true" className="w-3.5 h-3.5 shrink-0 mt-px text-zinc-400" /> <span>{T.result.pupilWide}</span></p>
       )}
       {/* decision 5 speaks about the customer's own photo, so the sample gets its own line instead of the card */}

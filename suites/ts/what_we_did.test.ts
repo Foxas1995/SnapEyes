@@ -10,7 +10,7 @@
 import { readFileSync } from 'node:fs';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { type Eye, PUPIL_WIDE, pupilWide } from '../../src/try/multi';
+import { type Eye, PUPIL_LARGE, PUPIL_WIDE, pupilLarge, pupilWide } from '../../src/try/multi';
 import { COPY, setCopyLang } from '../../src/try/copy';
 import { ResultView } from '../../src/try/ResultView';
 import { emptyPicker } from '../../src/try/StylePicker';
@@ -149,8 +149,20 @@ export async function run(): Promise<Array<[string, boolean, string?]>> {
     setCopyLang(l);
     const h = page(eyeOf(undefined, { glarePct: 2, lidPct: 3, pupil: 0.5 }));
     const d = COPY[l].result.did;
-    check(`${l}: the card speaks the page's language (its title, the lid line, the disclosure's title and quality line, the pupil line)`,
-      h.includes(esc(d.title)) && h.includes(esc(d.lid)) && h.includes(esc(COPY[l].result.how)) && h.includes(esc(d.quality(CROP_MAX_PX))) && h.includes(esc(COPY[l].result.pupilWide)));
+    // (2026-11-25, the owner's decision: a pupil of 0.5 is LARGE, so its note is the visible one with the way to retake the eye, not the grey line)
+    check(`${l}: the card speaks the page's language (its title, the lid line, the disclosure's title and quality line, the large pupil's note)`,
+      h.includes(esc(d.title)) && h.includes(esc(d.lid)) && h.includes(esc(COPY[l].result.how)) && h.includes(esc(d.quality(CROP_MAX_PX))) && h.includes(esc(COPY[l].result.pupilLarge))
+      && !has(h, 'pupil-hint'));
+  }
+  // ---- the large pupil (2026-11-25, the owner's decision: his photo's pupil was about half the iris and the artwork "looks odd"): more than 0.45 of the iris
+  // radius gets a visible note with the button to photograph that eye again, instead of the grey line; advice only (the buy card is untouched by it)
+  check('PUPIL_LARGE is 0.45, and a pupil of exactly 0.45 still gets the grey line, 0.46 the note', PUPIL_LARGE === 0.45 && !pupilLarge(eyeOf(okRv, { pupil: 0.45 }))
+    && pupilLarge(eyeOf(okRv, { pupil: 0.46 })) && !pupilLarge(eyeOf(undefined, { sample: true, pupil: 0.6 })));
+  {
+    setCopyLang('en');
+    const h = page(eyeOf(okRv, { pupil: 0.52 }));
+    check('a large pupil: the note "Your pupil is large ..." with one button to photograph this eye again, and no grey line', has(h, 'pupil-large') && !has(h, 'pupil-hint')
+      && h.includes(esc(COPY.en.result.pupilLarge)) && /data-testid="pupil-large"[\s\S]*?<button/.test(h));
   }
   setCopyLang('en');
 

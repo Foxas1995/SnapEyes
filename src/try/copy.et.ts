@@ -239,6 +239,7 @@ export const et: TryCopy = {
     // new sentences of 2026-10-20 (colourOff, pupilWide, how, did)
     colourOff: 'Värvid võivad sinu silmast veidi erineda. Kõige tõetruum on päevavalgus või taskulamp küljelt, ilma välguta; kui tulemus sulle meeldib, jätka julgelt.',
     pupilWide: 'Rohkem valgust teeb pupilli väiksemaks ja näitab sinu iirisest rohkem.',
+    pupilLarge: 'Su pupill on suur: akna juures see aheneb ja iirise mustrit paistab rohkem.',
     how: 'Kuidas see käib',
     did: {
       title: 'Mida me tegime',

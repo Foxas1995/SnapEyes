@@ -231,6 +231,7 @@ export const fi: TryCopy = {
     sampleNote: 'Tämä silmä on tekoälyn luoma näyte, ei oikea valokuva. Kun käytät omaa kuvaasi, väri tulee siitä.',
     colourOff: 'Värit voivat poiketa hieman silmästäsi. Aidoimman värin antaa päivänvalo tai taskulamppu sivulta, ilman salamaa; jos pidät tuloksesta, jatka vain.',
     pupilWide: 'Lisävalo pienentää pupillia ja näyttää enemmän iiristäsi.',
+    pupilLarge: 'Pupillisi on suuri: ikkunan ääressä se supistuu ja iiriksen kuviota näkyy enemmän.',
     how: 'Näin se toimii',
     did: {
       title: 'Mitä teimme',

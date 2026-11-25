@@ -265,6 +265,7 @@ const en = {
     colourOff: 'Colours may differ slightly from your eye. Daylight or a torch from the side is truest, without the flash; if you like it, carry on.',
     // one line under the before/after, only when the pupil measured on the photo is wide (./multi.ts pupilWide): the engine keeps the photo's pupil, so more light is what helps
     pupilWide: 'More light makes the pupil smaller and shows more of your iris.',
+    pupilLarge: 'Your pupil is large: by a window it will narrow and more of your iris pattern will show.',
     // the summary of the one closed disclosure under the before/after (./ResultView.tsx HowItWorks): the sentence that says where the colour comes from and what the AI
     // restores (transparency), the promise or "nothing painted on top", the shared library (aiMaterial), the camera's quality (did.quality) and the small-photo notes.
     // Folded, never deleted: every sentence counsel may need is still on the page, one tap away
@@ -784,6 +785,7 @@ const de: TryCopy = {
     sampleNote: 'Dieses Auge ist das KI-generierte Beispiel, kein echtes Foto. Mit Ihrem eigenen Foto stammt die Farbe aus Ihrem Foto.',
     colourOff: 'Die Farben können leicht abweichen. Am natürlichsten sind sie bei Tageslicht oder mit einer Taschenlampe von der Seite, ohne Blitz; gefällt es Ihnen, machen Sie einfach weiter.',
     pupilWide: 'Mehr Licht macht die Pupille kleiner und zeigt mehr von Ihrer Iris.',
+    pupilLarge: 'Ihre Pupille ist groß: Am Fenster zieht sie sich zusammen, und mehr vom Muster Ihrer Iris wird sichtbar.',
     how: 'So funktioniert es',
     did: {
       title: 'Was wir gemacht haben',

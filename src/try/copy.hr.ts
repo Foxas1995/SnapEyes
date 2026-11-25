@@ -234,6 +234,7 @@ export const hr: TryCopy = {
     // new sentences of 2026-10-20 (colourOff, pupilWide, how, did)
     colourOff: 'Boje se mogu malo razlikovati od vašeg oka. Najvjernije su uz dnevno svjetlo ili svjetiljku sa strane, bez bljeskalice; ako vam se sviđa, slobodno nastavite.',
     pupilWide: 'Uz više svjetla zjenica je manja i vidi se više vaše šarenice.',
+    pupilLarge: 'Zjenica vam je velika: uz prozor će se suziti i vidjet će se više uzorka šarenice.',
     how: 'Kako to funkcionira',
     did: {
       title: 'Što smo napravili',

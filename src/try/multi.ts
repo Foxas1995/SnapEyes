@@ -83,6 +83,18 @@ export function pupilWide(e: Pick<Eye, 'pupil' | 'sample' | 'reveal'>): boolean 
   return typeof r === 'number' && Number.isFinite(r) && r >= PUPIL_WIDE;
 }
 
+/** A pupil whose radius (the same share of the iris's diameter) is more than this is LARGE (the owner's decision of 2026-11-25: his own photo had a pupil of
+ *  about half the iris and the artwork "looks odd"): the result shows a visible note with a button to photograph the eye again. Advice, never a refusal: the
+ *  artwork can still be bought. Read from the same field as PUPIL_WIDE (quality.pupil_size of /api/analyze, else the Reveal's rho). */
+export const PUPIL_LARGE = 0.45;
+
+/** True when the eye's pupil is more than PUPIL_LARGE (never for the sample eye). */
+export function pupilLarge(e: Pick<Eye, 'pupil' | 'sample' | 'reveal'>): boolean {
+  if (e.sample) return false;
+  const r = typeof e.pupil === 'number' && Number.isFinite(e.pupil) ? e.pupil : e.reveal?.rho;
+  return typeof r === 'number' && Number.isFinite(r) && r > PUPIL_LARGE;
+}
+
 /** The eyes an order would be for: the AI-generated sample eye is never one of them. */
 export const billableEyes = (list: readonly Eye[]): number => list.filter((e) => !e.sample).length;
 

@@ -235,6 +235,7 @@ export const lv: TryCopy = {
     // new sentences of 2026-10-20 (colourOff, pupilWide, how, did)
     colourOff: 'Krāsas var nedaudz atšķirties no jūsu acs. Visprecīzākās tās ir dienasgaismā vai ar lukturīti no sāniem, bez zibspuldzes; ja jums patīk, turpiniet.',
     pupilWide: 'Vairāk gaismas samazina zīlīti un parāda vairāk jūsu varavīksnenes.',
+    pupilLarge: 'Zīlīte ir liela: pie loga tā sašaurināsies, un būs redzams vairāk varavīksnenes raksta.',
     how: 'Kā tas notiek',
     did: {
       title: 'Ko mēs izdarījām',

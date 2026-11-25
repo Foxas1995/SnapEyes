@@ -244,6 +244,7 @@ export const hu: TryCopy = {
     // new sentences of 2026-10-20 (colourOff, pupilWide, how, did): written without a native reader
     colourOff: 'A színek kissé eltérhetnek a szemedétől. Nappali fényben vagy oldalról érkező zseblámpafénnyel, vaku nélkül a leghűbbek; ha tetszik, folytasd nyugodtan.',
     pupilWide: 'Több fénynél kisebb a pupilla, és több látszik az íriszedből.',
+    pupilLarge: 'Nagy a pupillád: ablak mellett összeszűkül, és több látszik az íriszed mintázatából.',
     how: 'Hogyan működik?',
     did: {
       title: 'Mit csináltunk',
