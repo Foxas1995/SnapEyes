@@ -20,6 +20,9 @@ the legal texts src/legal/docs/vouchers.ts).
       single-use coupon per session), the balance across two orders, the release when a checkout is replaced, the commit when it is paid, the settling of a
       reservation nobody closed (expired: released; redeemed: paid), two checkouts at once never spend the same balance, a voucher more and less than the
       total, an expired one, another currency, the check of the page with its own order left out; the voucher's own coupon is never redeemed
+  9.  the latest checkout of a value voucher wins: a new order's checkout expires the pages of the voucher's other open reservations and releases them (a
+      paid page is marked paid, never released; a settling page and a checkout in flight stay); a remainder to pay is 0 or at least 0.50 EUR; Stripe's note
+      when a voucher is bought says nothing about withdrawal
 Since the owner's decision of 2026-11-25 (value vouchers) the gift page sells amounts only; a voucher of the old kinds (one, two) is made here as a payment page
 opened before that day and paid after it (old_voucher), and sections 3 to 5 hold that such a voucher works exactly as it was sold.
 
@@ -543,8 +546,9 @@ check("the ledger: entry 1 reserved for the artwork of that order, its amount, i
                                                                                       "balance": 3000}, led)
 cc1, jc1 = get(f"/api/checkout?voucher={code30}&m=lt")
 cc2, jc2 = get(f"/api/checkout?voucher={code30}&m=lt&o={oa}")
-check("the page's check: a reservation counts against the balance for everyone else (30.00 less the artwork left), but not for the order that holds it (o: all 30.00)",
-      cc1 == 200 and jc1.get("value") == 3000 - price1 and cc2 == 200 and jc2.get("value") == 3000, (jc1, jc2))
+check("the page's check: a reservation counts against the balance for everyone else (30.00 less the artwork left), but not for the order that holds it (o: all 30.00)"
+      " - 1125 (the latest checkout wins): a reservation whose page exists is left out for everyone, since the next checkout expires that page first (section 9)",
+      cc1 == 200 and jc1.get("value") == 3000 and cc2 == 200 and jc2.get("value") == 3000, (jc1, jc2))
 c, j = co(oa, ka, lang="lt", market="lt", voucher=code30)
 second = sid_of(oa)
 check("the customer comes back from Stripe and checks out again: the earlier session is expired at Stripe and its reservation RELEASED; a new entry reserves anew, with a new coupon (s002)",
@@ -643,8 +647,13 @@ for t in th:
 for t in th:
     t.join()
 disc = sorted((j_.get("voucher") or {}).get("discount", 0) for c_, j_ in both if c_ == 200)
-check("two orders check out with one 30.00 voucher at the same moment: together they take exactly 30.00 (an artwork and the rest)", disc == [3000 - price1, price1]
-      and sum(e["amount"] for e in V.view(V.coupon_id(code30c)) if e["state"] != "released") == 3000, (both, disc))
+v30c = V.view(V.coupon_id(code30c))
+sess_ok = all(H.Fake.sessions[e["session"]]["status"] == ("expired" if e["state"] == "released" else "open") for e in v30c if e["session"])
+check("two orders check out with one 30.00 voucher at the same moment: together they take exactly 30.00 (an artwork and the rest)"
+      " - 1125 (the latest checkout wins): either both pages stand (an artwork and the rest, when neither saw the other's page) or the later one expired the earlier"
+      " page and took the artwork's price; never more than 30.00 on open pages, and every released entry's page is expired at Stripe",
+      len(both) == 2 and all(c_ == 200 for c_, _j in both) and disc in ([3000 - price1, price1], [price1, price1]) and sess_ok
+      and sum(e["amount"] for e in v30c if e["state"] != "released") == (3000 if disc == [3000 - price1, price1] else price1), (disc, v30c))
 
 # a reservation nobody closed is settled after its session's end from its own coupon
 s30d, code30d = buy_value(3000, "lt", "lt", "settle@example.com")
@@ -683,5 +692,73 @@ check("the print offer's check (u=print): a voucher of an old kind pays for an a
       cp1 == 409 and jp1.get("why") == "artwork" and cp2 == 200 and jp2.get("value") == 2500, (jp1, jp2))
 src_v = open(os.path.join(API, "_lib", "voucher.py"), encoding="utf-8").read()
 check("the voucher's server code holds no dash (with the ledger)", not re.search(DASH, src_v), re.findall(DASH, src_v)[:3])
+
+# ============================================================================================ 9. the latest checkout wins, the minimum charge
+section("9. the latest checkout of a value voucher wins (an abandoned page never holds the balance); a remainder is 0 or at least Stripe's minimum")
+s9, code9 = buy_value(3000, "lt", "lt", "latest@example.com")
+c9 = V.coupon_id(code9)
+oA, kA = draft(lang="lt")
+c, jA = co(oA, kA, lang="lt", market="lt", voucher=code9)
+sA = sid_of(oA)
+cl, jl = get(f"/api/checkout?voucher={code9}&m=lt")
+check("order A opens its payment page with the voucher and leaves the tab: a NEW order's check of the code already sees the full balance (A's page will be expired)",
+      c == 200 and states(c9) == ["reserved"] and cl == 200 and jl.get("value") == 3000, (jA, jl))
+oB, kB = draft(lang="lt")
+n_exp = len(H.Fake.expires)
+c, jB = co(oB, kB, lang="lt", market="lt", voucher=code9)
+check("order B checks out with the same code: it gets the whole balance; A's session is expired at Stripe and A's entry released",
+      c == 200 and jB.get("voucher") == {"value": 3000, "discount": price1, "pay": 0} and sA in H.Fake.expires[n_exp:]
+      and H.Fake.sessions[sA]["status"] == "expired" and states(c9) == ["released", "reserved"]
+      and (V.view(c9)[0].get("session") == sA), (jB, states(c9), H.Fake.sessions[sA]["status"]))
+cs, js = get(f"/api/order?o={oA}&k={kA}&s={sA}")
+check("A comes back to its old payment page: Stripe holds it expired (it cannot be paid there), and A's order is not paid",
+      not pay.session_paid(H.Fake.sessions[sA]) and not os.path.exists(os.path.join(STORE, "orders", oA, "paid.json")) and js.get("state") != "ready", (cs, js.get("state")))
+c, jA2 = co(oA, kA, lang="lt", market="lt", voucher=code9)
+check("A checks out again: now A's page is the latest; B's open page is expired and released in its turn, A gets the whole balance",
+      c == 200 and jA2.get("voucher", {}).get("discount") == price1 and H.Fake.sessions[sid_of(oB)]["status"] == "expired" and states(c9) == ["released", "released", "reserved"],
+      (jA2, states(c9)))
+webhook(complete(sid_of(oA)))
+check("A pays: its entry is paid; what is left is 30.00 less the artwork", states(c9)[-1] == "paid" and get(f"/api/checkout?voucher={code9}&m=lt")[1].get("value") == 3000 - price1)
+# a PAID session is never expired nor released
+s9p, code9p = buy_value(6000, "lt", "lt", "paid@example.com")
+c9p = V.coupon_id(code9p)
+oC, kC = draft(lang="lt")
+co(oC, kC, lang="lt", market="lt", voucher=code9p)
+sC = sid_of(oC)
+complete(sC)                                       # paid at Stripe; its webhook has not arrived yet
+oD, kD = draft(lang="lt")
+c, jD = co(oD, kD, lang="lt", market="lt", voucher=code9p)
+check("order C has PAID its page but the webhook has not come yet; order D checks out: C's session is not expired (Stripe refuses, it is complete), C's entry is marked "
+      "PAID and never released, and D gets only what is left (60.00 less the artwork)",
+      c == 200 and H.Fake.sessions[sC]["status"] == "complete" and states(c9p) == ["paid", "reserved"] and jD.get("voucher") == {"value": 6000 - price1, "discount": price1, "pay": 0},
+      (jD, states(c9p)))
+cwc, jwc = webhook(H.Fake.sessions[sC])
+check("C's webhook then records C as paid with its voucher; the ledger is unchanged", cwc == 200 and (rj(f"orders/{oC}/paid.json") or {}).get("paid") is True
+      and states(c9p) == ["paid", "reserved"], (cwc, jwc))
+# completed and still settling: never released; a checkout in flight (no session yet): untouched
+s9s, code9s = buy_value(6000, "lt", "lt", "settling@example.com")
+c9s = V.coupon_id(code9s)
+oE, kE = draft(lang="lt")
+co(oE, kE, lang="lt", market="lt", voucher=code9s)
+H.Fake.sessions[sid_of(oE)].update(status="complete", payment_status="unpaid")   # a bank payment that settles later
+g9s = V.lookup(code9s, "lt")
+flight = V.spend(g9s, "261125-inflightaaaaaaaaaa", "artwork", 1000, int(time.time()) + 3600, "lt")    # reserved, its session not made yet (no bind)
+oF, kF = draft(lang="lt")
+c, jF = co(oF, kF, lang="lt", market="lt", voucher=code9s)
+check("a page completed with a method that settles later stays reserved (not expired, not released), and so does a checkout in flight that has no session yet; "
+      "the next checkout gets what is left after both",
+      c == 200 and states(c9s) == ["reserved", "reserved", "reserved"] and jF.get("voucher") == {"value": 6000 - price1 - 1000, "discount": price1, "pay": 0},
+      (jF, states(c9s)))
+# the minimum charge
+s9m, code9m = buy_value(3000, "lt", "lt", "min@example.com")
+gm = V.lookup(code9m, "lt")
+sp_m = V.spend(gm, "261125-minchargeaaaaaaaa", "artwork", 3020, int(time.time()) + 3600, "lt")
+check("a remainder under Stripe's minimum charge is never left: a 30.00 voucher on a 30.20 total pays 29.70 and leaves 0.50 to pay (and 0.30 on the voucher); "
+      "a total the voucher covers is paid in full; 0.50 or more is left as it is",
+      V.MIN_CHARGE == 50 and sp_m["value"] == 2970 and V.pays(3000, 3000) == 3000 and V.pays(3049, 3000) == 2999 and V.pays(3050, 3000) == 3000
+      and V.pays(2000, 3000) == 2000 and V.pays(3001, 3000) == 2951 and get(f"/api/checkout?voucher={code9m}&m=lt")[1].get("value") == 3000 - 2970, sp_m)
+check("Stripe's note above the pay button when a voucher is bought says only that the code comes by e-mail: nothing about withdrawal, in every language",
+      all("14" not in v and len(v) < 75 for v in V.SUBMIT.values()) and V.SUBMIT["lt"] == "Kupono kodą gausite el. paštu iškart po apmokėjimo." and set(V.SUBMIT) == set(V.MAIL),
+      V.SUBMIT)
 print(f"\n{sum(RESULTS)} of {len(RESULTS)} passed")
 sys.exit(0 if all(RESULTS) else 1)

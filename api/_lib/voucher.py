@@ -50,6 +50,9 @@ VALUE VOUCHERS (the owner's decision of 2026-11-25 (value vouchers): "not every 
     The balance is the value less every entry that is not released: a reservation counts against it until it is committed or released. A reservation
     that is neither past its session's end (until, plus SETTLE_GRACE) is settled when the log is read: its own coupon is asked at Stripe (redeemed: paid;
     not redeemed or gone: released), so a lost webhook or an expiry nobody saw never keeps the balance away for good.
+  - THE LATEST CHECKOUT WINS: a checkout that reserves first expires at Stripe the sessions of the voucher's other open reservations (any order: an
+    abandoned tab never holds the balance) and releases them (supersede); a paid one is marked paid, never released. A remainder to pay is 0 or at
+    least Stripe's minimum charge (pays).
   - Each checkout that uses a value voucher gets a FRESH single-use coupon gift_<24 hex>_sNNN (amount_off = min(balance, the session's total), one
     redemption, redeem_by just after the session's end), attached to that one session. The session's metadata says voucher (that coupon), voucher_value
     (its amount), voucher_base (the voucher's own coupon id) and voucher_n. A coupon applies to the line items only, never to Stripe's shipping rate: when
@@ -75,6 +78,7 @@ SPEND_TRIES = 8                              # how often a checkout reads the le
 SPEND_MAX = 60                               # the most entries one voucher's ledger holds (a voucher is spent long before)
 SETTLE_GRACE = 300                           # how long after its session's end a reservation that nobody committed or released is asked about at Stripe
 COUPON_MARGIN = 120                          # a fresh coupon stays redeemable this long after its session's end (the session ends first)
+MIN_CHARGE = 50                              # Stripe's minimum charge in euros (0.50 EUR, docs.stripe.com/currencies): a remainder to pay is 0 or at least this
 VALID_DAYS = 365
 ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 CODE_RE = re.compile(r"^[A-Z2-9]{12}$")
@@ -174,15 +178,17 @@ DESC = {
     "et": "Kood üheks tellimuseks lehel snapeyes.com, kehtib 12 kuud. Kingisaaja pildistab oma silma ise.",
     "lv": "Kods vienam pasūtījumam vietnē snapeyes.com, derīgs 12 mēnešus. Apdāvinātais pats nofotografē savu aci.",
 }
+# Stripe's note above the pay button: the code comes by e-mail. Nothing about withdrawal or refunds here (the owner's rule of 2026-11-25: only the legal pages say
+# it; the terms keep the voucher's withdrawal paragraph, and the e-mail with the code carries the terms and the withdrawal information)
 SUBMIT = {
-    "en": "You receive the voucher code by email right after paying. An unused voucher can be withdrawn within 14 days.",
-    "de": "Den Gutscheincode erhalten Sie direkt nach der Zahlung per E-Mail. Einen unbenutzten Gutschein können Sie innerhalb von 14 Tagen widerrufen.",
-    "lt": "Kupono kodą gausite el. paštu iškart po apmokėjimo. Nepanaudoto kupono galite atsisakyti per 14 dienų.",
-    "hu": "Az utalvány kódját a fizetés után azonnal megkapod e-mailben. A fel nem használt utalványtól 14 napon belül elállhatsz.",
-    "hr": "Kod bona dobit ćete e-poštom odmah nakon plaćanja. Ugovor o neiskorištenom bonu možete jednostrano raskinuti u roku od 14 dana.",
-    "fi": "Saat lahjakortin koodin sähköpostiisi heti maksun jälkeen. Käyttämättömän lahjakortin oston voit peruuttaa 14 päivän kuluessa.",
-    "et": "Kinkekaardi koodi saad e-kirjaga kohe pärast maksmist. Kasutamata kinkekaardi ostust saad taganeda 14 päeva jooksul.",
-    "lv": "Kartes kodu saņemsiet e-pastā uzreiz pēc samaksas. No neizmantotas dāvanu kartes pirkuma var atteikties 14 dienu laikā.",
+    "en": "You receive the voucher code by email right after paying.",
+    "de": "Den Gutscheincode erhalten Sie direkt nach der Zahlung per E-Mail.",
+    "lt": "Kupono kodą gausite el. paštu iškart po apmokėjimo.",
+    "hu": "Az utalvány kódját a fizetés után azonnal megkapod e-mailben.",
+    "hr": "Kod bona dobit ćete e-poštom odmah nakon plaćanja.",
+    "fi": "Saat lahjakortin koodin sähköpostiisi heti maksun jälkeen.",
+    "et": "Kinkekaardi koodi saad e-kirjaga kohe pärast maksmist.",
+    "lv": "Kartes kodu saņemsiet e-pastā uzreiz pēc samaksas.",
 }
 # the coupon's name: Stripe shows it beside the discount on its payment page and receipt (at most 40 characters)
 COUPON_NAME = {"en": "SnapEyes gift voucher", "de": "SnapEyes-Geschenkgutschein", "lt": "SnapEyes dovanų kuponas",
@@ -699,7 +705,7 @@ def by_coupon(cid, market, order=None, use=None):
             raise _invalid("expired", "This voucher has expired.")
         if str(cp.get("currency") or "").lower() != pay.market_currency(market) or not market_ok(market):
             raise _invalid("currency", "This voucher can be used for orders in euros only.")
-        left = balance(rec, settle(cid, entries(cid)), skip=(order, use) if order and use else None)
+        left = balance(rec, settle(cid, entries(cid)), skip=(order, use) if order and use else None, latest=True)
         if left <= 0:
             raise _invalid("used", "This voucher has already been used.")
         return {"coupon": cid, "value": left, "currency": pay.market_currency(market), "valid_until": rec.get("valid_until") or until,
@@ -752,9 +758,10 @@ def entries(cid):
             break
         out.append(dict(e, n=n))
     if out:
-        marks = pay.parallel([lambda n=e["n"], m=m: store.exists(_entry_path(cid, n, m), timeout=6.0) for e in out for m in ("paid", "released")])
+        marks = pay.parallel([lambda n=e["n"], m=m: store.exists(_entry_path(cid, n, m), timeout=6.0) for e in out for m in ("paid", "released", "session")])
         for i, e in enumerate(out):
-            e["state"] = "paid" if marks[2 * i] else "released" if marks[2 * i + 1] else "reserved"
+            e["state"] = "paid" if marks[3 * i] else "released" if marks[3 * i + 1] else "reserved"
+            e["bound"] = bool(marks[3 * i + 2])     # its Stripe session exists (bind wrote the mark): a later checkout of the voucher may expire it
     return out
 
 
@@ -790,24 +797,66 @@ def settle(cid, es):
     return es
 
 
-def balance(rec, es, skip=None):
+def balance(rec, es, skip=None, latest=False):
     """What is left of a value voucher: its value less every entry that is not released (a reservation counts until it is paid or released). skip
-    (order, use): the reservations of that order and use are left out (the checkout releases them before it reserves again)."""
+    (order, use): the reservations of that order and use are left out (the checkout releases them before it reserves again). latest: the answer of a
+    look before a checkout (the page's check, the print offer): every reservation whose Stripe session exists is left out too, because the latest
+    checkout of a voucher wins and expires those sessions first (supersede); a reservation still being made this second (no session yet) counts."""
     used = sum(int(e.get("amount") or 0) for e in es if e.get("state") != "released"
-               and not (skip and e.get("state") == "reserved" and e.get("order") == skip[0] and e.get("use") == skip[1]))
+               and not (skip and e.get("state") == "reserved" and e.get("order") == skip[0] and e.get("use") == skip[1])
+               and not (latest and e.get("state") == "reserved" and e.get("bound")))
     return max(0, int(rec.get("value") or 0) - used)
+
+
+def pays(total, left):
+    """What a voucher with this much left pays of a total: all of it it can, but never so much that a remainder under Stripe's minimum charge (MIN_CHARGE)
+    is left to pay: such a remainder is made MIN_CHARGE and the voucher keeps the difference (the owner's decision of 2026-11-25 (value vouchers); Stripe
+    refuses a session whose total is above 0 and under its minimum)."""
+    amount = max(0, min(int(left), int(total)))
+    if 0 < int(total) - amount < MIN_CHARGE:
+        amount = max(0, int(total) - MIN_CHARGE)
+    return amount
+
+
+def supersede(cid, es):
+    """The latest checkout of a voucher wins (the owner's decision of 2026-11-25 (value vouchers)): before a checkout reserves, every other reservation of
+    the voucher whose Stripe session exists (any order, any use) has that session expired at Stripe and is released. A session that is no longer open
+    cannot be expired: paid, its entry is marked paid; completed and still settling, or not readable, the entry stays reserved (never released on a
+    guess). A reservation with no session yet (a checkout in flight this second) stays as it is. Returns es with the states as they are now."""
+    for e in es:
+        if e.get("state") != "reserved" or not e.get("bound"):
+            continue
+        try:
+            sid = (store.get_json(_entry_path(cid, e["n"], "session"), timeout=6.0) or {}).get("session")
+            if not (isinstance(sid, str) and pay.SID_RE.fullmatch(sid)):
+                continue
+            sess = pay.expire_session(sid)
+            if not isinstance(sess, dict):
+                continue
+            if sess.get("status") == "expired":
+                _mark(cid, e["n"], "released", {"why": "superseded", "session": sid})
+                e["state"] = "released"
+                pay.log(f"voucher {cid}: entry {e['n']} superseded by a later checkout: its session {sid} expired, released")
+            elif pay.session_paid(sess):
+                _mark(cid, e["n"], "paid", {"source": "superseded_check", "session": sid})
+                e["state"] = "paid"
+        except Exception as ex:  # noqa: the entry stays reserved; it counts against the balance and is settled after its end
+            pay.log(f"voucher {cid}: entry {e['n']} not superseded now ({type(ex).__name__})")
+    return es
 
 
 def spend(gift, order, use, total, until, lang="en"):
     """Reserve what a value voucher pays of one checkout (min(balance, total)) and make the fresh single-use coupon of that session. gift: lookup's
-    answer (ledger True); until: the session's end (epoch seconds). Returns the spend {coupon, value, base, n, until} that pay.create_session and
+    answer (ledger True); until: the session's end (epoch seconds). Returns the spend {coupon, value, base, n, until, left: the balance it was taken
+    from} that pay.create_session and
     prints.addon_buy attach to the session; 409 voucher_invalid used when nothing is left. The entry is claimed write-once: a checkout that loses the
     race for an entry reads the ledger again and computes the balance anew (at most SPEND_TRIES times; then it is busy)."""
     cid, rec = gift["coupon"], gift["rec"]
     currency = rec.get("currency") or "eur"
     for _ in range(SPEND_TRIES):
-        es = settle(cid, entries(cid))
-        amount = min(balance(rec, es), int(total))
+        es = supersede(cid, settle(cid, entries(cid)))
+        left = balance(rec, es)
+        amount = pays(int(total), left)
         n = len(es) + 1
         if amount <= 0 or n > SPEND_MAX:
             raise _invalid("used", "This voucher has already been used.")
@@ -839,7 +888,7 @@ def spend(gift, order, use, total, until, lang="en"):
         _mark(cid, n, "released", {"why": "coupon_failed"})
         raise
     pay.log(f"voucher {cid}: entry {n} reserves {amount} for the {use} of order {order} until {int(until)}")
-    return {"coupon": entry["coupon"], "value": amount, "base": cid, "n": n, "until": int(until)}
+    return {"coupon": entry["coupon"], "value": amount, "base": cid, "n": n, "until": int(until), "left": left}
 
 
 def unspend(sp, why):
@@ -917,7 +966,7 @@ def offer_balance(paid, order):
         rec = store.get_json(record_path(cid), timeout=6.0)
         if not isinstance(rec, dict) or rec.get("kind") != VALUE or expired(rec):
             return None
-        left = balance(rec, settle(cid, entries(cid)), skip=(order, "print"))
+        left = balance(rec, settle(cid, entries(cid)), skip=(order, "print"), latest=True)
         return {"balance": left, "valid_until": rec.get("valid_until")} if left > 0 else None
     except Exception as e:  # noqa: the offer is the offer without it
         pay.log(f"order {order}: the voucher's balance not read ({type(e).__name__})")

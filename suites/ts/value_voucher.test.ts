@@ -9,7 +9,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { readFileSync } from 'node:fs';
 import { GiftApp } from '../../src/gift/GiftApp';
 import { GIFT_COPY } from '../../src/gift/copy';
-import { DEFAULT_GIFT_AMOUNT, GIFT_AMOUNTS } from '../../src/shared/gift';
+import { DEFAULT_GIFT_AMOUNT, GIFT_AMOUNTS, MIN_CHARGE, voucherPays } from '../../src/shared/gift';
 import { PrintOffer } from '../../src/order/PrintOffer';
 import { buyPrint, checkPrintVoucher, offerVoucher, voucherSplit, type PrintOfferReply } from '../../src/order/printAddon';
 import { ORDER_COPY } from '../../src/order/copy';
@@ -88,6 +88,9 @@ export async function run(): Promise<Row[]> {
     && offerVoucher(ready({ print_offer: { ...offer, voucher: { balance: -5 } } })) === 0 && offerVoucher(null) === 0);
   check('voucherSplit: the voucher takes the whole total (the shipping too) up to its balance; the rest is to pay', JSON.stringify(voucherSplit(6749, 7503)) === '{"discount":6749,"pay":0}'
     && JSON.stringify(voucherSplit(8749, 7503)) === '{"discount":7503,"pay":1246}' && JSON.stringify(voucherSplit(100, 0)) === '{"discount":0,"pay":100}');
+  check('a remainder is 0 or at least Stripe\'s minimum charge of 0.50 EUR (the server\'s rule, api/_lib/voucher.py pays): 30.00 on 30.20 pays 29.70 and leaves 0.50',
+    MIN_CHARGE === 50 && voucherPays(3020, 3000) === 2970 && voucherPays(3000, 3000) === 3000 && voucherPays(3050, 3000) === 3000 && voucherPays(3049, 3000) === 2999
+      && JSON.stringify(voucherSplit(3020, 3000)) === '{"discount":2970,"pay":50}');
   const v0 = card({ st: withV });
   check('the offer of an order paid with a voucher that has a balance: one line "Gift voucher balance: 75.03", no field to type a code, no price rows before a print is chosen',
     has(v0, 'print-voucher') && text(v0).includes(W.balance(money(7503, 'eur', 'en'))) && !has(v0, 'print-voucher-open') && !has(v0, 'print-voucher-field')

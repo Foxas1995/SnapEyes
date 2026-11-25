@@ -343,7 +343,7 @@ def checkout(body):
     if gift:
         rec["checkout"]["voucher"] = {"coupon": used["coupon"], "value": used["value"], "discount": min(used["value"], total)}
         if gift.get("ledger"):
-            rec["checkout"]["voucher"].update(base=used["base"], n=used["n"], balance=gift["value"])
+            rec["checkout"]["voucher"].update(base=used["base"], n=used["n"], balance=used.get("left", gift["value"]))
     if note:
         # the page's plan8 was not the server's but its plan8_core was (freeze_plan): the plan stored is the server's, and the owner can see that and what the page showed
         rec["checkout"].update(plan8_note=note, plan8_page=_page8(body))
@@ -362,7 +362,7 @@ def checkout(body):
     if part:
         out.update(print={k: part[k] for k in ("product", "country", "price", "ship")}, total=total)
     if gift:
-        out["voucher"] = {"value": gift["value"], "discount": min(used["value"], total), "pay": max(0, total - used["value"])}
+        out["voucher"] = {"value": used.get("left", gift["value"]), "discount": min(used["value"], total), "pay": max(0, total - used["value"])}
     return out
 
 

@@ -13,6 +13,7 @@ import { Dot } from '../motion/Tick';
 import type { Lang } from '../shared/lang';
 import type { ServerPrints } from '../shared/prints';
 import { GiftField, giftMarket, type GiftApplied } from './GiftField';
+import { voucherPays } from '../shared/gift';
 
 /** The withdrawal-waiver text per language, as GET /api/checkout sends it. */
 export type ConsentTexts = Partial<Record<Lang, string>>;
@@ -189,7 +190,7 @@ export const BuyCard: React.FC<Props> = (props) => {
   // a gift voucher pays for the total up to its value (a value voucher keeps the rest for the next order: the owner's decision of 2026-11-25)
   const giftHere = !!p.onGift && giftMarket(market);
   const gift = giftHere ? p.gift ?? null : null;
-  const toPay = gift ? Math.max(0, total - gift.value) : total;
+  const toPay = gift ? total - voucherPays(total, gift.value) : total;
   // the consent box only where the market's checkout still asks it (the US market; the owner's decision of 2026-11-25: no box anywhere else)
   const box = consentBox(market);
   const blockedBy = p.stale.length ? 'stale' : p.preview !== 'ready' ? p.preview : p.wordsBlocked ? 'words' : box && !p.waiver ? 'waiver' : null;

@@ -5,6 +5,7 @@
 import { callApi, type ApiReply, type OrderPrint, type OrderStatus } from './api';
 import { offeredPrints, type OfferedPrint, type ServerPrints } from '../shared/prints';
 import type { Lang } from '../shared/lang';
+import { voucherPays } from '../shared/gift';
 
 /** The status reply's print_offer: the prints with the prices and the shipping the server would charge (euro cents), and the exact text of
  *  the print box per language. Present only while this order can buy a print (delivered, no print yet, the owner's switch on). */
@@ -23,9 +24,10 @@ export function offerVoucher(st: Pick<OrderStatus, 'print_offer'> | null | undef
   return typeof b === 'number' && Number.isInteger(b) && b > 0 ? b : 0;
 }
 
-/** What a voucher pays of a print and what is left to pay (euro cents): the voucher takes the whole total up to its balance, the shipping too. */
+/** What a voucher pays of a print and what is left to pay (euro cents): the voucher takes the whole total up to its balance, the shipping too; a
+ *  remainder is 0 or at least Stripe's minimum charge (src/shared/gift.ts voucherPays). */
 export function voucherSplit(total: number, balance: number): { discount: number; pay: number } {
-  const discount = Math.max(0, Math.min(balance, total));
+  const discount = voucherPays(total, balance);
   return { discount, pay: total - discount };
 }
 

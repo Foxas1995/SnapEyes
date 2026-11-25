@@ -1745,14 +1745,14 @@ def addon_buy(body):
              "amount": total(part), "currency": currency, "market": market, "lang": lang, "expires_at": expires,
              "livemode": bool(sess.get("livemode")), "print": part}
     if sp:
-        pcrec["voucher"] = {"coupon": sp["coupon"], "value": sp["value"], "discount": sp["value"], "base": sp["base"], "n": sp["n"], "balance": gift["value"]}
+        pcrec["voucher"] = {"coupon": sp["coupon"], "value": sp["value"], "discount": sp["value"], "base": sp["base"], "n": sp["n"], "balance": sp.get("left", gift["value"])}
     store.put(_path(order, ADDON_CHECKOUT), store.json_bytes(pcrec), "application/json", upsert=True)
     pay.log(f"order {order}: print checkout {sid} {part['product']} to {part['country']} {part['price']}+{part['ship']} {currency} ({market}) {lang}"
             + (f" voucher {sp['coupon']} -{sp['value']}" if sp else ""))
     out = {"ok": True, "url": url, "order": order, "print": {x: part[x] for x in ("product", "country", "price", "ship")},
            "total": total(part), "currency": currency.upper(), "expires_at": expires}
     if sp:
-        out["voucher"] = {"value": gift["value"], "discount": sp["value"], "pay": total(part) - sp["value"]}
+        out["voucher"] = {"value": sp.get("left", gift["value"]), "discount": sp["value"], "pay": total(part) - sp["value"]}
     return out
 
 
