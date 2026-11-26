@@ -3442,6 +3442,172 @@ def chroma_lock(ai, src, blur=1.6, amount=1.0, r_frac=None):
         cr = Image.blend(cr_ai, cr, amount)
     return Image.merge("YCbCr", (y, cb, cr)).convert("RGB")
 
+
+# ---- the colour under a thin lid (the owner, 2026-11-26, looking at a paid visitor's before and after: "where the lid covers a little, the place has
+# to be made in the iris's own colour, not the lid's"). A thin lid as light as the iris passes /api/deglare unfilled (lid_mask needs a margin and
+# lidcap.py did not find this cap), the model draws iris fibres over it, and chroma_lock puts the photo's colour back there, which is the lid's skin:
+# a pink or brown cap in a blue or grey iris (live v-mwxvtun2, gate lid_colour_wedge). lid_recolour keeps the model's luminance (its fibres) and
+# gives the cap the chroma of the same eye's iris at the same radius, read on the angles the cap does not touch. The cap must be a lid by its
+# evidence in the SOURCE: skin colour (a skin hue off the iris's own colour), skin lighter than the iris, or the dark lash line, from the rim inward
+# at the top or the bottom, over a run of angles, with plain iris further in on the same angles. A colour that runs from the pupil to the rim (a
+# sector of heterochromia), a spot away from the rim (pigment, a collarette) or a change all round (a darker limbal ring) is no cap. Only a thin
+# lid: a cap over LIDC_MAX_PCT of the disc is left as it is (analyze refuses a lid wedge of 11 percent, api/analyze.py EYELID_BLOCK_PCT; what
+# passes it is what this is for). No cap: the very object it was given comes back.
+LIDC_ON = (os.environ.get("SNAPEYES_LIDCOLOUR") or "on").strip().lstrip("\ufeff").strip().lower() not in ("off", "0", "false", "no")
+LIDC_SIDE = 256                  # the source and the render are read at this side
+LIDC_RADII = (0.30, 0.995, 56)   # the polar grid: radii (iris radii) from, to, steps...
+LIDC_BINS = 180                  # ...and 2-degree angles
+LIDC_SKIN_HUE = (10.0, 85.0)     # lid skin: a skin hue (degrees of atan2(b*, a*), as coverage.SKIN_HUE)...
+LIDC_SKIN_C = 6.0                # ...at least this chroma...
+LIDC_SKIN_DAB = 6.0              # ...at least this far in a*b* from the iris's median colour at its radius...
+LIDC_SKIN_DA = 4.0               # ...redder than it by at least this much a* (a yellow or green fleck is not; skin is pink to brown)...
+LIDC_SKIN_DL = -2.0              # ...and not darker than it by more than this (a brown collarette or freckle is darker; lid skin is not)
+LIDC_LIGHT_DL = 12.0             # or skin this much lighter (L*) than the iris at its radius and warmer than it (a* + b* up by LIDC_LIGHT_WARM),
+LIDC_LIGHT_WARM = 4.0            # never a reflection (light and colourless: L* above LIDC_SPEC_L, chroma under LIDC_SPEC_C) nor the bluish white of
+LIDC_SPEC_L, LIDC_SPEC_C = 70.0, 8.0   # the eye or of a window (which is cooler than the iris, not warmer)
+LIDC_DARK_DL = 14.0              # the lash line and lashes this much darker count as lid inside a cap, never on their own
+LIDC_OUTER = (0.80, 0.95)        # a cap angle: at least LIDC_OUT_MIN of this band is lid, LIDC_OUT_SKIN of it skin...
+LIDC_OUT_MIN = 0.5
+LIDC_OUT_SKIN = 0.4
+LIDC_RIM = (0.91, 0.99)          # ...or of this band at the rim, for a thin sliver of lower lid along the rim (the same shares)
+LIDC_INNER = (0.45, 0.62)        # ...and at most LIDC_IN_MAX of this band (plain iris further in: a sector of heterochromia fails here)
+LIDC_IN_MAX = 0.25
+LIDC_IN_SAME = 0.85              # ...and the same angles further in are not off the ring's colour the same way as the cap: their a*b* step from it,
+                                 # along the cap's step, under this share of the cap's own (a sector of heterochromia runs from the pupil to the rim
+                                 # in one colour: 1.0 and more; the live lid under its lashes 0.3 to 0.7)
+LIDC_AXIS = 75.0                 # the cap's angles lie within this many degrees of straight up or straight down...
+LIDC_CENTRE = 45.0               # ...and the middle of its run within this many
+LIDC_ARC_MIN = 30.0              # a cap spans at least this many degrees at the rim (a fleck of pigment at the rim is shorter)
+LIDC_DEPTH_FRAC = 0.6            # a cap angle reaches in to the innermost radius from which this share of the cells out to the rim are lid
+LIDC_GROW = 0.03                 # the mask then reaches this much further in (the lid margin's soft edge)
+LIDC_MAX_PCT = 15.0              # a cap over this share of the disc (percent) is left alone: no thin lid
+LIDC_FEATHER = 2.0               # soft edge, px at LIDC_SIDE
+
+
+def lid_cap_mask(src, r_frac=None, debug=None):
+    """(weight float32 LIDC_SIDE x LIDC_SIDE 0..1, pct of the disc) of a thin lid cap in the source square (its iris circle centred, radius
+    r_frac of its side), or (None, pct) when there is none or it is no thin lid (see the section above)."""
+    if r_frac is None:
+        r_frac = iris_radius_frac()
+    n = LIDC_SIDE
+    lab = srgb_to_lab(np.asarray(src.convert("RGB").resize((n, n), Image.BILINEAR), np.float32)).astype(np.float32)
+    rs = np.linspace(LIDC_RADII[0], LIDC_RADII[1], LIDC_RADII[2]).astype(np.float32)
+    th = np.radians((np.arange(LIDC_BINS) + 0.5) * 360.0 / LIDC_BINS).astype(np.float32)
+    R = r_frac * n
+    X = n / 2.0 + np.outer(rs, np.cos(th)) * R - 0.5
+    Y = n / 2.0 + np.outer(rs, np.sin(th)) * R - 0.5
+    P = lab[np.clip(np.round(Y).astype(int), 0, n - 1), np.clip(np.round(X).astype(int), 0, n - 1)]      # radii x angles x Lab
+    med = np.median(P, axis=1, keepdims=True)
+    dL = P[..., 0] - med[..., 0]
+    dab = np.hypot(P[..., 1] - med[..., 1], P[..., 2] - med[..., 2])
+    C = np.hypot(P[..., 1], P[..., 2])
+    hue = np.degrees(np.arctan2(P[..., 2], P[..., 1]))
+    da = P[..., 1] - med[..., 1]
+    skin = ((hue >= LIDC_SKIN_HUE[0]) & (hue <= LIDC_SKIN_HUE[1]) & (C >= LIDC_SKIN_C) & (dab >= LIDC_SKIN_DAB) & (da >= LIDC_SKIN_DA)
+            & (dL >= LIDC_SKIN_DL)) | ((dL >= LIDC_LIGHT_DL) & (da + (P[..., 2] - med[..., 2]) >= LIDC_LIGHT_WARM)
+                                         & ~((P[..., 0] > LIDC_SPEC_L) & (C < LIDC_SPEC_C)))
+    ev = (skin | (dL <= -LIDC_DARK_DL)).astype(np.float32)
+    band = lambda b: (rs >= b[0]) & (rs <= b[1])
+    outer, inner = ev[band(LIDC_OUTER)].mean(0), ev[band(LIDC_INNER)].mean(0)
+    outer_skin = skin[band(LIDC_OUTER)].astype(np.float32).mean(0)
+    rim, rim_skin = ev[band(LIDC_RIM)].mean(0), skin[band(LIDC_RIM)].astype(np.float32).mean(0)
+    deg = np.degrees(th)
+    vert = lambda d: np.minimum(np.abs((d - 90.0 + 180.0) % 360.0 - 180.0), np.abs((d - 270.0 + 180.0) % 360.0 - 180.0))
+    axis = vert(deg) <= LIDC_AXIS
+    sh = P[..., 1:] - med[..., 1:]
+    o_sh = np.median(sh[band(LIDC_OUTER)], 0)
+    i_sh = np.median(sh[band(LIDC_INNER)], 0)
+    o_len = np.maximum(np.hypot(o_sh[:, 0], o_sh[:, 1]), 1e-6)
+    along = (i_sh * o_sh).sum(-1) / o_len
+    plain_in = (inner <= LIDC_IN_MAX) & (along < LIDC_IN_SAME * o_len)
+    cap = (((outer >= LIDC_OUT_MIN) & (outer_skin >= LIDC_OUT_SKIN)) | ((rim >= LIDC_OUT_MIN) & (rim_skin >= LIDC_OUT_SKIN))) & plain_in & axis
+    if debug is not None:
+        debug.update(outer=outer, outer_skin=outer_skin, inner=inner, deg=deg, P=P, med=med)
+    cap = cap | (np.roll(cap, 1) & np.roll(cap, -1))                        # a single missing angle inside a run is closed
+    step = 360.0 / LIDC_BINS
+    keep = np.zeros_like(cap)
+    if cap.any() and not cap.all():                                        # circular runs at least LIDC_ARC_MIN long
+        start = int(np.argmin(cap))
+        c = np.roll(cap, -start)
+        i = 0
+        while i < LIDC_BINS:
+            if c[i]:
+                j = i
+                while j < LIDC_BINS and c[j]:
+                    j += 1
+                mid = ((i + j - 1) / 2.0 + start + 0.5) * step % 360.0
+                if (j - i) * step >= LIDC_ARC_MIN and vert(mid) <= LIDC_CENTRE:
+                    keep[(np.arange(i, j) + start) % LIDC_BINS] = True
+                i = j
+            else:
+                i += 1
+    if not keep.any():
+        return None, 0.0
+    # how far in each cap angle reaches: the innermost radius from which LIDC_DEPTH_FRAC of the cells out to the rim are lid
+    tail = np.cumsum(ev[::-1], 0)[::-1] / np.arange(len(rs), 0, -1, dtype=np.float32)[:, None]
+    depth = np.full(LIDC_BINS, 2.0, np.float32)
+    for a in np.nonzero(keep)[0]:
+        ok = np.nonzero(tail[:, a] >= LIDC_DEPTH_FRAC)[0]
+        depth[a] = rs[ok[0]] - LIDC_GROW if len(ok) else LIDC_OUTER[0]
+    ax = (np.arange(n) + 0.5 - n / 2.0) / R
+    GX, GY = np.meshgrid(ax, ax)
+    rho = np.hypot(GX, GY)
+    ang = (np.degrees(np.arctan2(GY, GX)) % 360.0 / step).astype(int) % LIDC_BINS
+    m = (rho >= depth[ang]) & (rho < 1.02)
+    disk = rho < 1.0
+    pct = 100.0 * float((m & disk).sum()) / max(1.0, float(disk.sum()))
+    if pct <= 0.0 or pct > LIDC_MAX_PCT:
+        return None, pct
+    w = np.clip(_blur_f(m.astype(np.float32), LIDC_FEATHER) * 1.5, 0.0, 1.0) * (rho < 1.02)
+    return np.maximum(w, m.astype(np.float32)).astype(np.float32), pct
+
+
+def lid_recolour(out, src, r_frac=None):
+    """The render out with the chroma of the iris at each radius (read on the render's own uncovered angles) where the source shows a thin lid cap
+    (lid_cap_mask), its luminance (the fibres) untouched. The very object out when the switch is off, there is no cap, or anything fails."""
+    if not LIDC_ON:
+        return out
+    try:
+        w, _pct = lid_cap_mask(src, r_frac)
+        if w is None:
+            return out
+        if r_frac is None:
+            r_frac = iris_radius_frac()
+        n = LIDC_SIDE
+        y, cb, cr = out.convert("YCbCr").split()
+        small = lambda im: np.asarray(im.resize((n, n), Image.BILINEAR), np.float32)
+        CBs, CRs = small(cb), small(cr)
+        ax = (np.arange(n) + 0.5 - n / 2.0) / (r_frac * n)
+        GX, GY = np.meshgrid(ax, ax)
+        rho = np.hypot(GX, GY)
+        edges = np.linspace(0.0, 1.02, 52)
+        rb = np.clip(np.digitize(rho, edges) - 1, 0, len(edges) - 2)
+        free = (w < 0.05) & (rho < 1.0)
+        ref_cb, ref_cr = np.zeros(len(edges) - 1, np.float32), np.zeros(len(edges) - 1, np.float32)
+        have = np.zeros(len(edges) - 1, bool)
+        for b in range(len(edges) - 1):
+            sel = free & (rb == b)
+            if sel.sum() >= 12:
+                ref_cb[b], ref_cr[b], have[b] = np.median(CBs[sel]), np.median(CRs[sel]), True
+        if not have.any():
+            return out
+        idx = np.arange(len(have))
+        ref_cb = np.interp(idx, idx[have], ref_cb[have]).astype(np.float32)
+        ref_cr = np.interp(idx, idx[have], ref_cr[have]).astype(np.float32)
+        big = lambda a: np.asarray(Image.fromarray(a.astype(np.float32), mode="F").resize(out.size, Image.BILINEAR), np.float32)
+        W, RCB, RCR = big(w), big(ref_cb[rb]), big(ref_cr[rb])
+        CB, CR = np.asarray(cb, np.float32).copy(), np.asarray(cr, np.float32).copy()
+        CB += (RCB - CB) * W
+        CR += (RCR - CR) * W
+        cb2 = Image.fromarray(np.clip(np.round(CB), 0, 255).astype(np.uint8))
+        cr2 = Image.fromarray(np.clip(np.round(CR), 0, 255).astype(np.uint8))
+        new = np.asarray(Image.merge("YCbCr", (y, cb2, cr2)).convert("RGB"))
+        return Image.fromarray(np.where((W > 0.0)[..., None], new, np.asarray(out.convert("RGB"))))       # every pixel off the cap exactly as it was
+    except Exception as e:  # noqa: the render as it was
+        print("snapeyes lid_recolour " + json.dumps({"error": _scrub(repr(e))[:160]}), flush=True)
+        return out
+
+
 DARK_BLEND = 24.0        # below this luminance a colour ratio is noise, so the lift is applied as an offset
 PUPIL_EDGE_FRAC = 0.25
 PUPIL_DARK = (10.0, 30.0)   # pupil colour: full neutral below the first luminance, none above the second

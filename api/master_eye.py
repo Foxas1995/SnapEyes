@@ -397,6 +397,7 @@ def _master_eye(body, stage):
             # the model may sculpt structure and light; the colour stays the client's own photo, upsampled to 4096
             out = L.chroma_lock(out, base)
             out = L.pupil_lock(out, base, r_frac)   # and the pupil stays as wide as the photo's (see /api/enhance)
+            out = L.lid_recolour(out, base, r_frac)   # and a thin lid's cap takes the iris's colour, not the skin's (see /api/enhance)
         else:
             # the approved preview at full size: on its framing, with its pupil, its tone and its colour
             out, reg = L.preview_register(out, pv, r_frac)

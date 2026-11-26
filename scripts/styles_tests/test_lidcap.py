@@ -20,6 +20,7 @@ import math
 import os
 import subprocess
 import sys
+import time
 
 REPO = os.environ.get("SNAPEYES_REPO") or sys.exit("SNAPEYES_REPO is not set: run suites/run_main.sh")
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -269,6 +270,69 @@ finally:
 check("a failure inside the cap leaves the crop as the switch off leaves it (never a failed deglare call)",
       broken["crop"] == off["crop"] and broken["lid_pct"] == 0.0 and "lid_cap" not in broken)
 check("the module text says where the brown came from and what the switch does", all(w in read("api/_lib/lidcap.py") for w in ("chroma_lock", "SNAPEYES_LIDCAP=off", "lid_drift")))
+
+# ============================================================================================ 5. the colour under a thin lid in the render (2026-11-26)
+section("5  iris.lid_recolour: a thin lid's cap takes the iris's colour of its radius, nothing else moves")
+
+
+def painted(base, fn):
+    """A copy of the synthetic eye with fn(rho, th) -> (weight, rgb) painted over it."""
+    a = np.asarray(base, np.float32).copy()
+    N = a.shape[0]
+    ax = (np.arange(N, dtype=np.float32) + 0.5 - N / 2.0) / np.float32(SI.R_FRAC * N)
+    X, Y = np.meshgrid(ax, ax)
+    rho, th = np.hypot(X, Y), np.degrees(np.arctan2(Y, X)) % 360.0
+    w, rgb = fn(rho, th)
+    a = a * (1 - w[..., None]) + np.asarray(rgb, np.float32) * w[..., None]
+    return Image.fromarray(np.clip(a * (rho < 1.0)[..., None] + 0.5, 0, 255).astype(np.uint8)), rho, th
+
+
+def soft(x, k=0.02):
+    return np.clip(0.5 + x / k, 0.0, 1.0)
+
+
+eye0 = L.mask_disk(SI.make("blue", seed=7), 1.12)
+# a thin upper lid: pink skin over the top rim from 0.84 iris radii out, 80 degrees wide (about 5 percent of the disc)
+lid_im, rho, th = painted(eye0, lambda r, t: (soft(r - 0.84) * soft(t - 230.0, 4.0) * soft(310.0 - t, 4.0), (198, 160, 150)))
+w_lid, pct_lid = L.lid_cap_mask(lid_im)
+fixed = L.lid_recolour(lid_im, lid_im)
+ycc = lambda im: np.asarray(im.convert("YCbCr"), np.float32)
+A, B, E0 = ycc(lid_im), ycc(fixed), ycc(eye0)
+cap = (rho > 0.88) & (rho < 0.97) & (th > 240) & (th < 300)
+far_ = (rho < 1.0) & ((th < 210) | (th > 330))          # every angle the cap does not reach
+ref = np.median(E0[(rho > 0.88) & (rho < 0.97) & ~((th > 200) & (th < 340))][:, 1:], 0)
+d0 = float(np.median(np.hypot(*(A[cap][:, 1:] - ref).T)))
+d1 = float(np.median(np.hypot(*(B[cap][:, 1:] - ref).T)))
+check("a thin pink lid over the top rim is found (a few percent of the disc), and its cap takes the iris's chroma of its radius: the distance to it falls to a third or less",
+      w_lid is not None and 1.0 <= pct_lid <= L.LIDC_MAX_PCT and fixed is not lid_im and d1 <= d0 / 3.0, (round(pct_lid, 2), round(d0, 1), round(d1, 1)))
+check("...the luminance is the render's own everywhere (its fibres), and the colour away from the cap does not move",
+      float(np.abs(B[..., 0] - A[..., 0]).max()) <= 1.0 and float(np.abs(B[far_] - A[far_]).max()) == 0.0,
+      (float(np.abs(B[..., 0] - A[..., 0]).max()), float(np.abs(B[far_][:, 1:] - A[far_][:, 1:]).max())))
+check("a clean eye: the very object comes back (byte for byte)", L.lid_recolour(eye0, eye0) is eye0 and L.lid_cap_mask(eye0)[0] is None)
+spot, _, _ = painted(eye0, lambda r, t: (np.exp(-0.5 * ((r * np.cos(np.radians(t - 270.0)) - 0.9) ** 2 + (r * np.sin(np.radians(t - 270.0))) ** 2) / 0.045 ** 2), (170, 120, 60)))
+sector, _, _ = painted(eye0, lambda r, t: (soft(r - 0.32) * soft(t - 250.0, 4.0) * soft(290.0 - t, 4.0) * 0.85, (150, 100, 60)))
+coll, _, _ = painted(eye0, lambda r, t: (np.exp(-0.5 * ((r - 0.47) / 0.05) ** 2) * 0.8, (140, 95, 55)))
+limbal, _, _ = painted(eye0, lambda r, t: (soft(r - 0.88) * 0.6, (40, 45, 60)))
+quiet = {n: L.lid_recolour(im, im) is im for n, im in (("pigment spot at the rim", spot), ("sector of heterochromia", sector), ("brown collarette", coll), ("darker limbal ring", limbal))}
+check("a pigment spot at the top rim, a brown sector from the pupil to the rim, a brown collarette and a darker limbal ring are no lid: the very object comes back",
+      all(quiet.values()), quiet)
+big, _, _ = painted(eye0, lambda r, t: (soft(r - 0.45) * soft(t - 215.0, 4.0) * soft(325.0 - t, 4.0), (198, 160, 150)))
+wb, pb = L.lid_cap_mask(big)
+check("a deep lid (to 0.45 iris radii, 110 degrees: no thin lid, analyze refuses such a lid) is left as it is", wb is None and L.lid_recolour(big, big) is big, round(pb, 1))
+was = L.LIDC_ON
+L.LIDC_ON = False
+try:
+    check("SNAPEYES_LIDCOLOUR=off: the very object comes back", L.lid_recolour(lid_im, lid_im) is lid_im)
+finally:
+    L.LIDC_ON = was
+t0 = time.time()
+for _ in range(3):
+    L.lid_recolour(lid_im, lid_im)
+ms = (time.time() - t0) / 3 * 1000
+check("it costs well under half a second at 1024 px (no model call)", ms < 500, round(ms))
+en = read("api/enhance.py")
+check("/api/enhance re-colours every restoration after its chroma and pupil locks, on the crop the model was given",
+      en.count("out = L.lid_recolour(out, base, r_frac)") == 2)
 
 ok = sum(RESULTS)
 print(f"\n{ok} of {len(RESULTS)} passed")
