@@ -23,9 +23,9 @@ TEXT_ET = {
     "dark_iris": "Sinu iiris on tume, seega on selle kiud nõrgalt näha. Seisa päevavalguses heleda akna lähedal (mitte "
                  "otsese päikese käes), nii et aken jääb küljele, või palu kellelgi hoida taskulampi küljelt, ja "
                  "pildista uuesti: rohkem valgust toob need esile. Soe laualamp muudab sinu silmade värvi.",
-    "too_blurry": "See foto on liiga udune, et saaksime sinu enda iirise taastada, seega me seda ei kasutanud: stuudio "
+    "too_blurry": "Kasuta tagakaamerat, mitte esikaamerat (selfie). See foto on liiga udune, et saaksime sinu enda iirise taastada, seega me seda ei kasutanud: stuudio "
                   "peaks mustri välja mõtlema. Palun pildista uuesti akna päevavalguses või taskulambiga, küljelt, "
-                  "tagakaamera 2x suurendusega, puuduta teravustamiseks ekraanil iirist ja hoia telefoni paigal.",
+                  "2x suurendusega, puuduta teravustamiseks ekraanil iirist ja hoia telefoni paigal.",
     "too_dark": "Sinu iiris on tume ja sellel fotol oli liiga vähe valgust, et selle enda mustrit näha, seega me seda ei "
                 "kasutanud: stuudio peaks mustri välja mõtlema. Palun pildista uuesti päevavalguses heleda akna "
                 "lähedal, nii et aken jääb küljele (mitte otsese päikese käes, ilma toalambi ja välguta), või "
@@ -55,7 +55,7 @@ TEXT_ET = {
     "reflection": "Leidsime peegelduse; eemaldame selle automaatselt.",
     "glare": "Peegeldus katab osa iirise kiududest ja see, mida ta varjab, tuleb rekonstrueerida. Pööra end nii, et aken "
              "või lamp jääks küljele, mitte otse sinu ette.",
-    "soft": "See tuli veidi udune. Kasuta tagakaamerat 2x suurendusega, puuduta teravustamiseks iirist ja hoia telefoni "
+    "soft": "Kasuta tagakaamerat, mitte esikaamerat (selfie). See tuli veidi udune. Kasuta 2x suurendust, puuduta teravustamiseks iirist ja hoia telefoni "
             "paigal; esikaamerad ei suuda nii lähedalt üldse teravustada.",
     "no_lock": "Me ei suutnud sinu iirise ümarat serva kindlalt leida. Sea üks silm kaadri keskele, nii et selle ümber "
                "jääb veidi ruumi, ja hoia silmalaug eest ära.",

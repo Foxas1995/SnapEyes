@@ -26,6 +26,7 @@ import type { WordsModel } from './Words';
 import { DATE_MAX, FAMILY_MAX, NAME_MAX, drawsFamilyName, namesFromWire, namesOf, problems, typed, wireNames } from './names';
 import { StudyCard } from './StudyCard';
 import { RetakeGuide } from './RetakeGuide';
+import { type SoftPick, isBlur, keepSoft, offerSoft, softAnalysis } from './soft';
 import { BuyCard, type Ordering } from './BuyCard';
 import type { GiftApplied } from './GiftField';
 import {
@@ -297,6 +298,11 @@ export const TryApp: React.FC = () => {
   const [shotNote, setShotNote] = useState<string | null>(null);
   const shotsRef = useRef<Analysis[]>([]);
   const bestShotRef = useRef<{ img: HTMLImageElement; url: string } | null>(null);
+  // a soft photo (src/try/soft.ts): the visit's blur refusals, counted in memory only, the best refused photo that carried a soft ticket (its file, so
+  // it can be loaded again whichever photo is on screen), and whether the offer was counted
+  const blurRef = useRef(0);
+  const softRef = useRef<SoftPick<Blob> | null>(null);
+  const softCountedRef = useRef(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
   // how the photo now on its way was taken (the anonymous codes of the 'photo' beacon and the analysis: src/try/livecam/logic.ts Cap)
@@ -609,7 +615,7 @@ export const TryApp: React.FC = () => {
     try {
       const img = await loadImage(url);
       setPhoto(img, url);
-      await analyze(img, isSample ? 'sample' : source);
+      await analyze(img, isSample ? 'sample' : source, isSample ? null : file);
     } catch (e) {
       if (photoUrlRef.current !== url) URL.revokeObjectURL(url);   // an unreadable file never became the photo
       setError((e as Error).message); setStep('capture');
@@ -635,6 +641,7 @@ export const TryApp: React.FC = () => {
         const img = await loadImage(url);
         sent++;
         const a = await measure(img, source);
+        noteSoft(a, file);
         if (a.ok && a.iris) return { img, url, a };
       } catch { /* an unreadable file just does not compete */ }
       finally { done++; tick(); }
@@ -687,6 +694,7 @@ export const TryApp: React.FC = () => {
       img = await loadImage(url);
       a = await measure(img, origin);
     } catch (e) { URL.revokeObjectURL(url); fail((e as Error).message); return; }
+    noteSoft(a, file);
     // measure() hands back a no-eye reply instead of throwing, so this shot gets its questions too
     askStudy(origin, 1, outcomeOf(a));
     if (!a.ok || !a.iris) { URL.revokeObjectURL(url); fail(a.message || T.errors.noEyeShot); return; }
@@ -735,6 +743,26 @@ export const TryApp: React.FC = () => {
   // the pictures go on at once; the view stays a moment longer with its "Done" (2026-11-26), then closes
   const onLiveFrames = (files: File[], cap: Cap) => { capRef.current = cap; void onFiles(files, 'live'); window.setTimeout(() => setLive(false), LIVE_DONE_MS); };
 
+  /** A blur refusal counts towards the soft offer, and a soft one (it carries a soft ticket) is kept if its Detail is the visit's best (src/try/soft.ts). */
+  const noteSoft = (a: Analysis, file: Blob | null) => {
+    if (!isBlur(a)) return;
+    blurRef.current += 1;
+    if (file) softRef.current = keepSoft(softRef.current, a, file, (a as Stamped).receivedAt ?? Date.now());
+  };
+  /** "Tęsti su šia nuotrauka": the best soft photo of the visit goes on as an accepted weak one, with its soft ticket. */
+  const goSoft = async () => {
+    const p = softRef.current;
+    if (!p) return;
+    softRef.current = null;
+    count('soft_go', T.lang, currentMarket());
+    const url = URL.createObjectURL(p.file);
+    let img: HTMLImageElement;
+    try { img = await loadImage(url); } catch (e) { URL.revokeObjectURL(url); setError((e as Error).message); return; }
+    const a = softAnalysis(p.a);
+    clearShots(); setPhoto(img, url); setAnalysis(a);
+    await process(img, a);
+  };
+
   /** /api/analyze for one photo. Always says what kind of device and source it came from. In study mode every
    *  answer that no logged analyze has carried yet rides along; the engine logs only a reply that found an
    *  eye, so the answers are dropped here only after such a reply (a no-eye shot or a failed request keeps
@@ -764,9 +792,10 @@ export const TryApp: React.FC = () => {
     }
   };
 
-  const analyze = async (img: HTMLImageElement, source: ShotOrigin) => {
+  const analyze = async (img: HTMLImageElement, source: ShotOrigin, file: Blob | null = null) => {
     setStep('analyzing');
     const a = await measure(img, source);
+    noteSoft(a, file);
     askStudy(source, 1, outcomeOf(a));
     if (!a.ok || !a.iris) { setError(a.message || T.errors.noEye); setStep('capture'); return; }
     setAnalysis(a);
@@ -827,7 +856,8 @@ export const TryApp: React.FC = () => {
       // each eye has its own storage folder, or one eye would overwrite another one's files. The language is named here, once: the watermark of the display copy is drawn in it
       // (and the eye remembers it, wm), so a switch of the page's language while this runs is seen when the answer is in
       wm = T.lang;
-      e = await post<Enhanced>('/api/enhance', { crop: d.crop, mode: 'artistic', pad, ticket: a.ticket, session: `${session}-${id}`, consent, used_sr: d.used_sr, meta: a.quality, lang: wm });
+      e = await post<Enhanced>('/api/enhance', { crop: d.crop, mode: 'artistic', pad, ticket: a.ticket, session: `${session}-${id}`, consent, used_sr: d.used_sr, meta: a.quality, lang: wm,
+        ...(a.quality?.soft ? { soft: true } : {}) });
     } catch (err) {
       // the photo is still held, so "Continue anyway" / "Use this shot" can run it again
       setError((err as Error).message);
@@ -1067,6 +1097,15 @@ export const TryApp: React.FC = () => {
     } catch (e) { setError((e as Error).message); }
   };
 
+  // the soft offer (src/try/soft.ts): on a blur refusal (the photo on screen, or the latest shot of a set with nothing usable), from the visit's second
+  // blur refusal on, while a soft photo of this visit is held and its ticket still good. Counted once a visit when first shown
+  const shown = shots.length ? shots[shots.length - 1] : analysis;
+  const softOffer = step === 'quality' && !!analysis?.quality && !usable(analysis) && isBlur(shown)
+    && offerSoft(blurRef.current, softRef.current, Date.now(), TICKET_MS - TICKET_MARGIN_MS);
+  useEffect(() => {
+    if (softOffer && !softCountedRef.current) { softCountedRef.current = true; count('soft_offer', T.lang, currentMarket()); }
+  }, [softOffer]);
+
   return (
     <div className="min-h-screen bg-[#07090e] text-[#f0f3fa]">
       <header className="px-4 py-4 flex items-center justify-between gap-3 max-w-3xl mx-auto">
@@ -1218,7 +1257,7 @@ export const TryApp: React.FC = () => {
         {step === 'quality' && analysis?.quality && shots.length > 0 && (
           <>
             <ShotCollector shots={shots} t={targetsOf(analysis)} note={shotNote} onTakeAnother={takeAnother} enter={stepped}
-              canUse={usable(analysis)}
+              canUse={usable(analysis)} soft={softOffer ? <SoftOffer onGo={goSoft} /> : null}
               onContinue={() => imgRef.current && process(imgRef.current, analysis)} onStartOver={retake} />
             {backLink && <div className="flex justify-center mt-4">{backLink}</div>}
           </>
@@ -1238,13 +1277,15 @@ export const TryApp: React.FC = () => {
             {analysis.picked && !usable(analysis) && <p className="text-xs text-rose-200/90 bg-rose-950/25 border border-rose-500/30 rounded-xl p-3">{T.quality.noneUsable(analysis.picked.of)}</p>}
             {blockOf(analysis) && <RetakeGuide block={blockOf(analysis)!} code={blockCode(analysis)} />}
             <div className={`grid gap-3 ${usable(analysis) ? 'grid-cols-2' : 'grid-cols-1'}`}>
-              <button onClick={retake} className="py-3 rounded-xl bg-white/5 border border-white/10 text-sm font-semibold flex items-center justify-center gap-2"><RefreshCcw className="w-4 h-4" /> {T.quality.retake}</button>
+              {/* with the soft offer under it, the retake is the gold one */}
+              <button onClick={retake} className={`py-3 rounded-xl text-sm flex items-center justify-center gap-2 ${softOffer ? 'gold-metal font-bold' : 'bg-white/5 border border-white/10 font-semibold'}`}><RefreshCcw className="w-4 h-4" /> {T.quality.retake}</button>
               {/* no way forward from a crop that is not an iris, nor from one the engine blocked: the studio
                   would invent one, and the server gave neither a work ticket */}
               {usable(analysis) && (
                 <button data-testid="quality-again" onClick={() => imgRef.current && process(imgRef.current, analysis)} className="py-3 rounded-xl gold-metal text-sm font-bold flex items-center justify-center gap-2"><Sparkles className="w-4 h-4" /> {T.result.retry}</button>
               )}
             </div>
+            {softOffer && <SoftOffer onGo={goSoft} />}
             {backLink}
           </section>
         )}
@@ -1320,14 +1361,22 @@ const LangSwitch: React.FC<{ lang: Lang; onSwitch: (l: Lang) => void }> = ({ lan
 };
 
 
+/** The soft offer (src/try/soft.ts): one quiet line and a quiet second button under the gold retake. */
+const SoftOffer: React.FC<{ onGo: () => void }> = ({ onGo }) => (
+  <div data-testid="soft-offer" className="flex flex-col gap-2">
+    <p className="text-xs text-zinc-400 text-center">{T.quality.soft.line}</p>
+    <button data-testid="soft-go" onClick={onGo} className="py-3 rounded-xl bg-white/5 border border-white/10 text-sm font-semibold flex items-center justify-center gap-2">{T.quality.soft.go}</button>
+  </div>
+);
+
 /** The camera shot collector. A shot the studio can restore goes on by itself (autoContinue), so this is on screen only while no shot of the set
  *  can be used (the retake steps of the latest blocked shot, or the one line of a shot whose circle did not lock), or when the restoration of a
  *  usable best shot just failed (the error above says why; the one way on is to try it again). No verdict, no Detail: the shots so far, the best one
  *  ringed, a way to shoot again or to go on. */
 const ShotCollector: React.FC<{
   shots: Analysis[]; t: Targets; note: string | null;
-  onTakeAnother: () => void; onContinue: () => void; onStartOver: () => void; canUse?: boolean; enter?: boolean;
-}> = ({ shots, t, note, onTakeAnother, onContinue, onStartOver, canUse = true, enter = false }) => {
+  onTakeAnother: () => void; onContinue: () => void; onStartOver: () => void; canUse?: boolean; enter?: boolean; soft?: React.ReactNode;
+}> = ({ shots, t, note, onTakeAnother, onContinue, onStartOver, canUse = true, enter = false, soft = null }) => {
   const n = shots.length;
   const latest = shots[n - 1];
   const q = latest.quality;
@@ -1411,6 +1460,7 @@ const ShotCollector: React.FC<{
           </button>
         )}
       </div>
+      {soft}
       <button onClick={onStartOver} className="text-xs text-zinc-400 underline underline-offset-4 self-center">{T.collector.startOver}</button>
     </section>
   );

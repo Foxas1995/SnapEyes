@@ -23,9 +23,9 @@ TEXT_LV = {
     "dark_iris": "Jūsu varavīksnene ir tumša, tāpēc tās šķiedras ir vāji redzamas. Dienā nostājieties tuvu gaišam logam "
                  "(ne tiešos saules staros) tā, lai logs būtu sānos, vai palūdziet kādam turēt lukturīti no sāniem, un "
                  "fotografējiet vēlreiz: vairāk gaismas tās izcels. Silta galda lampa maina jūsu acu krāsu.",
-    "too_blurry": "Šī fotogrāfija ir pārāk izplūdusi, lai mēs atjaunotu jūsu pašu varavīksneni, tāpēc to neizmantojām: "
+    "too_blurry": "Izmantojiet aizmugurējo kameru, nevis priekšējo (selfiju). Šī fotogrāfija ir pārāk izplūdusi, lai mēs atjaunotu jūsu pašu varavīksneni, tāpēc to neizmantojām: "
                   "studijai rakstu nāktos izdomāt. Lūdzu, nofotografējiet vēlreiz dienasgaismā no loga vai ar "
-                  "lukturīti, no sāniem, ar aizmugurējo kameru un 2x tuvinājumu, pieskarieties varavīksnenei ekrānā, "
+                  "lukturīti, no sāniem, ar 2x tuvinājumu, pieskarieties varavīksnenei ekrānā, "
                   "lai iefokusētu, un turiet telefonu nekustīgi.",
     "too_dark": "Jūsu varavīksnene ir tumša, un šajā fotogrāfijā bija par maz gaismas, lai redzētu tās pašas rakstu, "
                 "tāpēc to neizmantojām: studijai rakstu nāktos izdomāt. Lūdzu, nofotografējiet vēlreiz dienasgaismā "
@@ -58,7 +58,7 @@ TEXT_LV = {
     "reflection": "Atradām atspīdumu; to noņemsim automātiski.",
     "glare": "Atspīdums aizsedz daļu varavīksnenes šķiedru, un aizsegto nākas rekonstruēt. Pagriezieties tā, lai logs "
              "vai lampa būtu sānos, nevis tieši jums priekšā.",
-    "soft": "Kadrs iznāca nedaudz izplūdis. Izmantojiet aizmugurējo kameru ar 2x tuvinājumu, pieskarieties "
+    "soft": "Izmantojiet aizmugurējo kameru, nevis priekšējo (selfiju). Kadrs iznāca nedaudz izplūdis. Ieslēdziet 2x tuvinājumu, pieskarieties "
             "varavīksnenei, lai iefokusētu, un turiet telefonu nekustīgi; priekšējās kameras šādā attālumā vispār "
             "nespēj iefokusēt.",
     "no_lock": "Neizdevās droši atrast jūsu varavīksnenes apaļo malu. Novietojiet vienu aci kadra centrā ar nelielu "

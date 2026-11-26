@@ -42,6 +42,9 @@ const LIGHT = 'Daylight from a window or a torch, from one side. No room lamp, n
 const CAMERA = 'Back camera at 2x zoom, about 10 cm from the eye.';
 const FOCUS = 'Tap the iris on the screen so the camera focuses on it.';
 const STEADY = 'Hold the phone steady (rest your elbows on something) and take 3-5 shots.';
+// the blur refusal says the camera first (the owner, 2026-11-26: a paid visitor shot ten close-ups with the front camera)
+const BACK = 'Use the back camera, not the front (selfie) one.';
+const BACK_STEP = `${BACK} At 2x zoom, about 10 cm from the eye.`;
 // the first retake step for a dark iris: the same light as LIGHT, only closer to the window, since more light is
 // what brings a dark iris's pattern out (api/analyze.py DARK_IRIS_TIP)
 const DARK_LIGHT = 'More light brings out a dark iris: stand close to a bright window in daylight, with the window off to one side (not direct sun), or have someone hold a torch to the side. Not a room lamp or the flash.';
@@ -142,6 +145,8 @@ const en = {
 
   quality: {
     retake: 'Retake',
+    // a soft photo the customer may go on with after two blur refusals (src/try/soft.ts): the line above the quiet second button, and the button
+    soft: { line: 'The photo is soft, so we will rebuild more of the detail.', go: 'Continue with this photo' },
     notCentred: 'This photo is not centred on an iris, so it cannot be restored. Please retake it with one eye filling the frame.',
     // shots the engine blocked (api/analyze.py quality.blocked + block_reason): no work ticket, so never a way
     // forward from them. One entry per reason the server gives; blockOf() in shots.ts picks it.
@@ -150,10 +155,10 @@ const en = {
       too_blurry: {
         title: 'Too blurry to restore your own iris',
         reason: 'We could not see enough of your own iris pattern in this photo to restore it, so it is not used.',
-        error: 'This photo is too blurry to restore your own iris. Please retake it following the steps below.',
-        retakeLine: 'This shot is too blurry to restore your own iris. Retake it in daylight from a window or with a torch, off to one side, with the back camera at 2x: tap the iris to focus and hold the phone steady.',
+        error: BACK + ' ' + 'This photo is too blurry to restore your own iris. Please retake it following the steps below.',
+        retakeLine: BACK + ' ' + 'This shot is too blurry to restore your own iris. Retake it in daylight from a window or with a torch, off to one side, at 2x: tap the iris to focus and hold the phone steady.',
         thumb: 'blurry',
-        steps: [LIGHT, CAMERA, FOCUS, STEADY],
+        steps: [BACK_STEP, LIGHT, FOCUS, STEADY],
       },
       // blocked for the same reason, but the photo is sharp and the iris dark: light is the fix, not focus
       too_dark: {
@@ -615,6 +620,8 @@ const LIGHT_DE = 'Tageslicht vom Fenster oder eine Taschenlampe, von der Seite. 
 const CAMERA_DE = 'Rückkamera mit 2-fachem Zoom, etwa 10 cm vor dem Auge.';
 const FOCUS_DE = 'Tippen Sie auf dem Bildschirm auf die Iris, damit die Kamera darauf scharfstellt.';
 const STEADY_DE = 'Halten Sie das Smartphone ruhig (stützen Sie die Ellbogen auf) und machen Sie 3-5 Aufnahmen.';
+const BACK_DE = 'Nutzen Sie die Rückkamera, nicht die Frontkamera (Selfie).';
+const BACK_STEP_DE = `${BACK_DE} Mit 2-fachem Zoom, etwa 10 cm vor dem Auge.`;
 const DARK_LIGHT_DE = 'Mehr Licht bringt eine dunkle Iris zur Geltung: Stellen Sie sich bei Tageslicht nah an ein helles Fenster, das Fenster seitlich (keine direkte Sonne), oder lassen Sie jemanden eine Taschenlampe seitlich halten. Keine Zimmerlampe, kein Blitz.';
 const DE_DECIMAL = new Intl.NumberFormat('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
@@ -702,15 +709,16 @@ const de: TryCopy = {
 
   quality: {
     retake: 'Neu aufnehmen',
+    soft: { line: 'Das Foto ist unscharf, daher rekonstruieren wir mehr Details.', go: 'Mit diesem Foto weitermachen' },
     notCentred: 'Dieses Foto ist nicht auf eine Iris zentriert und kann daher nicht restauriert werden. Bitte nehmen Sie es neu auf, sodass ein Auge das Bild füllt.',
     blocks: {
       too_blurry: {
         title: 'Zu unscharf, um Ihre eigene Iris zu restaurieren',
         reason: 'Auf diesem Foto ist zu wenig von Ihrem eigenen Irismuster zu sehen, um es zu restaurieren. Daher verwenden wir es nicht.',
-        error: 'Dieses Foto ist zu unscharf, um Ihre eigene Iris zu restaurieren. Bitte nehmen Sie es mit den Schritten unten neu auf.',
-        retakeLine: 'Diese Aufnahme ist zu unscharf, um Ihre eigene Iris zu restaurieren. Nehmen Sie sie bei Tageslicht von einem seitlichen Fenster oder mit einer seitlich gehaltenen Taschenlampe neu auf, mit der Rückkamera und 2-fachem Zoom: Tippen Sie zum Scharfstellen auf die Iris und halten Sie das Smartphone ruhig.',
+        error: BACK_DE + ' ' + 'Dieses Foto ist zu unscharf, um Ihre eigene Iris zu restaurieren. Bitte nehmen Sie es mit den Schritten unten neu auf.',
+        retakeLine: BACK_DE + ' ' + 'Diese Aufnahme ist zu unscharf, um Ihre eigene Iris zu restaurieren. Nehmen Sie sie bei Tageslicht von einem seitlichen Fenster oder mit einer seitlich gehaltenen Taschenlampe neu auf, mit 2-fachem Zoom: Tippen Sie zum Scharfstellen auf die Iris und halten Sie das Smartphone ruhig.',
         thumb: 'unscharf',
-        steps: [LIGHT_DE, CAMERA_DE, FOCUS_DE, STEADY_DE],
+        steps: [BACK_STEP_DE, LIGHT_DE, FOCUS_DE, STEADY_DE],
       },
       too_dark: {
         title: 'Zu dunkel, um Ihr eigenes Irismuster zu erkennen',

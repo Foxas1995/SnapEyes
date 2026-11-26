@@ -128,7 +128,7 @@ FIELDS = {
             "took": "n", "eyes": "n", "style": "c"},
     "fb": {"w": "c", "c": "c", "x": "c", "eyes": "n", "txt": "c", "src": "c", "med": "c", "cmp": "c", "trm": "c", "cnt": "c", "lang": "c", "market": "c", "dev": "c", "br": "c", "cc": "c"},
 }
-HIT_STEPS = ("landing", "try", "photo", "result", "soon", "buy", "order")      # api/_lib/counter.py STEPS (a test holds the two equal)
+HIT_STEPS = ("landing", "try", "photo", "result", "soon", "buy", "order", "soft_offer", "soft_go")      # api/_lib/counter.py STEPS (a test holds the two equal)
 FB_PLACES = ("result", "retake")                                               # api/_lib/feedback.py PLACES (a test holds the two equal)
 # The events the endpoints write for a visitor's request carry, besides their own fields, where the request came from as codes (api/_lib/counter.py context, put in by record()): the campaign
 # (src, med, cmp, trm, cnt), the device class (dev), the browser family (br), the country (cc) and the page's language and price market. Nothing else of the request.
@@ -143,6 +143,9 @@ FIELDS["analyze"].update(res="c", ori="c", irs="c")
 # what became of the kept copy of the step's pictures (api/_lib/keep.py Keeper.done: ok, slow, fail, full, skip, off, time, robot, sample, admin)
 for _kind in ("analyze", "enhance", "compose"):
     FIELDS[_kind]["kept"] = "c"
+# a soft photo (api/analyze.py SOFT_BY): offered with a second ticket on the analysis, gone on with on the restoration (2026-11-26)
+for _kind in ("analyze", "enhance"):
+    FIELDS[_kind]["soft"] = "b"
 EXP_STAGES = ("visit", "preview", "checkout", "paid")
 CHECKOUT_STAGES = ("start", "paid")
 SOURCES = ("camera", "gallery", "live", "sample", "lab")

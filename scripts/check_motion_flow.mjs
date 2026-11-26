@@ -719,7 +719,10 @@ async function checkGuide() {
 // 14,584 B), measured on ec3da6e against the tree with it (/order -12 B JS, left in the budget). Words and a product, not motion.
 // The refusal of a photo of the whole face (2026-11-26, too_far: its title, line, thumb word and three steps in eight languages in the page's own chunk)
 // moved the base of /try by +711 B JS (206,245 to 206,956 B), measured on e3c5b79 against the tree with it (the CSS and /order did not move). Words, not motion.
-const BEFORE = { try: { js: 152765 + 1961 + 4483 + 1144 + 1108 - 1373 - 3730 + 8838 + 5366 + 3068 + 29190 - 5390 + 632 + 1970 + 1077 + 637 + 1167 + 711, css: 10975 + 245 + 494 + 261 + 74 + 135 + 94 + 36 + 197 + 66 + 4 + 35 }, order: { js: 108723 + 414 + 110 + 3953 + 4052 + 794 + 13127 + 7903 + 483 + 2024 + 709 + 117 + 1707, css: 10975 + 245 + 494 + 261 + 74 + 135 + 94 + 36 + 197 + 66 + 4 + 35 } };
+// The soft photo and the camera-first blur refusal (2026-11-26: src/try/soft.ts, the offer under the retake after the visit's second blur refusal, its line and
+// button and the back camera sentence in eight languages, all in the page's own chunk) moved the base of /try by +1,138 B JS (207,057 to 208,195 B), measured on
+// 981a8d1 against the tree with it (the CSS and /order did not move). A product and words, not motion.
+const BEFORE = { try: { js: 152765 + 1961 + 4483 + 1144 + 1108 - 1373 - 3730 + 8838 + 5366 + 3068 + 29190 - 5390 + 632 + 1970 + 1077 + 637 + 1167 + 711 + 1138, css: 10975 + 245 + 494 + 261 + 74 + 135 + 94 + 36 + 197 + 66 + 4 + 35 }, order: { js: 108723 + 414 + 110 + 3953 + 4052 + 794 + 13127 + 7903 + 483 + 2024 + 709 + 117 + 1707, css: 10975 + 245 + 494 + 261 + 74 + 135 + 94 + 36 + 197 + 66 + 4 + 35 } };
 function firstLoad(page) {
   const html = readFileSync(join(dist, page), 'utf8');
   const seen = new Map();

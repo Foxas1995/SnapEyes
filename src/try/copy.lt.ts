@@ -19,6 +19,9 @@ const LIGHT = 'Dienos šviesa pro langą arba žibintuvėlis, iš šono. Ne lemp
 const CAMERA = 'Galinė kamera su 2x priartinimu, maždaug 10 cm nuo akies.';
 const FOCUS = 'Bakstelėkite rainelę ekrane, kad kamera ją sufokusuotų.';
 const STEADY = 'Laikykite telefoną stabiliai (alkūnes atremkite į ką nors tvirto) ir padarykite 3-5 kadrus.';
+// the blur refusal says the camera first (the owner, 2026-11-26: a paid visitor shot ten close-ups with the front camera)
+const BACK = 'Naudokite galinę kamerą, ne priekinę (asmenukių).';
+const BACK_STEP = `${BACK} Su 2x priartinimu, maždaug 10 cm nuo akies.`;
 // the first retake step for a dark iris: the same light, only closer to the window
 const DARK_LIGHT = 'Daugiau šviesos išryškina tamsią rainelę: dieną atsistokite arti šviesaus lango, kad langas būtų iš šono (ne tiesioginiai saulės spinduliai), arba paprašykite, kad kas nors palaikytų žibintuvėlį iš šono. Ne lempa ir ne blykstė.';
 
@@ -109,15 +112,16 @@ export const lt: TryCopy = {
 
   quality: {
     retake: 'Fotografuoti iš naujo',
+    soft: { line: 'Nuotrauka neryški, todėl daugiau detalių atkursime.', go: 'Tęsti su šia nuotrauka' },
     notCentred: 'Šios nuotraukos centre nėra rainelės, todėl jos atkurti negalime. Nufotografuokite iš naujo taip, kad viena akis užpildytų kadrą.',
     blocks: {
       too_blurry: {
         title: 'Nuotrauka per neryški, kad atkurtume Jūsų rainelę',
         reason: 'Šioje nuotraukoje matyti per mažai Jūsų rainelės rašto, kad galėtume jį atkurti, todėl šios nuotraukos nenaudojame.',
-        error: 'Ši nuotrauka per neryški, kad atkurtume Jūsų rainelę. Nufotografuokite iš naujo pagal toliau pateiktus žingsnius.',
-        retakeLine: 'Šis kadras per neryškus, kad atkurtume Jūsų rainelę. Fotografuokite iš naujo dienos šviesoje prie lango arba su žibintuvėliu, iš šono, galine kamera su 2x priartinimu: bakstelėkite rainelę, kad kamera ją sufokusuotų, ir laikykite telefoną stabiliai.',
+        error: BACK + ' ' + 'Ši nuotrauka per neryški, kad atkurtume Jūsų rainelę. Nufotografuokite iš naujo pagal toliau pateiktus žingsnius.',
+        retakeLine: BACK + ' ' + 'Šis kadras per neryškus, kad atkurtume Jūsų rainelę. Fotografuokite iš naujo dienos šviesoje prie lango arba su žibintuvėliu, iš šono, su 2x priartinimu: bakstelėkite rainelę, kad kamera ją sufokusuotų, ir laikykite telefoną stabiliai.',
         thumb: 'neryški',
-        steps: [LIGHT, CAMERA, FOCUS, STEADY],
+        steps: [BACK_STEP, LIGHT, FOCUS, STEADY],
       },
       too_dark: {
         title: 'Per tamsu, kad būtų matomas Jūsų rainelės raštas',

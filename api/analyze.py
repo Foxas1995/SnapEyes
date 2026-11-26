@@ -178,9 +178,9 @@ PATTERN_PUPIL_GAP = 0.10     # the ring starts this far (share of the iris radiu
 PATTERN_OUTER = 0.92         # ...and ends here (iris.FIBRE_RING)
 PATTERN_SECTORS = 16
 PATTERN_MIN_SECTORS = 8      # fewer sectors left after the reflections are cut out: no reading
-BLOCK_MESSAGE = ("This photo is too blurry for us to restore your own iris, so we have not used it: the studio would "
+BLOCK_MESSAGE = ("Use the back camera, not the front (selfie) one. This photo is too blurry for us to restore your own iris, so we have not used it: the studio would "
                  "have to invent the pattern. Please retake it in daylight from a window or with a torch, off to one "
-                 "side, with the back camera at 2x, tap the iris on screen to focus, and hold the phone steady.")
+                 "side, at 2x, tap the iris on screen to focus, and hold the phone steady.")
 # The same block on a photo the vision model calls sharp, of a dark iris (DARK_IRIS_LUMA): 01 as it is (Laplacian
 # 179.8, the owner's passing photos 31.6-80.7), 18 and 19 1-1.5 EV darker. Focus and a steady hand cannot help
 # there; light can. The same light as the capture guide's (a window off to one side), only closer.
@@ -363,6 +363,24 @@ def blur_blocked(locked, basis, detail, pattern, shape, label, direction=None, d
             or (direction is not None and direction < BLOCK_MOTION[1])): return True, "motion"
     if softness is not None and softness < BLOCK_SOFT: return True, "soft"
     return False, None
+
+# ---- a soft photo the customer may go on with (2026-11-26, the owner: a paid visitor shot ten close-ups of one eye with the FRONT camera, nine refused as
+# too blurry, Detail 11 to 12, while the day's accepted weak photos read 7 to 9; two of six Facebook visitors who took photos got no preview at all). A
+# photo refused as too blurry by the blur lines (SOFT_BY: the fibre and pattern lines, the vision label, the shake question; not the motion and smear
+# lines, which read a pattern dragged across itself) that is otherwise usable: its circle locked, no other reason (too far, too small, too dark, a wide
+# pupil, an eyelid), the iris at least GOOD_DIAMETER_PX across in the original and Detail at least SOFT_DETAIL. It is still refused exactly as before
+# (no ticket, the same reason and words), and it carries a second work ticket in soft_ticket and quality.soft; the page offers it only after the
+# visit's second blur refusal (src/try/soft.ts), as a quiet second button under the retake. SOFT_DETAIL is the lowest Detail a photo the engine
+# accepted that day had (7): her photos (11 to 12) are well above it, and a photo under it would not have been accepted as weak by any other line.
+SOFT_BY = ("detail", "pattern", "label", "shake")
+SOFT_DETAIL = 7
+
+
+def soft_ok(locked, blocked, reason, block_by, diam_orig, detail, cover, pupil_block):
+    """True when a refused photo may be continued with as a soft one (see the section above)."""
+    return bool(locked and blocked and reason == "too_blurry" and block_by in SOFT_BY and diam_orig >= GOOD_DIAMETER_PX and detail >= SOFT_DETAIL
+                and not pupil_block and (cover is None or cover["wedge_pct"] < EYELID_BLOCK_PCT))
+
 
 def block_reason(trigger, dark_iris, label):
     """Why a blocked photo is blocked, in the words the capture screen shows (quality.block_reason). 'too_dark' for a
@@ -620,9 +638,9 @@ TEXT_DE = {
                  "helles Fenster (keine direkte Sonne), das Fenster seitlich, oder lassen Sie jemanden eine Taschenlampe "
                  "seitlich halten, und fotografieren Sie erneut: Mehr Licht bringt sie hervor. Eine warme Schreibtischlampe "
                  "verändert Ihre Augenfarbe.",
-    "too_blurry": "Dieses Foto ist zu unscharf, um Ihre eigene Iris zu restaurieren, daher haben wir es nicht verwendet: Das "
+    "too_blurry": "Nutzen Sie die Rückkamera, nicht die Frontkamera (Selfie). Dieses Foto ist zu unscharf, um Ihre eigene Iris zu restaurieren, daher haben wir es nicht verwendet: Das "
                   "Studio müsste das Muster erfinden. Bitte nehmen Sie es bei Tageslicht von einem seitlichen Fenster oder "
-                  "mit einer seitlich gehaltenen Taschenlampe neu auf, mit der Rückkamera und 2-fachem Zoom, tippen Sie zum "
+                  "mit einer seitlich gehaltenen Taschenlampe neu auf, mit 2-fachem Zoom, tippen Sie zum "
                   "Scharfstellen auf die Iris und halten Sie das Smartphone ruhig.",
     "too_dark": "Ihre Iris ist dunkel und auf diesem Foto war zu wenig Licht, um ihr eigenes Muster zu erkennen, daher haben "
                 "wir es nicht verwendet: Das Studio müsste das Muster erfinden. Bitte nehmen Sie es bei Tageslicht nah an "
@@ -655,7 +673,7 @@ TEXT_DE = {
     "reflection": "Eine Spiegelung wurde gefunden, wir entfernen sie automatisch.",
     "glare": "Eine Spiegelung verdeckt einen Teil der Irisfasern, und was sie verdeckt, muss neu aufgebaut werden. Drehen Sie "
              "sich so, dass Fenster oder Lampe seitlich stehen und nicht direkt vor Ihnen.",
-    "soft": "Die Aufnahme ist etwas unscharf. Nutzen Sie die Rückkamera mit 2-fachem Zoom, tippen Sie zum Scharfstellen auf die "
+    "soft": "Nutzen Sie die Rückkamera, nicht die Frontkamera (Selfie). Die Aufnahme ist etwas unscharf. Stellen Sie 2-fachen Zoom ein, tippen Sie zum Scharfstellen auf die "
             "Iris und halten Sie das Smartphone ruhig. Frontkameras können auf diese Entfernung gar nicht scharfstellen.",
     "no_lock": "Wir konnten den runden Rand Ihrer Iris nicht sicher erfassen. Zentrieren Sie ein Auge im Bild, mit etwas Platz "
                "drumherum, und halten Sie das Lid aus dem Weg.",
@@ -847,6 +865,8 @@ def _analyze(body, box):
     share = iris_share(locked, r, box, W, H)
     if share is not None and share < FAR_SHARE and (blocked or not locked):
         blocked, block_by, reason = True, "far", "too_far"
+    # a soft photo the page may let the customer go on with after two blur refusals (SOFT_BY): refused as before, plus a second ticket
+    soft = soft_ok(locked, blocked, reason, block_by, diam_orig, detail, cover, pupil_block)
     # a reflection sitting on the pupil hides nothing recoverable: say so instead of pretending to restore it
     on_pupil = False
     if pupil_r and v.get("glare_boxes"):
@@ -889,7 +909,7 @@ def _analyze(body, box):
                                      "window or lamp is off to one side rather than straight in front of you."))
         # a dark iris that the vision model still calls sharp needs light, not focus: its tip is already above
         if label != "sharp" or (basis < FIBRE_GOOD and not dark_iris):
-            tips.append(say_("soft", "This came out soft. Use the back camera at 2x, tap the iris to focus, and keep the phone "
+            tips.append(say_("soft", "Use the back camera, not the front (selfie) one. This came out soft: set it to 2x, tap the iris to focus, and keep the phone "
                                     "steady; front cameras cannot focus at this distance at all."))
         if not locked:
             tips.insert(0, say_("no_lock", "We could not lock onto the round edge of your iris. Centre one eye in the frame with a "
@@ -919,7 +939,7 @@ def _analyze(body, box):
                "direction_fine": None if direction_fine is None else round(direction_fine, 3),
                "softness": None if softness is None else round(softness, 3),
                "blocked": blocked, "block_by": block_by, "block_reason": reason, "pupil_size": pupil_size,
-               "iris_share": None if share is None else round(share, 3),
+               "iris_share": None if share is None else round(share, 3), "soft": soft,
                "covered_pct": None if cover is None else cover["covered_pct"],
                "lid_wedge_pct": None if cover is None else cover["wedge_pct"],
                "lid_side": None if cover is None else cover["side"], "lid_tilt": None if cover is None else cover["tilt"]}
@@ -938,11 +958,12 @@ def _analyze(body, box):
                     "verdict": verdict, "detail": detail, "locked": bool(locked), "blocked": bool(blocked), "block_by": block_by, "diameter_px": int(diam_orig),
                     "glare_on_fibres_pct": round(glare_fib, 1), "occlusion_pct": occl, "pupil_size": pupil_size,
                     "lid_wedge_pct": None if cover is None else cover["wedge_pct"], "res": res, "ori": ori, "source": E.device_source(device),
-                    "iris_share": None if share is None else round(share, 3),
+                    "iris_share": None if share is None else round(share, 3), "soft": soft or None,
                     "cap": E.capture_codes((device or {}).get("cap")) or None})
     E.record("analyze", ok=True, verdict=verdict, detail=detail, blocked=bool(blocked), block_reason=reason, locked=bool(locked), shake_asked=bool(locked) and basis < FIBRE_OK and block_by in (None, "shake"), lang=lang, device=E.device_class(device), source=E.device_source(device),
-             res=res, ori=ori, irs=E.photo_classes(ow, oh, diam_orig)[2], kept=kept, **E.capture_codes((device or {}).get("cap")))
+             res=res, ori=ori, irs=E.photo_classes(ow, oh, diam_orig)[2], kept=kept, **({"soft": True} if soft else {}), **E.capture_codes((device or {}).get("cap")))
     return {"ok": True, "ticket": L.mint_ticket("work") if locked and not blocked else None, "pupil_r": pupil_r, "fibre": round(fibre, 2),
+            **({"soft_ticket": L.mint_ticket("work")} if soft else {}),
             "iris": {"cx": cx / W, "cy": cy / H, "r": r / W}, "pad": pad, "glare_boxes_crop": boxes,
             "quality": {"diameter_px": int(diam_orig), "sharpness": round(sharp, 1), "fibre": round(fibre, 2), "sharpness_label": label, "occlusion_pct": occl,
                         "glare": bool(v.get("glare_boxes")), "locked": bool(locked),
@@ -954,7 +975,7 @@ def _analyze(body, box):
                         "direction": None if direction is None else round(direction, 3),
                         "direction_fine": None if direction_fine is None else round(direction_fine, 3),
                         "softness": None if softness is None else round(softness, 3), "blocked": blocked,
-                        "block_reason": reason, "pupil_size": pupil_size,
+                        "block_reason": reason, "pupil_size": pupil_size, **({"soft": True} if soft else {}),
                         "covered_pct": None if cover is None else cover["covered_pct"],
                         "lid_wedge_pct": None if cover is None else cover["wedge_pct"]},
             "targets": TARGETS,

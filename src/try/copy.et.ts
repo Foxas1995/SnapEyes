@@ -27,6 +27,9 @@ const LIGHT = 'Päevavalgus aknast või taskulamp, küljelt. Ilma toalambi ja v�
 const CAMERA = 'Tagakaamera 2x suurendusega, umbes 10 cm kaugusel silmast.';
 const FOCUS = 'Puuduta ekraanil iirist, et kaamera sellele teravustaks.';
 const STEADY = 'Hoia telefoni paigal (toeta küünarnukid millelegi) ja tee 3-5 võtet.';
+// the blur refusal says the camera first (the owner, 2026-11-26: a paid visitor shot ten close-ups with the front camera)
+const BACK = 'Kasuta tagakaamerat, mitte esikaamerat (selfie).';
+const BACK_STEP = `${BACK} 2x suurendusega, umbes 10 cm kaugusel silmast.`;
 // the first retake step for a dark iris: the same light, only closer to the window
 const DARK_LIGHT = 'Rohkem valgust toob tumeda iirise esile: seisa päevavalguses heleda akna lähedal, nii et aken jääb küljele (mitte otsese päikese käes), või palu kellelgi hoida taskulampi küljelt. Ilma toalambi ja välguta.';
 // the two steps the pupil and the eyelid cards share
@@ -122,15 +125,16 @@ export const et: TryCopy = {
 
   quality: {
     retake: 'Pildista uuesti',
+    soft: { line: 'Foto on udune, seega taastame rohkem detaile.', go: 'Jätka selle fotoga' },
     notCentred: 'Iiris ei ole selle foto keskel, seega ei saa seda taastada. Palun pildista uuesti nii, et üks silm täidab kaadri.',
     blocks: {
       too_blurry: {
         title: 'Liiga udune, et sinu enda iirist taastada',
         reason: 'Me ei näinud sellel fotol sinu enda iirise mustrit piisavalt, et seda taastada, seega me seda ei kasuta.',
-        error: 'See foto on liiga udune, et sinu enda iirist taastada. Palun pildista uuesti allolevate sammude järgi.',
-        retakeLine: 'See võte on liiga udune, et sinu enda iirist taastada. Pildista uuesti akna päevavalguses või taskulambiga, küljelt, tagakaamera 2x suurendusega: puuduta teravustamiseks iirist ja hoia telefoni paigal.',
+        error: BACK + ' ' + 'See foto on liiga udune, et sinu enda iirist taastada. Palun pildista uuesti allolevate sammude järgi.',
+        retakeLine: BACK + ' ' + 'See võte on liiga udune, et sinu enda iirist taastada. Pildista uuesti akna päevavalguses või taskulambiga, küljelt, 2x suurendusega: puuduta teravustamiseks iirist ja hoia telefoni paigal.',
         thumb: 'udune',
-        steps: [LIGHT, CAMERA, FOCUS, STEADY],
+        steps: [BACK_STEP, LIGHT, FOCUS, STEADY],
       },
       too_dark: {
         title: 'Liiga tume, et sinu enda iirise mustrit näha',

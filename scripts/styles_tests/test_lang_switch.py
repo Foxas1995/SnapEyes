@@ -317,6 +317,58 @@ check("a refused close-up keeps its own reason (here too blurry); the same refus
       and blur_far["quality"].get("block_reason") == "too_far" and not blur_far.get("ticket") and not blur_near.get("ticket"),
       (blur_near["quality"].get("block_reason"), blur_far["quality"].get("block_reason")))
 
+# ============================================================================================ 6. a soft photo the customer may go on with (2026-11-26)
+section("6. a blur refusal that is otherwise usable: refused as before, with a second ticket (soft_ticket, quality.soft); the camera first in its words")
+OK_ARGS = dict(locked=True, blocked=True, reason="too_blurry", block_by="pattern", diam_orig=640, detail=11, cover={"wedge_pct": 2.0}, pupil_block=False)
+NOT_SOFT = {"under the floor": {"detail": A.SOFT_DETAIL - 0.1}, "unlocked": {"locked": False}, "too_far": {"reason": "too_far", "block_by": "far"},
+            "too_dark": {"reason": "too_dark"}, "eyelid": {"reason": "eyelid", "block_by": "lid"}, "pupil": {"reason": "pupil_too_large", "block_by": "pupil"},
+            "a wide pupil beside the blur": {"pupil_block": True}, "an eyelid beside the blur": {"cover": {"wedge_pct": A.EYELID_BLOCK_PCT}},
+            "motion": {"block_by": "motion"}, "smear": {"block_by": "soft"}, "small iris": {"diam_orig": A.GOOD_DIAMETER_PX - 1},
+            "accepted": {"blocked": False, "reason": None, "block_by": None}}
+check("the rule (analyze.soft_ok): a blur refusal by the fibre, pattern, label or shake line, locked, the iris at least GOOD_DIAMETER_PX, Detail at least SOFT_DETAIL (7) is soft; at the floor too",
+      A.SOFT_DETAIL == 7 and all(A.soft_ok(**{**OK_ARGS, "block_by": b}) for b in A.SOFT_BY) and A.soft_ok(**{**OK_ARGS, "detail": 7, "cover": None})
+      and set(A.SOFT_BY) == {"detail", "pattern", "label", "shake"})
+check("... under the floor, unlocked, too far, too dark, an eyelid, a wide pupil, motion or smear, a small iris and an accepted photo are not",
+      not any(A.soft_ok(**{**OK_ARGS, **ch}) for ch in NOT_SOFT.values()), [k for k, ch in NOT_SOFT.items() if A.soft_ok(**{**OK_ARGS, **ch})])
+
+
+def blurred(radius):
+    b = io.BytesIO()
+    Image.open(io.BytesIO(base64.b64decode(PHOTO))).filter(ImageFilter.GaussianBlur(radius)).save(b, "JPEG", quality=90)
+    return base64.b64encode(b.getvalue()).decode()
+
+
+SOFT_RAD, HARD_RAD = 6, 9          # Gaussian radii: 6 is refused too_blurry at Detail 9 (radius 5 is still accepted at 11), 9 at Detail 6
+soft_runs = {rad: analyze_photo(blurred(rad), "lt", sharp="blurry") for rad in (SOFT_RAD, HARD_RAD)}
+sq = {rad: (a.get("quality") or {}) for rad, (c, a) in soft_runs.items()}
+over, under = soft_runs[SOFT_RAD][1], soft_runs[HARD_RAD][1]
+SEEN = {rad: (q.get("block_reason"), q.get("detail"), q.get("soft"), bool(soft_runs[rad][1].get("soft_ticket"))) for rad, q in sq.items()}
+check("a blur refusal over the floor (the sample eye blurred to Detail 9, the vision label blurry): refused too_blurry as before, ticket null, a soft_ticket that is a work ticket, quality.soft",
+      soft_runs[SOFT_RAD][0] == 200 and sq[SOFT_RAD].get("blocked") is True and sq[SOFT_RAD].get("block_reason") == "too_blurry" and over.get("ticket") is None
+      and isinstance(over.get("soft_ticket"), str) and L.check_ticket(over["soft_ticket"], "work") and sq[SOFT_RAD].get("soft") is True
+      and (sq[SOFT_RAD].get("detail") or 0) >= A.SOFT_DETAIL and sq[SOFT_RAD].get("message") == A.TEXT_LT["too_blurry"], SEEN)
+check("... under the floor (heavily blurred): refused the same, no soft_ticket, no soft flag",
+      soft_runs[HARD_RAD][0] == 200 and sq[HARD_RAD].get("blocked") is True and (sq[HARD_RAD].get("detail") or 0) < A.SOFT_DETAIL and "soft_ticket" not in under
+      and "soft" not in sq[HARD_RAD] and under.get("ticket") is None, SEEN)
+c_far, soft_far = analyze_photo(blurred(SOFT_RAD), "lt", sharp="blurry", box=[478, 478, 560, 560], pupil=[505, 505, 533, 533])
+c_lock, soft_lock = analyze_photo(blurred(SOFT_RAD), "lt", sharp="blurry", box=[20, 20, 200, 200], pupil=[90, 90, 130, 130])
+check("... the same soft photo seen as too far, or with no circle locked on the iris, carries none (a wide pupil, an eyelid and a dark iris: the rule above)",
+      c_far == c_lock == 200 and not any("soft_ticket" in a or (a.get("quality") or {}).get("soft") for a in (soft_far, soft_lock))
+      and (soft_far.get("quality") or {}).get("block_reason") == "too_far" and (soft_lock.get("quality") or {}).get("locked") is False,
+      [((a.get("quality") or {}).get("block_reason"), (a.get("quality") or {}).get("locked"), "soft_ticket" in a) for a in (soft_far, soft_lock)])
+c_acc, acc = analyze_photo(PHOTO, "en")
+check("... an accepted photo is unchanged: its work ticket, no soft_ticket, no soft key in quality (the same quality as section 5's)",
+      c_acc == 200 and bool(acc.get("ticket")) and "soft_ticket" not in acc and "soft" not in acc["quality"] and acc["quality"] == base["quality"])
+CAMERA_FIRST = {"en": "Use the back camera, not the front (selfie) one.", "de": "Nutzen Sie die Rückkamera, nicht die Frontkamera (Selfie).",
+                "lt": "Naudokite galinę kamerą, ne priekinę (asmenukių).", "hu": "A hátsó kamerát használd, ne az elülsőt (szelfi).",
+                "hr": "Koristite stražnju kameru, ne prednju (selfie).", "fi": "Käytä takakameraa, älä etukameraa (selfie).",
+                "et": "Kasuta tagakaamerat, mitte esikaamerat (selfie).", "lv": "Izmantojiet aizmugurējo kameru, nevis priekšējo (selfiju)."}
+soft_tips = {l: [t for t in sq[SOFT_RAD]["words"][l]["tips"] if t.startswith(CAMERA_FIRST[l])] for l in LANGS}
+check("the blur refusal and the soft tip start with the back camera sentence in all eight languages (the English inline, the seven tables)",
+      A.BLOCK_MESSAGE.startswith(CAMERA_FIRST["en"] + " ") and all(TABLES[l]["too_blurry"].startswith(CAMERA_FIRST[l] + " ") and TABLES[l]["soft"].startswith(CAMERA_FIRST[l] + " ") for l in TABLES)
+      and all(sq[SOFT_RAD]["words"][l]["message"].startswith(CAMERA_FIRST[l]) for l in LANGS) and all(len(v) <= 1 for v in soft_tips.values()),
+      {l: sq[SOFT_RAD]["words"][l]["tips"][:2] for l in ("en", "lt")})
+
 ok = sum(RESULTS)
 print(f"\n{ok} of {len(RESULTS)} passed")
 sys.exit(0 if ok == len(RESULTS) else 1)

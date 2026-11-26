@@ -19,9 +19,9 @@ TEXT_HU = {
                  "közvetlen napfényben), úgy, hogy az ablak oldalt legyen, vagy kérd meg, hogy valaki oldalról tartson "
                  "egy zseblámpát, és fotózz újra: több fénynél előtűnnek. A meleg fényű asztali lámpa megváltoztatja a "
                  "szemed színét.",
-    "too_blurry": "Ez a fotó túl elmosódott ahhoz, hogy a saját íriszedet helyreállítsuk, ezért nem használtuk: a "
+    "too_blurry": "A hátsó kamerát használd, ne az elülsőt (szelfi). Ez a fotó túl elmosódott ahhoz, hogy a saját íriszedet helyreállítsuk, ezért nem használtuk: a "
                   "stúdiónak ki kellene találnia a mintázatot. Kérjük, fotózd újra nappali fénynél, oldalt lévő "
-                  "ablaknál vagy oldalról tartott zseblámpával, a hátsó kamerával 2x-es zoommal, koppints a képernyőn az "
+                  "ablaknál vagy oldalról tartott zseblámpával, 2x-es zoommal, koppints a képernyőn az "
                   "íriszre az élességállításhoz, és tartsd stabilan a telefont.",
     "too_dark": "Az íriszed sötét, és ezen a fotón túl kevés volt a fény ahhoz, hogy a saját mintázata látsszon, ezért nem "
                 "használtuk: a stúdiónak ki kellene találnia a mintázatot. Kérjük, fotózd újra nappal, egy világos "
@@ -53,7 +53,7 @@ TEXT_HU = {
     "reflection": "Tükröződést találtunk; automatikusan eltávolítjuk.",
     "glare": "Egy tükröződés eltakarja az íriszrostok egy részét, és amit eltakar, azt újra kell építeni. Fordulj úgy, hogy "
              "az ablak vagy a lámpa oldalt legyen, ne közvetlenül előtted.",
-    "soft": "Ez kissé életlen lett. Használd a hátsó kamerát 2x-es zoommal, koppints az íriszre az élességállításhoz, és "
+    "soft": "A hátsó kamerát használd, ne az elülsőt (szelfi). Ez kissé életlen lett. Állítsd 2x-es zoomra, koppints az íriszre az élességállításhoz, és "
             "tartsd stabilan a telefont; az előlapi kamerák erről a távolságról egyáltalán nem tudnak élesre állni.",
     "no_lock": "Nem tudtuk biztosan megtalálni az íriszed kerek szélét. Helyezd az egyik szemedet a kép közepére, egy kis "
                "hellyel körülötte, és a szemhéjad ne lógjon bele.",

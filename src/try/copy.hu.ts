@@ -51,6 +51,9 @@ const LIGHT = 'Nappali fény egy ablakból vagy zseblámpa, oldalról. Se szobal
 const CAMERA = 'Hátsó kamera 2x-es zoommal, kb. 10 cm-re a szemtől.';
 const FOCUS = 'Koppints az íriszre a képernyőn, hogy a kamera arra állítsa az élességet.';
 const STEADY = 'Tartsd stabilan a telefont (támaszd meg a könyöködet), és készíts 3-5 felvételt.';
+// the blur refusal says the camera first (the owner, 2026-11-26: a paid visitor shot ten close-ups with the front camera)
+const BACK = 'A hátsó kamerát használd, ne az elülsőt (szelfi).';
+const BACK_STEP = `${BACK} 2x-es zoommal, kb. 10 cm-re a szemtől.`;
 const DARK_LIGHT = 'Több fénynél a sötét írisz mintázata is előtűnik: nappal állj közel egy világos ablakhoz, úgy, hogy az ablak oldalt legyen (ne közvetlen napfényben), vagy kérd meg, hogy valaki oldalról tartson egy zseblámpát. Se szobalámpa, se vaku.';
 const HU_DECIMAL = new Intl.NumberFormat('hu-HU', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
@@ -138,15 +141,16 @@ export const hu: TryCopy = {
 
   quality: {
     retake: 'Újrafotózás',
+    soft: { line: 'A fotó életlen, ezért több részletet építünk újra.', go: 'Folytatás ezzel a fotóval' },
     notCentred: 'Ezen a fotón az írisz nincs középen, ezért nem állítható helyre. Kérjük, fotózd újra úgy, hogy az egyik szemed kitöltse a képet.',
     blocks: {
       too_blurry: {
         title: 'Túl elmosódott ahhoz, hogy a saját íriszedet helyreállítsuk',
         reason: 'Ezen a fotón nem látszik eléggé a saját íriszmintázatod ahhoz, hogy helyreállítsuk, ezért nem használjuk.',
-        error: 'Ez a fotó túl elmosódott ahhoz, hogy a saját íriszedet helyreállítsuk. Kérjük, fotózd újra az alábbi lépések szerint.',
-        retakeLine: 'Ez a felvétel túl elmosódott ahhoz, hogy a saját íriszedet helyreállítsuk. Fotózd újra nappali fénynél, oldalt lévő ablaknál vagy oldalról tartott zseblámpával, a hátsó kamerával 2x-es zoommal: koppints az íriszre az élességállításhoz, és tartsd stabilan a telefont.',
+        error: BACK + ' ' + 'Ez a fotó túl elmosódott ahhoz, hogy a saját íriszedet helyreállítsuk. Kérjük, fotózd újra az alábbi lépések szerint.',
+        retakeLine: BACK + ' ' + 'Ez a felvétel túl elmosódott ahhoz, hogy a saját íriszedet helyreállítsuk. Fotózd újra nappali fénynél, oldalt lévő ablaknál vagy oldalról tartott zseblámpával, 2x-es zoommal: koppints az íriszre az élességállításhoz, és tartsd stabilan a telefont.',
         thumb: 'elmosódott',
-        steps: [LIGHT, CAMERA, FOCUS, STEADY],
+        steps: [BACK_STEP, LIGHT, FOCUS, STEADY],
       },
       too_dark: {
         title: 'Túl sötét ahhoz, hogy látsszon a saját íriszmintázatod',

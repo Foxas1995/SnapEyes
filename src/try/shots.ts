@@ -35,6 +35,8 @@ export interface Quality {
   pattern?: number | null;
   blocked?: boolean;
   block_reason?: string | null;   // a BlockReason, or one this page does not know yet (blockOf)
+  // a blur refusal the customer may go on with (api/analyze.py SOFT_BY, src/try/soft.ts): refused all the same, with a second ticket beside it
+  soft?: boolean;
 }
 
 export interface Targets {
@@ -50,6 +52,7 @@ export interface Analysis {
   reason?: string;
   message?: string;
   ticket?: string;
+  soft_ticket?: string;      // a soft photo's second work ticket (src/try/soft.ts); ticket stays empty for it
   pupil_r?: number | null;
   fibre?: number;
   iris?: { cx: number; cy: number; r: number };

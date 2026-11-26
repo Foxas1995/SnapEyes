@@ -30,6 +30,9 @@ const LIGHT = 'Dnevno svjetlo s prozora ili svjetiljka, sa strane. Bez sobne lam
 const CAMERA = 'Stražnja kamera sa zumom 2x, otprilike 10 cm od oka.';
 const FOCUS = 'Dodirnite šarenicu na zaslonu kako bi je kamera izoštrila.';
 const STEADY = 'Držite mobitel mirno (oslonite laktove na nešto) i napravite 3-5 snimaka.';
+// the blur refusal says the camera first (the owner, 2026-11-26: a paid visitor shot ten close-ups with the front camera)
+const BACK = 'Koristite stražnju kameru, ne prednju (selfie).';
+const BACK_STEP = `${BACK} Sa zumom 2x, otprilike 10 cm od oka.`;
 // the first retake step for a dark iris: the same light, only closer to the window
 const DARK_LIGHT = 'Više svjetla otkriva uzorak tamne šarenice: danju stanite blizu svijetlog prozora, tako da je prozor sa strane (ne na izravnom suncu), ili zamolite nekoga da drži svjetiljku sa strane. Bez sobne lampe i bez bljeskalice.';
 
@@ -120,15 +123,16 @@ export const hr: TryCopy = {
 
   quality: {
     retake: 'Snimite ponovno',
+    soft: { line: 'Fotografija je mutna, pa ćemo obnoviti više detalja.', go: 'Nastavi s ovom fotografijom' },
     notCentred: 'Šarenica nije u središtu ove fotografije, pa je ne možemo obnoviti. Snimite je ponovno tako da jedno oko ispuni kadar.',
     blocks: {
       too_blurry: {
         title: 'Premutno da bismo obnovili vašu šarenicu',
         reason: 'Na ovoj se fotografiji ne vidi dovoljno uzorka vaše šarenice da bismo ga obnovili, pa je ne koristimo.',
-        error: 'Ova je fotografija premutna da bismo obnovili vašu šarenicu. Snimite je ponovno prema koracima u nastavku.',
-        retakeLine: 'Ova je snimka premutna da bismo obnovili vašu šarenicu. Snimite je ponovno uz dnevno svjetlo s prozora ili uz svjetiljku, sa strane, stražnjom kamerom sa zumom 2x: dodirnite šarenicu za izoštravanje i držite mobitel mirno.',
+        error: BACK + ' ' + 'Ova je fotografija premutna da bismo obnovili vašu šarenicu. Snimite je ponovno prema koracima u nastavku.',
+        retakeLine: BACK + ' ' + 'Ova je snimka premutna da bismo obnovili vašu šarenicu. Snimite je ponovno uz dnevno svjetlo s prozora ili uz svjetiljku, sa strane, sa zumom 2x: dodirnite šarenicu za izoštravanje i držite mobitel mirno.',
         thumb: 'mutno',
-        steps: [LIGHT, CAMERA, FOCUS, STEADY],
+        steps: [BACK_STEP, LIGHT, FOCUS, STEADY],
       },
       too_dark: {
         title: 'Pretamno da bi se vidio uzorak vaše šarenice',

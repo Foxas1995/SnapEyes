@@ -285,14 +285,16 @@ def _enhance(body, box):
         L.store(f"eyes/{sid}/{mode}.json", json.dumps(meta).encode(), "application/json")
         res["stored"] = bool(u1 and u2)
     kp.image("after", lambda: bytes(clean))
+    soft = body.get("soft") is True     # the customer went on with a soft photo the analysis refused (api/analyze.py SOFT_BY): counted, nothing else differs
     kept = kp.done(dict({"outcome": "restored", "mode": mode, "qa_ok": bool(qa.get("ok")), "fallback": fallback, "used_sr": used_sr, "fidelity": res["fidelity"],
-                         "reveal": rv["code"], "retry": (retry or {}).get("code")}, **{k: v for k, v in _codes(prof, prof_ms).items() if k != "profile_ms"}))
+                         "reveal": rv["code"], "retry": (retry or {}).get("code"), "soft": soft or None}, **{k: v for k, v in _codes(prof, prof_ms).items() if k != "profile_ms"}))
     PC.mark(cap)                        # one more preview made by this connection today
     quota = PC.left(cap)                # and how many it has left: the page says so under the result (src/try/ResultView.tsx)
     if quota:
         res["previews"] = quota
     E.record("enhance", mode=mode, qa_ok=bool(qa.get("ok")), ring_de00=qa.get("ring_de00"), fallback=fallback, used_sr=used_sr, fidelity=res["fidelity"],
-             reveal=rv["code"], **({"reveal_ms": rv["ms"]} if rv["params"] is not None else {}), **_codes(prof, prof_ms), **_retry_codes(retry), kept=kept)
+             reveal=rv["code"], **({"reveal_ms": rv["ms"]} if rv["params"] is not None else {}), **_codes(prof, prof_ms), **_retry_codes(retry), kept=kept,
+             **({"soft": True} if soft else {}))
     return res
 
 def handle(req): L.run(req, enhance)

@@ -48,9 +48,10 @@ export function outcomeText(s: KeptStep): { text: string; bad: boolean } | null 
   const m = s.meta;
   if (!m) return null;
   const o = str(m.outcome);
-  if (o === 'refused') return { text: `Atmesta: ${label(REASON_LT, str(m.reason))}`, bad: true };
+  if (o === 'refused') return { text: `Atmesta: ${label(REASON_LT, str(m.reason))}${m.soft ? ' (galima tęsti)' : ''}`, bad: true };
   if (o === 'accepted') return { text: `Priimta${m.verdict ? ` (${label(VERDICT_LT, str(m.verdict))})` : ''}`, bad: false };
-  if (o === 'restored') return { text: m.gate && m.gate !== 'ok' ? `Restauruota, vartai: ${str(m.gate)}` : 'Restauruota', bad: !!m.gate && m.gate !== 'ok' && m.gate !== 'unknown' };
+  // soft: the customer went on with a photo refused as too blurry (src/try/soft.ts)
+  if (o === 'restored') return { text: (m.gate && m.gate !== 'ok' ? `Restauruota, vartai: ${str(m.gate)}` : 'Restauruota') + (m.soft ? ' (tęsta su neryškia)' : ''), bad: !!m.gate && m.gate !== 'ok' && m.gate !== 'unknown' };
   if (o === 'shown') return { text: `Parodyta: ${label(STYLE_LT, str(m.style))}`, bad: false };
   if (o === 'failed') return { text: `Nepavyko${m.error ? ` (${str(m.error)})` : ''}`, bad: true };
   return { text: o || '-', bad: false };

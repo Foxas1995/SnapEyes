@@ -35,7 +35,7 @@ export function campaign(): string {
 export const withCamp = <T extends object>(body: T): T => ({ ...body, camp: campaign() });
 
 /** One step reached: hit is the step, lang and market are the page's, extra is what the step adds. */
-export function count(hit: 'try' | 'photo' | 'result' | 'soon' | 'buy' | 'order', lang: string, market: string, extra?: object): void {
+export function count(hit: 'try' | 'photo' | 'result' | 'soon' | 'buy' | 'order' | 'soft_offer' | 'soft_go', lang: string, market: string, extra?: object): void {
   const body = JSON.stringify(withCamp({ hit, lang, market, ...extra }));
   void asked.then((on) => on && navigator.sendBeacon('/api/checkout', new Blob([body], { type: 'application/json' })));
 }

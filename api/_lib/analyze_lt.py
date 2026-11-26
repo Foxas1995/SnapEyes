@@ -20,9 +20,9 @@ TEXT_LT = {
                  "tiesioginiuose saulės spinduliuose), kad langas būtų iš šono, arba paprašykite, kad kas nors palaikytų "
                  "žibintuvėlį iš šono, ir fotografuokite dar kartą: daugiau šviesos jas išryškins. Šilta stalinė lempa "
                  "pakeičia Jūsų akių spalvą.",
-    "too_blurry": "Ši nuotrauka per neryški, kad atkurtume Jūsų rainelę, todėl jos nepanaudojome: studijai tektų raštą "
-                  "išgalvoti. Fotografuokite iš naujo dienos šviesoje prie lango arba su žibintuvėliu, iš šono, galine "
-                  "kamera su 2x priartinimu, bakstelėkite rainelę ekrane, kad kamera ją sufokusuotų, ir laikykite "
+    "too_blurry": "Naudokite galinę kamerą, ne priekinę (asmenukių). Ši nuotrauka per neryški, kad atkurtume Jūsų rainelę, todėl jos nepanaudojome: studijai tektų raštą "
+                  "išgalvoti. Fotografuokite iš naujo dienos šviesoje prie lango arba su žibintuvėliu, iš šono, su 2x "
+                  "priartinimu, bakstelėkite rainelę ekrane, kad kamera ją sufokusuotų, ir laikykite "
                   "telefoną stabiliai.",
     "too_dark": "Jūsų rainelė tamsi, o šioje nuotraukoje buvo per mažai šviesos, kad būtų matomas jos raštas, todėl jos "
                 "nepanaudojome: studijai tektų raštą išgalvoti. Fotografuokite iš naujo arti šviesaus lango dienos "
@@ -56,7 +56,7 @@ TEXT_LT = {
     "reflection": "Radome atspindį, jį pašalinsime automatiškai.",
     "glare": "Atspindys dengia dalį rainelės skaidulų, o tai, ką jis dengia, tenka atkurti. Pasisukite taip, kad langas "
              "ar lempa būtų iš šono, o ne tiesiai priešais Jus.",
-    "soft": "Kadras išėjo šiek tiek neryškus. Naudokite galinę kamerą su 2x priartinimu, bakstelėkite rainelę, kad kamera "
+    "soft": "Naudokite galinę kamerą, ne priekinę (asmenukių). Kadras išėjo šiek tiek neryškus. Įjunkite 2x priartinimą, bakstelėkite rainelę, kad kamera "
             "ją sufokusuotų, ir laikykite telefoną stabiliai; priekinės kameros tokiu atstumu apskritai negali "
             "sufokusuoti.",
     "no_lock": "Nepavyko patikimai nustatyti apvalaus Jūsų rainelės krašto. Nufotografuokite vieną akį kadro centre, su "

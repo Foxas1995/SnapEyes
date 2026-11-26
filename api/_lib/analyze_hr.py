@@ -22,9 +22,9 @@ TEXT_HR = {
     "dark_iris": "Vaša je šarenica tamna, pa se njezina vlakna slabo vide. Danju stanite blizu svijetlog prozora (ne na "
                  "izravnom suncu), tako da je prozor sa strane, ili zamolite nekoga da drži svjetiljku sa strane, i "
                  "fotografirajte ponovno: više svjetla istaknut će ih. Topla stolna lampa mijenja boju vaših očiju.",
-    "too_blurry": "Ova je fotografija previše mutna da bismo obnovili vašu vlastitu šarenicu, pa je nismo upotrijebili: "
+    "too_blurry": "Koristite stražnju kameru, ne prednju (selfie). Ova je fotografija previše mutna da bismo obnovili vašu vlastitu šarenicu, pa je nismo upotrijebili: "
                   "studio bi morao izmisliti uzorak. Molimo snimite je ponovno pri dnevnom svjetlu s prozora ili sa "
-                  "svjetiljkom, sa strane, stražnjom kamerom uz zum 2x, dodirnite šarenicu na zaslonu da se izoštri i "
+                  "svjetiljkom, sa strane, uz zum 2x, dodirnite šarenicu na zaslonu da se izoštri i "
                   "držite telefon mirno.",
     "too_dark": "Vaša je šarenica tamna, a na ovoj fotografiji bilo je premalo svjetla da se vidi njezin vlastiti uzorak, "
                 "pa je nismo upotrijebili: studio bi morao izmisliti uzorak. Molimo snimite je ponovno blizu svijetlog "
@@ -56,7 +56,7 @@ TEXT_HR = {
     "reflection": "Pronašli smo odsjaj; uklonit ćemo ga automatski.",
     "glare": "Odsjaj prekriva dio vlakana šarenice, a ono što prekriva mora se rekonstruirati. Okrenite se tako da prozor "
              "ili lampa budu sa strane, a ne ravno ispred vas.",
-    "soft": "Snimka je ispala malo mutna. Upotrijebite stražnju kameru uz zum 2x, dodirnite šarenicu da se izoštri i "
+    "soft": "Koristite stražnju kameru, ne prednju (selfie). Snimka je ispala malo mutna. Uključite zum 2x, dodirnite šarenicu da se izoštri i "
             "držite telefon mirno; prednje kamere s ove udaljenosti uopće ne mogu izoštriti sliku.",
     "no_lock": "Nismo mogli pouzdano pronaći okrugli rub vaše šarenice. Smjestite jedno oko u središte kadra, s malo "
                "prostora oko njega, i pazite da vam vjeđa ne smeta.",

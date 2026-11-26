@@ -39,6 +39,7 @@ export interface AdsReply extends Base {
 export const GROUP_LT: Record<Group, string> = { src: 'Šaltinis', cmp: 'Kampanija', trm: 'Reklamų rinkinys', cnt: 'Reklama' };
 export const STEP_LT: Record<string, string> = {
   landing: 'Nusileidimai', try: 'Atidarė /try', photo: 'Pasirinko nuotrauką', result: 'Peržiūra parodyta', soon: 'Pirkimo kortelė uždaryta', buy: 'Paspaudė pirkti', order: 'Atidarė užsakymo puslapį',
+  soft_offer: 'Pasiūlyta tęsti su neryškia', soft_go: 'Tęsė su neryškia',
   an: 'Nuotraukų patikros', anok: 'Tinkamos nuotraukos', en: 'Pradėtos peržiūros', rs: 'Užbaigtos peržiūros', sv: 'Stiliaus peržiūros', co: 'Mokėjimo puslapis', pd: 'Apmokėta', help: 'Rašė el. paštu',
 };
 export const SRC_LT: Record<string, string> = {

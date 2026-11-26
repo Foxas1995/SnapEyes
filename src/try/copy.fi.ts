@@ -28,6 +28,9 @@ const LIGHT = 'Päivänvalo ikkunasta tai taskulamppu, sivulta. Ei huoneen lampp
 const CAMERA = 'Takakamera ja 2x-zoomi, noin 10 cm silmästä.';
 const FOCUS = 'Napauta iiristä näytöllä, niin kamera tarkentaa siihen.';
 const STEADY = 'Pidä puhelin vakaana (tue kyynärpäät johonkin) ja ota 3-5 otosta.';
+// the blur refusal says the camera first (the owner, 2026-11-26: a paid visitor shot ten close-ups with the front camera)
+const BACK = 'Käytä takakameraa, älä etukameraa (selfie).';
+const BACK_STEP = `${BACK} 2x-zoomi, noin 10 cm silmästä.`;
 // the first retake step for a dark iris: the same light, only closer to the window
 const DARK_LIGHT = 'Lisävalo tuo tumman iiriksen kuvion esiin: seiso päivänvalossa lähellä valoisaa ikkunaa niin, että ikkuna on sivullasi (ei suorassa auringossa), tai pyydä jotakuta pitämään taskulamppua sivulla. Ei huoneen lamppua eikä salamaa.';
 
@@ -118,15 +121,16 @@ export const fi: TryCopy = {
 
   quality: {
     retake: 'Ota uusi kuva',
+    soft: { line: 'Kuva on epätarkka, joten rakennamme enemmän yksityiskohtia uudelleen.', go: 'Jatka tällä kuvalla' },
     notCentred: 'Iiris ei ole tämän kuvan keskellä, joten sitä ei voi entisöidä. Ota kuva uudelleen niin, että yksi silmä täyttää kuvan.',
     blocks: {
       too_blurry: {
         title: 'Liian epätarkka oman iiriksesi entisöintiin',
         reason: 'Tässä kuvassa ei näy tarpeeksi oman iiriksesi kuviota, jotta voisimme entisöidä sen, joten emme käytä kuvaa.',
-        error: 'Tämä kuva on liian epätarkka oman iiriksesi entisöintiin. Ota se uudelleen alla olevien vaiheiden mukaan.',
-        retakeLine: 'Tämä otos on liian epätarkka oman iiriksesi entisöintiin. Ota se uudelleen päivänvalossa ikkunan luona tai taskulampun kanssa, valo sivulta, takakameralla ja 2x-zoomilla: tarkenna napauttamalla iiristä ja pidä puhelin vakaana.',
+        error: BACK + ' ' + 'Tämä kuva on liian epätarkka oman iiriksesi entisöintiin. Ota se uudelleen alla olevien vaiheiden mukaan.',
+        retakeLine: BACK + ' ' + 'Tämä otos on liian epätarkka oman iiriksesi entisöintiin. Ota se uudelleen päivänvalossa ikkunan luona tai taskulampun kanssa, valo sivulta, 2x-zoomilla: tarkenna napauttamalla iiristä ja pidä puhelin vakaana.',
         thumb: 'epätarkka',
-        steps: [LIGHT, CAMERA, FOCUS, STEADY],
+        steps: [BACK_STEP, LIGHT, FOCUS, STEADY],
       },
       too_dark: {
         title: 'Liian tumma, jotta iiriksesi oma kuvio näkyisi',

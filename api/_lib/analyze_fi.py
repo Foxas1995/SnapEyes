@@ -22,9 +22,9 @@ TEXT_FI = {
     "dark_iris": "Iiriksesi on tumma, joten sen säikeet näkyvät heikosti. Seiso päivänvalossa lähellä valoisaa ikkunaa (ei "
                  "suorassa auringossa) niin, että ikkuna on sivullasi, tai pyydä jotakuta pitämään taskulamppua sivulla, "
                  "ja ota kuva uudelleen: lisävalo tuo säikeet esiin. Lämmin pöytälamppu muuttaa silmiesi väriä.",
-    "too_blurry": "Tämä kuva on liian epätarkka, jotta voisimme entisöidä oman iiriksesi, joten emme käyttäneet sitä: "
+    "too_blurry": "Käytä takakameraa, älä etukameraa (selfie). Tämä kuva on liian epätarkka, jotta voisimme entisöidä oman iiriksesi, joten emme käyttäneet sitä: "
                   "studio joutuisi keksimään kuvion. Ota kuva uudelleen päivänvalossa ikkunan luona tai taskulampun "
-                  "kanssa, valo sivulta, takakameralla ja 2x-zoomilla, tarkenna napauttamalla iiristä näytöllä ja pidä "
+                  "kanssa, valo sivulta, 2x-zoomilla, tarkenna napauttamalla iiristä näytöllä ja pidä "
                   "puhelin vakaana.",
     "too_dark": "Iiriksesi on tumma, ja tässä kuvassa oli liian vähän valoa sen oman kuvion näkemiseen, joten emme "
                 "käyttäneet kuvaa: studio joutuisi keksimään kuvion. Ota kuva uudelleen päivänvalossa lähellä valoisaa "
@@ -55,7 +55,7 @@ TEXT_FI = {
     "reflection": "Löysimme heijastuksen; poistamme sen automaattisesti.",
     "glare": "Heijastus peittää osan iiriksen säikeistä, ja sen peittämä osa on rakennettava uudelleen. Käänny niin, "
              "että ikkuna tai lamppu on sivullasi eikä suoraan edessäsi.",
-    "soft": "Otoksesta tuli pehmeä. Käytä takakameraa ja 2x-zoomia, tarkenna napauttamalla iiristä ja pidä puhelin "
+    "soft": "Käytä takakameraa, älä etukameraa (selfie). Otoksesta tuli pehmeä. Käytä 2x-zoomia, tarkenna napauttamalla iiristä ja pidä puhelin "
             "vakaana; etukamerat eivät pysty tarkentamaan tältä etäisyydeltä lainkaan.",
     "no_lock": "Emme saaneet varmasti kiinni iiriksesi pyöreästä reunasta. Aseta yksi silmä kuvan keskelle niin, että "
                "sen ympärille jää hieman tilaa, ja pidä silmäluomi poissa tieltä.",

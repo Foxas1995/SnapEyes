@@ -31,6 +31,9 @@ const LIGHT = 'Dienasgaisma no loga vai lukturītis, no sāniem. Bez istabas lam
 const CAMERA = 'Aizmugurējā kamera ar 2x tuvinājumu, apmēram 10 cm no acs.';
 const FOCUS = 'Pieskarieties varavīksnenei ekrānā, lai kamera to iefokusē.';
 const STEADY = 'Turiet telefonu nekustīgi (atbalstiet elkoņus pret kaut ko) un uzņemiet 3-5 kadrus.';
+// the blur refusal says the camera first (the owner, 2026-11-26: a paid visitor shot ten close-ups with the front camera)
+const BACK = 'Izmantojiet aizmugurējo kameru, nevis priekšējo (selfiju).';
+const BACK_STEP = `${BACK} Ar 2x tuvinājumu, apmēram 10 cm no acs.`;
 // the first retake step for a dark iris: the same light, only closer to the window
 const DARK_LIGHT = 'Vairāk gaismas izceļ tumšas varavīksnenes rakstu: dienā nostājieties tuvu gaišam logam tā, lai logs būtu sānos (ne tiešos saules staros), vai palūdziet kādam turēt lukturīti no sāniem. Bez istabas lampas un bez zibspuldzes.';
 
@@ -121,15 +124,16 @@ export const lv: TryCopy = {
 
   quality: {
     retake: 'Fotografēt vēlreiz',
+    soft: { line: 'Fotogrāfija ir izplūdusi, tāpēc vairāk detaļu atjaunosim.', go: 'Turpināt ar šo fotogrāfiju' },
     notCentred: 'Varavīksnene nav šīs fotogrāfijas centrā, tāpēc to nevar atjaunot. Nofotografējiet vēlreiz tā, lai viena acs aizpilda kadru.',
     blocks: {
       too_blurry: {
         title: 'Pārāk izplūdis, lai atjaunotu jūsu varavīksneni',
         reason: 'Šajā fotogrāfijā nav redzams pietiekami daudz jūsu varavīksnenes raksta, lai to atjaunotu, tāpēc to neizmantojam.',
-        error: 'Šī fotogrāfija ir pārāk izplūdusi, lai atjaunotu jūsu varavīksneni. Nofotografējiet vēlreiz, sekojot tālāk norādītajiem soļiem.',
-        retakeLine: 'Šis kadrs ir pārāk izplūdis, lai atjaunotu jūsu varavīksneni. Uzņemiet to vēlreiz dienasgaismā no loga vai ar lukturīti, no sāniem, ar aizmugurējo kameru un 2x tuvinājumu: pieskarieties varavīksnenei, lai iefokusētu, un turiet telefonu nekustīgi.',
+        error: BACK + ' ' + 'Šī fotogrāfija ir pārāk izplūdusi, lai atjaunotu jūsu varavīksneni. Nofotografējiet vēlreiz, sekojot tālāk norādītajiem soļiem.',
+        retakeLine: BACK + ' ' + 'Šis kadrs ir pārāk izplūdis, lai atjaunotu jūsu varavīksneni. Uzņemiet to vēlreiz dienasgaismā no loga vai ar lukturīti, no sāniem, ar 2x tuvinājumu: pieskarieties varavīksnenei, lai iefokusētu, un turiet telefonu nekustīgi.',
         thumb: 'izplūdis',
-        steps: [LIGHT, CAMERA, FOCUS, STEADY],
+        steps: [BACK_STEP, LIGHT, FOCUS, STEADY],
       },
       too_dark: {
         title: 'Pārāk tumšs, lai redzētu jūsu varavīksnenes rakstu',
