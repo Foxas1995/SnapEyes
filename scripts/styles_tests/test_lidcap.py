@@ -316,6 +316,16 @@ limbal, _, _ = painted(eye0, lambda r, t: (soft(r - 0.88) * 0.6, (40, 45, 60)))
 quiet = {n: L.lid_recolour(im, im) is im for n, im in (("pigment spot at the rim", spot), ("sector of heterochromia", sector), ("brown collarette", coll), ("darker limbal ring", limbal))}
 check("a pigment spot at the top rim, a brown sector from the pupil to the rim, a brown collarette and a darker limbal ring are no lid: the very object comes back",
       all(quiet.values()), quiet)
+# the thinnest lower lid: a light pink sliver in the outermost few percent of the radius, on a crop masked to its disc (faded to black there)
+sliver, _, _ = painted(eye0, lambda r, t: (soft(r - 0.955, 0.01) * soft(t - 70.0, 4.0) * soft(110.0 - t, 4.0), (205, 170, 180)))
+sliver = L.mask_disk(sliver, 1.12)
+ws, ps = L.lid_cap_mask(sliver)
+fs = L.lid_recolour(sliver, sliver)
+S1, S0 = ycc(fs), ycc(sliver)
+band_ = (rho > 0.96) & (rho < 0.985) & (th > 80) & (th < 100)
+check("a thin sliver of lower lid in the outermost few percent, on the masked crop (read with the fade divided out), is found and loses its pink",
+      ws is not None and fs is not sliver and float(np.median(np.hypot(*(S1[band_][:, 1:] - ref).T))) < float(np.median(np.hypot(*(S0[band_][:, 1:] - ref).T))) - 2.0,
+      (round(ps, 2), float(np.median(np.hypot(*(S0[band_][:, 1:] - ref).T))), float(np.median(np.hypot(*(S1[band_][:, 1:] - ref).T)))))
 big, _, _ = painted(eye0, lambda r, t: (soft(r - 0.45) * soft(t - 215.0, 4.0) * soft(325.0 - t, 4.0), (198, 160, 150)))
 wb, pb = L.lid_cap_mask(big)
 check("a deep lid (to 0.45 iris radii, 110 degrees: no thin lid, analyze refuses such a lid) is left as it is", wb is None and L.lid_recolour(big, big) is big, round(pb, 1))

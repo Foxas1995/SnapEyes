@@ -3452,7 +3452,9 @@ def chroma_lock(ai, src, blur=1.6, amount=1.0, r_frac=None):
 # at the top or the bottom, over a run of angles, with plain iris further in on the same angles. A colour that runs from the pupil to the rim (a
 # sector of heterochromia), a spot away from the rim (pigment, a collarette) or a change all round (a darker limbal ring) is no cap. Only a thin
 # lid: a cap over LIDC_MAX_PCT of the disc is left as it is (analyze refuses a lid wedge of 11 percent, api/analyze.py EYELID_BLOCK_PCT; what
-# passes it is what this is for). No cap: the very object it was given comes back.
+# passes it is what this is for). No cap: the very object it was given comes back. The second round (the owner's four places on the same eye): the
+# cap runs to the lid's real ends and fades out past them, its colour goes on inward under the lashes and the lid's shadow and fades in, and the
+# rim is read with the disc mask's fade divided out, so the thinnest sliver of lower lid in the outermost few percent is seen.
 LIDC_ON = (os.environ.get("SNAPEYES_LIDCOLOUR") or "on").strip().lstrip("\ufeff").strip().lower() not in ("off", "0", "false", "no")
 LIDC_SIDE = 256                  # the source and the render are read at this side
 LIDC_RADII = (0.30, 0.995, 56)   # the polar grid: radii (iris radii) from, to, steps...
@@ -3469,7 +3471,8 @@ LIDC_DARK_DL = 14.0              # the lash line and lashes this much darker cou
 LIDC_OUTER = (0.80, 0.95)        # a cap angle: at least LIDC_OUT_MIN of this band is lid, LIDC_OUT_SKIN of it skin...
 LIDC_OUT_MIN = 0.5
 LIDC_OUT_SKIN = 0.4
-LIDC_RIM = (0.91, 0.99)          # ...or of this band at the rim, for a thin sliver of lower lid along the rim (the same shares)
+LIDC_RIM = (0.91, 0.99)          # ...or of this band at the rim, for a thin sliver of lower lid along the rim (the same shares)...
+LIDC_EDGE = (0.945, 0.99)        # ...or of this one, for the thinnest sliver (a lower lid in the outermost few percent, read with the fade divided out)
 LIDC_INNER = (0.45, 0.62)        # ...and at most LIDC_IN_MAX of this band (plain iris further in: a sector of heterochromia fails here)
 LIDC_IN_MAX = 0.25
 LIDC_IN_SAME = 0.85              # ...and the same angles further in are not off the ring's colour the same way as the cap: their a*b* step from it,
@@ -3477,11 +3480,23 @@ LIDC_IN_SAME = 0.85              # ...and the same angles further in are not off
                                  # in one colour: 1.0 and more; the live lid under its lashes 0.3 to 0.7)
 LIDC_AXIS = 75.0                 # the cap's angles lie within this many degrees of straight up or straight down...
 LIDC_CENTRE = 45.0               # ...and the middle of its run within this many
-LIDC_ARC_MIN = 30.0              # a cap spans at least this many degrees at the rim (a fleck of pigment at the rim is shorter)
+LIDC_ARC_MIN = 12.0              # a cap spans at least this many degrees at the rim (a fleck of pigment at the rim is shorter)
 LIDC_DEPTH_FRAC = 0.6            # a cap angle reaches in to the innermost radius from which this share of the cells out to the rim are lid
 LIDC_GROW = 0.03                 # the mask then reaches this much further in (the lid margin's soft edge)
-LIDC_MAX_PCT = 15.0              # a cap over this share of the disc (percent) is left alone: no thin lid
+LIDC_MAX_PCT = 20.0              # a lid over this share of the disc (percent; the lid itself, not the lashes under it) is left alone: no thin lid. The
+                                 # same bound as lidcap.CAP_PCT; the live eye that asked for this reads 15.6 with its lower sliver, and analyze refuses
+                                 # a lid wedge of 11 percent by its own measure (EYELID_BLOCK_PCT), so what reaches here is what it let through
 LIDC_FEATHER = 2.0               # soft edge, px at LIDC_SIDE
+# the second round (2026-11-26, the owner's four places on v-mwxvtun2 after the first): the cap's ends, the lashes and shadow under it, the rim
+LIDC_ENDS = (0.2, 40.0)          # a cap run goes on round the rim while at least this share of the outer or rim band is skin (and the angles further in
+                                 # stay plain iris), at most this many degrees past each end of its core...
+LIDC_END_FADE = 4                # ...and fades out over this many 2-degree angles beyond its real end
+LIDC_SOFT = (3.0, 3.0, 1.0)      # under a cap the colour goes on inward while the cells are faintly skin: chroma, a*b* step from the ring, redder
+                                 # a* (or the lash line), the majority of three radii...
+LIDC_REACH_MIN = 0.50            # ...but never inside this radius...
+LIDC_REACH_FADE = 0.10           # ...and the colour fades in over this much radius at the inner end (no line across the fibres)
+LIDC_UNFADE = (0.08, 8.0)        # a crop masked to its disc (mask_disk: faded to black over the last 3.5 percent of the radius) is read with the fade
+                                 # divided out where the disc's alpha is at least the first, when the ring just outside the disc is darker than L* the second
 
 
 def lid_cap_mask(src, r_frac=None, debug=None):
@@ -3490,7 +3505,14 @@ def lid_cap_mask(src, r_frac=None, debug=None):
     if r_frac is None:
         r_frac = iris_radius_frac()
     n = LIDC_SIDE
-    lab = srgb_to_lab(np.asarray(src.convert("RGB").resize((n, n), Image.BILINEAR), np.float32)).astype(np.float32)
+    rgb = np.asarray(src.convert("RGB").resize((n, n), Image.BILINEAR), np.float32)
+    al = disk_alpha(n, r_frac * n, 0.035)
+    rr = _radius_grid(n, r_frac * n)
+    outside = (rr > 1.02) & (rr < 1.08)
+    if outside.any() and float(np.median(rgb[outside].mean(-1))) < LIDC_UNFADE[1]:        # a masked crop: the rim as it was before the fade
+        f = al >= LIDC_UNFADE[0]
+        rgb[f] = np.clip(rgb[f] / al[f][:, None], 0.0, 255.0)
+    lab = srgb_to_lab(rgb).astype(np.float32)
     rs = np.linspace(LIDC_RADII[0], LIDC_RADII[1], LIDC_RADII[2]).astype(np.float32)
     th = np.radians((np.arange(LIDC_BINS) + 0.5) * 360.0 / LIDC_BINS).astype(np.float32)
     R = r_frac * n
@@ -3511,6 +3533,8 @@ def lid_cap_mask(src, r_frac=None, debug=None):
     outer, inner = ev[band(LIDC_OUTER)].mean(0), ev[band(LIDC_INNER)].mean(0)
     outer_skin = skin[band(LIDC_OUTER)].astype(np.float32).mean(0)
     rim, rim_skin = ev[band(LIDC_RIM)].mean(0), skin[band(LIDC_RIM)].astype(np.float32).mean(0)
+    edge, edge_skin = ev[band(LIDC_EDGE)].mean(0), skin[band(LIDC_EDGE)].astype(np.float32).mean(0)
+    rim, rim_skin = np.maximum(rim, edge), np.maximum(rim_skin, edge_skin)
     deg = np.degrees(th)
     vert = lambda d: np.minimum(np.abs((d - 90.0 + 180.0) % 360.0 - 180.0), np.abs((d - 270.0 + 180.0) % 360.0 - 180.0))
     axis = vert(deg) <= LIDC_AXIS
@@ -3522,7 +3546,7 @@ def lid_cap_mask(src, r_frac=None, debug=None):
     plain_in = (inner <= LIDC_IN_MAX) & (along < LIDC_IN_SAME * o_len)
     cap = (((outer >= LIDC_OUT_MIN) & (outer_skin >= LIDC_OUT_SKIN)) | ((rim >= LIDC_OUT_MIN) & (rim_skin >= LIDC_OUT_SKIN))) & plain_in & axis
     if debug is not None:
-        debug.update(outer=outer, outer_skin=outer_skin, inner=inner, deg=deg, P=P, med=med)
+        debug.update(outer=outer, outer_skin=outer_skin, inner=inner, deg=deg, P=P, med=med, rim=rim, rim_skin=rim_skin, plain_in=plain_in, along=along, o_len=o_len)
     cap = cap | (np.roll(cap, 1) & np.roll(cap, -1))                        # a single missing angle inside a run is closed
     step = 360.0 / LIDC_BINS
     keep = np.zeros_like(cap)
@@ -3543,23 +3567,61 @@ def lid_cap_mask(src, r_frac=None, debug=None):
                 i += 1
     if not keep.any():
         return None, 0.0
+    # the cap's real ends: each run goes on round the rim while the lid does (skin in the outer or rim band, plain iris further in), then fades out
+    loose = (((outer_skin >= LIDC_ENDS[0]) | (rim_skin >= LIDC_ENDS[0])) & plain_in & axis)
+    core = keep.copy()
+    reach = int(round(LIDC_ENDS[1] / step))
+    for a in np.nonzero(core & ~np.roll(core, 1))[0]:                      # the first angle of each run: go back
+        for k in range(1, reach + 1):
+            b = (a - k) % LIDC_BINS
+            if keep[b] or not loose[b]:
+                break
+            keep[b] = True
+    for a in np.nonzero(core & ~np.roll(core, -1))[0]:                     # the last angle of each run: go on
+        for k in range(1, reach + 1):
+            b = (a + k) % LIDC_BINS
+            if keep[b] or not loose[b]:
+                break
+            keep[b] = True
     # how far in each cap angle reaches: the innermost radius from which LIDC_DEPTH_FRAC of the cells out to the rim are lid
     tail = np.cumsum(ev[::-1], 0)[::-1] / np.arange(len(rs), 0, -1, dtype=np.float32)[:, None]
     depth = np.full(LIDC_BINS, 2.0, np.float32)
+    soft = ((hue >= LIDC_SKIN_HUE[0]) & (hue <= LIDC_SKIN_HUE[1]) & (C >= LIDC_SOFT[0]) & (dab >= LIDC_SOFT[1]) & (da >= LIDC_SOFT[2])) | (ev > 0)
+    soft3 = (np.roll(soft, 1, 0).astype(np.float32) + soft + np.roll(soft, -1, 0)) / 3.0
+    depth_lid = np.full(LIDC_BINS, 2.0, np.float32)                        # the lid itself (its share of the disc is what LIDC_MAX_PCT bounds)
     for a in np.nonzero(keep)[0]:
         ok = np.nonzero(tail[:, a] >= LIDC_DEPTH_FRAC)[0]
-        depth[a] = rs[ok[0]] - LIDC_GROW if len(ok) else LIDC_OUTER[0]
+        k = ok[0] if len(ok) else int(np.searchsorted(rs, LIDC_OUTER[0]))
+        depth_lid[a] = rs[k] - LIDC_GROW
+        while k > 0 and rs[k - 1] >= LIDC_REACH_MIN and soft3[k - 1, a] >= 0.34:     # the lashes and the lid's shadow reaching in under the cap
+            k -= 1
+        depth[a] = rs[k] - LIDC_GROW
+    # the fade beyond each end: the end's depth, the weight going down to nothing over LIDC_END_FADE angles
+    wa = keep.astype(np.float32)
+    for a in np.nonzero(keep & ~np.roll(keep, 1))[0]:
+        for k in range(1, LIDC_END_FADE + 1):
+            b = (a - k) % LIDC_BINS
+            if not keep[b] and wa[b] < 1.0 - k / (LIDC_END_FADE + 1.0):
+                wa[b], depth[b] = 1.0 - k / (LIDC_END_FADE + 1.0), depth[a]
+    for a in np.nonzero(keep & ~np.roll(keep, -1))[0]:
+        for k in range(1, LIDC_END_FADE + 1):
+            b = (a + k) % LIDC_BINS
+            if not keep[b] and wa[b] < 1.0 - k / (LIDC_END_FADE + 1.0):
+                wa[b], depth[b] = 1.0 - k / (LIDC_END_FADE + 1.0), depth[a]
     ax = (np.arange(n) + 0.5 - n / 2.0) / R
     GX, GY = np.meshgrid(ax, ax)
     rho = np.hypot(GX, GY)
     ang = (np.degrees(np.arctan2(GY, GX)) % 360.0 / step).astype(int) % LIDC_BINS
-    m = (rho >= depth[ang]) & (rho < 1.02)
+    inside = (rho >= depth[ang]) & (rho < 1.02)
+    m = inside & keep[ang]
     disk = rho < 1.0
-    pct = 100.0 * float((m & disk).sum()) / max(1.0, float(disk.sum()))
+    pct = 100.0 * float(((rho >= depth_lid[ang]) & keep[ang] & disk).sum()) / max(1.0, float(disk.sum()))
     if pct <= 0.0 or pct > LIDC_MAX_PCT:
         return None, pct
-    w = np.clip(_blur_f(m.astype(np.float32), LIDC_FEATHER) * 1.5, 0.0, 1.0) * (rho < 1.02)
-    return np.maximum(w, m.astype(np.float32)).astype(np.float32), pct
+    ramp = np.clip((rho - depth[ang] + LIDC_REACH_FADE) / LIDC_REACH_FADE, 0.0, 1.0) * (rho < 1.02)
+    mw = (ramp * wa[ang]).astype(np.float32)
+    w = np.clip(_blur_f(mw, LIDC_FEATHER) * 1.5, 0.0, 1.0) * (rho < 1.02)
+    return np.maximum(np.minimum(w, np.maximum(mw, _blur_f(mw, LIDC_FEATHER))), m.astype(np.float32)).astype(np.float32), pct
 
 
 def lid_recolour(out, src, r_frac=None):
