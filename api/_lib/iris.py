@@ -3670,6 +3670,136 @@ def lid_recolour(out, src, r_frac=None):
         return out
 
 
+# ---- the crack-like texture in a thin lower lid's rim sliver (2026-11-26, the owner's place 4 on v-mwxvtun2 after lid_recolour). Where a thin lid lay
+# along the rim, the model draws it as dry, cracked skin: thin dark lines across a light band, and lid_recolour only gives that band the iris's colour.
+# lid_rim_cracks lifts those lines out of the brightness, only there: on the runs of the thin lid's cap (lid_cap_mask) that are a rim sliver (their
+# core angles fail the cap's outer-band evidence, so it was the rim band that found them; the upper cap, where the model drew usable fibres, is left
+# alone) and only between RIMC_RADII. In polar form (one pixel per step along the rim and across it) a grey closing along the rim (RIMC_ALONG) and
+# then across it (RIMC_ACROSS) fills every dark line narrower than its length; a ramp such as the limbal ring's darkening has no such minimum and
+# stays as it is. Only what the closing lifts by more than RIMC_GRAIN times its median there is taken (the grain's own small gaps are kept), and the
+# lift is laid back with the cap's own weight (its feathered ends) and a radial ramp at both ends, so there is no seam. Tried first (2026-11-26):
+# borrowing the brightness detail of the neighbouring rim on both sides, cross-faded. On the live eye the neighbouring rim is cracked too: the
+# borrowed detail carried the cracks back and the cross-fade left a light streak where the two sides met. Luminance only; the chroma is the render's.
+RIMC_ON = (os.environ.get("SNAPEYES_RIMCRACKS") or "on").strip().lstrip("﻿").strip().lower() not in ("off", "0", "false", "no")
+RIMC_BAND = (0.84, 1.0)          # the polar band read (iris radii)...
+RIMC_RADII = (0.86, 0.89, 0.975, 0.99)   # ...and the weight across it: up from the first to the second, down from the third to the fourth
+RIMC_READ = (0.90, 0.98)         # the cap's weight at an angle is its largest in this band
+RIMC_ALONG = 0.02                # the closing along the rim, a share of the iris radius (an odd number of px, at least 5)...
+RIMC_ACROSS = 0.012              # ...and across it (at least 3)
+RIMC_GRAIN = 2.5                 # a lift counts from this many times its median in the sliver (the grain's gaps), in full from twice that (1.5 flattened the grain on the live eye, 4 left traces of the cracks)
+
+
+def _rimc_runfilter(a, k, fn):
+    """fn (np.max or np.min) over a window of k along axis 1, wrapped round."""
+    h = k // 2
+    b = np.concatenate([a[:, -h:], a, a[:, :h]], 1)
+    return fn(np.lib.stride_tricks.sliding_window_view(b, k, axis=1), axis=-1)
+
+
+def _rimc_bilinear(img, y, x):
+    H, W = img.shape
+    x = np.clip(x, 0, W - 1.001); y = np.clip(y, 0, H - 1.001)
+    x0 = np.floor(x).astype(int); y0 = np.floor(y).astype(int)
+    fx, fy = x - x0, y - y0
+    return (img[y0, x0] * (1 - fx) + img[y0, x0 + 1] * fx) * (1 - fy) + (img[y0 + 1, x0] * (1 - fx) + img[y0 + 1, x0 + 1] * fx) * fy
+
+
+def rim_sliver_weight(src, r_frac):
+    """The thin lid cap's weight per 2-degree angle (LIDC_BINS) on its rim-sliver runs only, or None (no cap, or no run of it is a sliver)."""
+    d = {}
+    w, _pct = lid_cap_mask(src, r_frac, debug=d)
+    if w is None:
+        return None
+    n = w.shape[0]
+    ax = (np.arange(n) + 0.5 - n / 2.0) / (r_frac * n)
+    GX, GY = np.meshgrid(ax, ax)
+    rho = np.hypot(GX, GY)
+    ang = (np.degrees(np.arctan2(GY, GX)) % 360.0 / (360.0 / LIDC_BINS)).astype(int) % LIDC_BINS
+    band = (rho >= RIMC_READ[0]) & (rho <= RIMC_READ[1])
+    aw = np.zeros(LIDC_BINS, np.float32)
+    np.maximum.at(aw, ang[band], w[band])
+    on = aw > 0.02
+    if on.all() or not on.any():
+        return None
+    outer_ok = (d["outer"] >= LIDC_OUT_MIN) & (d["outer_skin"] >= LIDC_OUT_SKIN)
+    keep = np.zeros(LIDC_BINS, bool)
+    start = int(np.argmin(on))
+    c = np.roll(on, -start)
+    i = 0
+    while i < LIDC_BINS:
+        if c[i]:
+            j = i
+            while j < LIDC_BINS and c[j]:
+                j += 1
+            idx = (np.arange(i, j) + start) % LIDC_BINS
+            core = idx[aw[idx] >= 0.99]
+            if len(core) and float(outer_ok[core].mean()) < 0.5:       # its own lid was found by the rim band: a sliver
+                keep[idx] = True
+            i = j
+        else:
+            i += 1
+    aw = aw * keep
+    return aw if aw.any() else None
+
+
+def lid_rim_cracks(out, src, r_frac=None):
+    """The render out with the thin dark lines lifted out of its brightness in a thin lower lid's rim sliver (see the section above), everything
+    else exactly as it was. The very object out when the switch is off, there is no such sliver, or anything fails. No model call."""
+    if not RIMC_ON:
+        return out
+    try:
+        if r_frac is None:
+            r_frac = iris_radius_frac()
+        aw2 = rim_sliver_weight(src, r_frac)
+        if aw2 is None:
+            return out
+        N = out.size[0]
+        R = r_frac * N
+        ycc = np.asarray(out.convert("YCbCr"), np.float32).copy()
+        Y = ycc[..., 0]
+        Nt = int(round(2.0 * np.pi * R))
+        Nr = int(round((RIMC_BAND[1] - RIMC_BAND[0]) * R)) + 1
+        rr = np.linspace(RIMC_BAND[0], RIMC_BAND[1], Nr, dtype=np.float32)
+        tt = (np.arange(Nt, dtype=np.float32) + 0.5) * np.float32(2.0 * np.pi / Nt)
+        Yp = _rimc_bilinear(Y, N / 2.0 + np.outer(rr, np.sin(tt)) * R - 0.5, N / 2.0 + np.outer(rr, np.cos(tt)) * R - 0.5).astype(np.float32)
+        step = 360.0 / LIDC_BINS
+        centres = np.arange(-1, LIDC_BINS + 1, dtype=np.float32) * step + step / 2.0
+        aw = np.interp(np.degrees(tt), centres, np.concatenate([[aw2[-1]], aw2, [aw2[0]]])).astype(np.float32)
+        r = rr[:, None]
+        rw = np.clip(np.minimum((r - RIMC_RADII[0]) / (RIMC_RADII[1] - RIMC_RADII[0]), (RIMC_RADII[3] - r) / (RIMC_RADII[3] - RIMC_RADII[2])), 0.0, 1.0)
+        ka = max(5, int(round(RIMC_ALONG * R)) | 1)
+        kr = max(3, int(round(RIMC_ACROSS * R)) | 1)
+        cl = _rimc_runfilter(_rimc_runfilter(Yp, ka, np.max), ka, np.min)
+        cl = _rimc_runfilter(_rimc_runfilter(cl.T, kr, np.max), kr, np.min).T
+        core = (aw[None, :] > 0.5) & (rw > 0.5)
+        if not core.any():
+            return out
+        t = max(float(np.median((cl - Yp)[core])), 1.0)
+        # the closed level and the weight go back to the square (both smooth); the lift is read at each pixel against its own brightness, so a crack
+        # one or two pixels wide is lifted by its full depth (a polar lift mapped back is smeared to a fraction of it)
+        ax = (np.arange(N, dtype=np.float32) + 0.5 - N / 2.0) / np.float32(R)
+        GX, GY = np.meshgrid(ax, ax)
+        rho = np.hypot(GX, GY)
+        sel = (rho >= RIMC_RADII[0]) & (rho <= RIMC_RADII[3])
+        ti = np.mod((np.arctan2(GY[sel], GX[sel]) % (2.0 * np.pi)) / (2.0 * np.pi) * Nt - 0.5, Nt)
+        ri = (rho[sel] - RIMC_BAND[0]) / (RIMC_BAND[1] - RIMC_BAND[0]) * (Nr - 1)
+        back = lambda a: _rimc_bilinear(np.concatenate([a, a[:, :1]], 1), ri, ti)
+        lift = back(cl) - Y[sel]
+        dv = lift * np.clip((lift - RIMC_GRAIN * t) / (RIMC_GRAIN * t), 0.0, 1.0) * back(aw[None, :] * rw)
+        if float(np.abs(dv).max()) < 0.5:
+            return out
+        Y2 = Y.copy()
+        Y2[sel] += dv
+        ycc[..., 0] = np.clip(Y2, 0.0, 255.0)
+        new = np.asarray(Image.fromarray(np.round(ycc).astype(np.uint8), "YCbCr").convert("RGB"))
+        ch = np.zeros(Y.shape, bool)
+        ch[sel] = np.abs(dv) >= 0.5
+        return Image.fromarray(np.where(ch[..., None], new, np.asarray(out.convert("RGB"))))       # every pixel the lift does not reach exactly as it was
+    except Exception as e:  # noqa: the render as it was
+        print("snapeyes lid_rim_cracks " + json.dumps({"error": _scrub(repr(e))[:160]}), flush=True)
+        return out
+
+
 
 # ---- the colour and brightness under a reflection the deglare left (2026-11-26, the owner on his own 215208: "smoke where the window was"; and two
 # brown eyes of the same day). Two kinds reach the model: the dim halo round a window reflection whose core deglare filled (a light, flat wash: the

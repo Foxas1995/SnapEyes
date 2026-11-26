@@ -398,6 +398,7 @@ def _master_eye(body, stage):
             out = L.chroma_lock(out, base)
             out = L.pupil_lock(out, base, r_frac)   # and the pupil stays as wide as the photo's (see /api/enhance)
             out = L.lid_recolour(out, base, r_frac)   # and a thin lid's cap takes the iris's colour, not the skin's (see /api/enhance)
+            out = L.lid_rim_cracks(out, base, r_frac)   # and the cracks in a thin lower lid's rim sliver lifted out (see /api/enhance)
             out = L.glare_recolour(out, base, r_frac)   # and a reflection the deglare left takes the iris's colour and level (see /api/enhance)
         else:
             # the approved preview at full size: on its framing, with its pupil, its tone and its colour

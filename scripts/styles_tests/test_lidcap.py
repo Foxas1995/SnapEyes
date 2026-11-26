@@ -410,8 +410,88 @@ for _ in range(3):
 gms = (time.time() - t0) / 3 * 1000
 check("it costs under 0.3 s at 1024 px (no model call)", gms < 300, round(gms))
 check("/api/enhance and a master without a preview run it right after the lid step",
-      read("api/enhance.py").count("out = L.lid_recolour(out, base, r_frac)   # where a thin lid covered the iris, the iris's colour, never the lid's skin (2026-11-26)\n        out = L.glare_recolour(out, base, r_frac)") == 2
+      read("api/enhance.py").count("out = L.lid_recolour(out, base, r_frac)   # where a thin lid covered the iris, the iris's colour, never the lid's skin (2026-11-26)\n"
+                                   "        out = L.lid_rim_cracks(out, base, r_frac)   # and the cracks the model drew into a thin lower lid's rim sliver lifted out (2026-11-26)\n"
+                                   "        out = L.glare_recolour(out, base, r_frac)") == 2
       and "out = L.glare_recolour(out, base, r_frac)" in read("api/master_eye.py"))
+
+# ============================================================================================ 7. the cracks in a thin lower lid's rim sliver (2026-11-26)
+section("7  iris.lid_rim_cracks: the dark lines the model drew into a thin lower lid's rim sliver are lifted out; a clean rim, the upper cap and the limbal ring stay")
+from PIL import ImageDraw  # noqa: E402
+
+
+def cracked(im, seed=3, a0=76.0, a1=104.0, r0=0.905, r1=0.968):
+    """A render of im with thin dark cracks drawn across the rim band (r0..r1 iris radii, a0..a1 degrees), and the mask of the cracks."""
+    rng = np.random.default_rng(seed)
+    N = im.size[0]
+    R = SI.R_FRAC * N
+    m = Image.new("L", im.size, 0)
+    dm = ImageDraw.Draw(m)
+    for _ in range(9):
+        t, r = np.radians(rng.uniform(a0, a1)), rng.uniform(r0, r1)
+        pts = []
+        for _ in range(7):
+            pts.append((N / 2 + r * R * np.cos(t), N / 2 + r * R * np.sin(t)))
+            t += np.radians(rng.uniform(-1.6, 1.6)); r = float(np.clip(r + rng.uniform(-0.012, 0.012), r0, r1))
+        dm.line(pts, fill=255, width=2)
+    k = np.asarray(m, np.float32)[..., None] / 255.0
+    a = np.asarray(im, np.float32)
+    return Image.fromarray(np.clip(a * (1 - 0.62 * k) + 0.5, 0, 255).astype(np.uint8)), k[..., 0] > 0.5
+
+
+Yof = lambda im: np.asarray(im.convert("YCbCr"), np.float32)[..., 0]
+sl_src = sliver                                         # the photo: the light pink sliver of section 5 (masked crop), no cracks
+sl_out, crack = cracked(sliver)                         # the render: the same with the model's cracks in it
+lr = L.lid_recolour(sl_out, sl_src)
+rc = L.lid_rim_cracks(lr, sl_src)
+clean = L.lid_recolour(sliver, sl_src)
+gap0 = float((Yof(clean) - Yof(lr))[crack].mean())
+gap1 = float((Yof(clean) - Yof(rc))[crack].mean())
+S2 = ycc(rc)
+cdist = lambda X: float(np.median(np.hypot(*(X[band_][:, 1:] - ref).T)))
+check("a cracked pink sliver loses its colour (lid_recolour) and its cracks (lid_rim_cracks): the cracks come up to within a third of the clean sliver's brightness",
+      rc is not lr and L.rim_sliver_weight(sl_src, SI.R_FRAC) is not None and gap0 > 20.0 and gap1 <= gap0 / 3.0 and cdist(S2) < cdist(ycc(sl_out)) - 2.0,
+      (round(gap0, 1), round(gap1, 1), round(cdist(ycc(sl_out)), 1), round(cdist(S2), 1)))
+uncr = (rho < 1.0) & ~crack
+ring_band = (rho > 0.90) & (rho < 0.97) & (th > 80) & (th < 100)
+check("...only the cracks move: the rest of the sliver stays within a few levels of the render (the grain is kept), and the chroma is the render's",
+      float(np.median(np.abs(Yof(rc) - Yof(lr))[ring_band & ~crack])) <= 2.0 and float(np.abs(S2[..., 1:] - ycc(lr)[..., 1:]).max()) <= 2.0,
+      (float(np.median(np.abs(Yof(rc) - Yof(lr))[ring_band & ~crack])), float(np.abs(S2[..., 1:] - ycc(lr)[..., 1:]).max())))
+away = (rho < 0.85) | ((th < 50) | (th > 130))
+check("...and nothing away from the sliver moves (inside 0.85 iris radii, and every angle the sliver's run does not reach: byte for byte)",
+      bool((np.asarray(rc)[away] == np.asarray(lr)[away]).all()))
+cl_out, _ = cracked(eye0)
+check("a clean rim (no lid in the photo) is not touched even with cracks in the render: the very object comes back",
+      L.lid_rim_cracks(cl_out, eye0) is cl_out and L.lid_rim_cracks(eye0, eye0) is eye0)
+up_out, _ = cracked(lid_im, a0=246.0, a1=294.0)
+check("the upper cap (found by the outer band, where the model drew fibres) is no rim sliver: the very object comes back",
+      L.rim_sliver_weight(lid_im, SI.R_FRAC) is None and L.lid_rim_cracks(up_out, lid_im) is up_out)
+lim_src, _, _ = painted(eye0, lambda r, t: (soft(r - 0.86) * 0.55, (40, 45, 60)))
+lim_src, _, _ = painted(lim_src, lambda r, t: (soft(r - 0.955, 0.01) * soft(t - 70.0, 4.0) * soft(110.0 - t, 4.0), (205, 170, 180)))
+lim_src = L.mask_disk(lim_src, 1.12)
+lim_out, lcrack = cracked(lim_src)
+lim_fix = L.lid_rim_cracks(L.lid_recolour(lim_out, lim_src), lim_src)
+lim_ref = L.lid_recolour(lim_src, lim_src)
+sector = (th > 82) & (th < 98)
+prof = lambda im: [float(np.median(Yof(im)[sector & ~lcrack & (rho >= a) & (rho < a + 0.02)])) for a in (0.80, 0.86, 0.90, 0.94)]
+pf, pr = prof(lim_fix), prof(lim_ref)
+check("a darker limbal ring stays: under the sliver the brightness by radius is the crack-free render's (within 3 levels), still darker at the ring than further in",
+      lim_fix is not lim_src and max(abs(x - y) for x, y in zip(pf, pr)) <= 3.0 and pf[2] < pf[0] - 10.0, ([round(x) for x in pf], [round(x) for x in pr]))
+was = L.RIMC_ON
+L.RIMC_ON = False
+try:
+    check("SNAPEYES_RIMCRACKS=off: the very object comes back", L.lid_rim_cracks(lr, sl_src) is lr)
+finally:
+    L.RIMC_ON = was
+check("anything that fails gives the render back as it was", L.lid_rim_cracks("not a picture", sl_src) == "not a picture")
+t0 = time.time()
+for _ in range(3):
+    L.lid_rim_cracks(lr, sl_src)
+rms = (time.time() - t0) / 3 * 1000
+check("it costs under 0.4 s at 1024 px (no model call)", rms < 400, round(rms))
+check("/api/enhance (both modes) and a master without a preview run it right after the lid step",
+      read("api/enhance.py").count("out = L.lid_recolour(out, base, r_frac)   # where a thin lid covered the iris, the iris's colour, never the lid's skin (2026-11-26)\n        out = L.lid_rim_cracks(out, base, r_frac)") == 2
+      and "out = L.lid_rim_cracks(out, base, r_frac)" in read("api/master_eye.py"))
 
 ok = sum(RESULTS)
 print(f"\n{ok} of {len(RESULTS)} passed")
