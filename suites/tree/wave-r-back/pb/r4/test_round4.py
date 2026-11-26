@@ -129,7 +129,7 @@ def mails_to(addr, since=0):
 
 
 def owner_since(n0, exclude_new_orders=True):
-    return [m for m in mails_to(OWNER, n0) if not (exclude_new_orders and m["subject"].startswith("SnapEyes: new order"))]
+    return [m for m in mails_to(OWNER, n0) if not (exclude_new_orders and m["subject"].startswith("SnapEyes: naujas užsakymas"))]
 
 
 def withdraw(o, k=None, name="Ana Tester", email="kunde@example.com", lang="en", **kw):

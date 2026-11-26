@@ -74,9 +74,9 @@ const en = {
 
   capture: {
     // the first screen's heading: the second part is set in gold. Calm and short (the owner, 2026-10-20: a page that has to say "for real" makes people read the opposite)
-    titleA: 'YOUR EYE, ',
-    titleB: 'AS ART.',
-    lead: 'Photograph one eye and see it restored in about a minute.',
+    titleA: 'PHOTOGRAPH',
+    titleB: ' YOUR EYE.',
+    lead: 'In a minute you will see it turned into art. Free.',
     addTitle: (n: number) => `Add eye ${n}`,
     addLead: 'Your partner, your child, or your other eye. Same steps as before: take a few shots and we keep the best one.',
     // a couple with one phone: the back camera cannot be aimed at your own eye while you watch the screen
@@ -106,9 +106,9 @@ const en = {
     stepsShotsMore: ' Turn a little between shots. We measure every one and use the sharpest; on a real test the best shot had 3.7x the detail of the worst.',
     // the capture screen's first way (the owner's decision of 2026-11-25): the phone's own camera app, then the picker; the page's camera button (capture="environment",
     // the phone's reduced capture mode, visibly softer in his test) is the second, quieter choice
-    cameraFirst: 'Photograph your eye with your phone\'s own camera (2x, by a window), then choose the photo here: that way it is sharpest.',
-    takePhoto: 'Take a photo',
-    pickShots: 'Pick 3-5 shots',
+    cameraTip: 'The sharpest photo comes from your phone camera (2x, by a window): take it there and upload it here.',
+    takePhoto: 'Photograph your eye',
+    pickShots: 'Upload a photo',
     consent: "Save my eye photo and result to SnapEyes' training memory so restorations get better over time. Anonymous, no name or face. You can ask us to delete it any time.",
   },
 
@@ -621,9 +621,9 @@ const de: TryCopy = {
   },
 
   capture: {
-    titleA: 'IHR AUGE ',
-    titleB: 'ALS KUNSTWERK.',
-    lead: 'Fotografieren Sie ein Auge und sehen Sie es in etwa einer Minute restauriert.',
+    titleA: 'FOTOGRAFIEREN SIE',
+    titleB: ' IHR AUGE.',
+    lead: 'In einer Minute sehen Sie es als Kunstwerk. Kostenlos.',
     addTitle: (n: number) => `Auge ${n} hinzufügen`,
     addLead: 'Ihr Partner oder Ihre Partnerin, Ihr Kind oder Ihr anderes Auge. Dieselben Schritte wie zuvor: Machen Sie ein paar Aufnahmen, wir behalten die beste.',
     takeTurns: 'Sie fotografieren sich gegenseitig? Wechseln Sie sich ab: Eine Person hält das Smartphone, die andere schaut geradeaus. Dann tauschen Sie.',
@@ -643,9 +643,9 @@ const de: TryCopy = {
     stepsOpenMore: 'Schauen Sie geradeaus und heben Sie das Oberlid sanft mit einer Fingerspitze an, damit weder Lid noch Wimpern über der Iris liegen.',
     stepsShots: 'Machen Sie 3-5 Aufnahmen und senden Sie alle.',
     stepsShotsMore: ' Drehen Sie sich zwischen den Aufnahmen ein wenig. Wir messen jede und verwenden die schärfste; in einem echten Test hatte die beste Aufnahme 3,7-mal so viele Details wie die schlechteste.',
-    cameraFirst: 'Fotografieren Sie Ihr Auge mit der Kamera-App Ihres Handys (2x, am Fenster) und wählen Sie dann das Foto hier: So wird es am schärfsten.',
-    takePhoto: 'Foto aufnehmen',
-    pickShots: '3-5 Fotos wählen',
+    cameraTip: 'Am schärfsten wird das Foto mit der Kamera-App Ihres Handys (2x, am Fenster): aufnehmen und hier hochladen.',
+    takePhoto: 'Auge fotografieren',
+    pickShots: 'Foto hochladen',
     consent: 'Mein Augenfoto und das Ergebnis im Trainingsspeicher von SnapEyes sichern, damit Restaurierungen mit der Zeit besser werden. Anonym, ohne Namen oder Gesicht. Sie können jederzeit die Löschung verlangen.',
   },
 

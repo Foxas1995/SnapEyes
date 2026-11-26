@@ -191,7 +191,9 @@ export async function run(): Promise<Array<[string, boolean, string?]>> {
     const head = `${cp.titleA}${cp.titleB}`;
     check(`${l}: the headline does not insist ("REALLY", "FOR REAL", "TIKRAI", "GANZ ECHT", "TÉNYLEG", "OIKEASTI", "PÄRISELT", "PATIEŠĀM") and has no dash`,
       !/really|for real|tikrai|ganz echt|wirklich|tényleg|igazán|oikeasti|todella|aidosti|päriselt|tõesti|tõeliselt|patiešām|tiešām|pa īstam/i.test(head) && !DASH.test(head), head);
-    check(`${l}: the line under the headline is one short sentence`, (cp.lead.match(/[.!?](\s|$)/g) ?? []).length === 1 && words(cp.lead) <= 14, cp.lead);
+    // 2026-11-26 (the owner's lead: "Po minutės pamatysite ją paverstą kūriniu. Nemokamai."): one short sentence, and at most a word or two after it (Free)
+    const parts = cp.lead.split(/[.!?](?:\s|$)/).filter((x) => x.trim());
+    check(`${l}: the line under the headline is one short sentence, and at most the word Free after it`, (parts.length === 1 || (parts.length === 2 && words(parts[1]) <= 2)) && words(cp.lead) <= 14, cp.lead);
     // 2026-10-22: the guide video above them shows the steps, so each is one short line (the list numbers them)
     check(`${l}: four steps, one short line each, no sentence`, cp.steps.length === 4 && cp.steps.every((s) => typeof s === 'string' && words(s) <= 7 && !/[.!?]$/.test(s)), cp.steps.map((s) => words(s)).join());
     check(`${l}: the disclosure of the other tips has its title`, typeof cp.moreTips === 'string' && cp.moreTips.length > 3 && words(cp.moreTips) <= 3, cp.moreTips);

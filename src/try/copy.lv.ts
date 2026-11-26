@@ -62,9 +62,9 @@ export const lv: TryCopy = {
 
   capture: {
     // the first screen's heading: the second part is set in gold
-    titleA: 'JŪSU ACS, ',
-    titleB: 'KĀ MĀKSLA.',
-    lead: 'Nofotografējiet vienu aci un apmēram minūtes laikā ieraugiet to atjaunotu.',
+    titleA: 'NOFOTOGRAFĒJIET',
+    titleB: ' SAVU ACI.',
+    lead: 'Pēc minūtes redzēsiet to kā mākslas darbu. Bez maksas.',
     addTitle: (n: number) => `Pievienojiet ${n}. aci`,
     addLead: 'Jūsu partnera, jūsu bērna vai jūsu otra acs. Tie paši soļi kā iepriekš: uzņemiet dažus kadrus, un mēs paturēsim labāko.',
     takeTurns: 'Fotografējat viens otru? Mainieties: viens tur telefonu, otrs skatās taisni uz priekšu. Pēc tam samainieties.',
@@ -85,9 +85,9 @@ export const lv: TryCopy = {
     stepsOpenMore: 'Skatieties taisni uz priekšu un ar pirksta galu saudzīgi paceliet augšējo plakstiņu, lai plakstiņš un skropstas neaizsedz varavīksneni.',
     stepsShots: 'Uzņemiet 3-5 kadrus un nosūtiet visus.',
     stepsShotsMore: ' Starp kadriem nedaudz pagriezieties. Mēs izmērām katru un izmantojam asāko; īstā testā labākajā kadrā bija 3,7 reizes vairāk detaļu nekā sliktākajā.',
-    cameraFirst: 'Nofotografējiet aci ar sava telefona kameru (2x, pie loga) un pēc tam izvēlieties fotogrāfiju šeit: tā tā būs visasākā.',
-    takePhoto: 'Fotografēt',
-    pickShots: 'Izvēlēties 3-5 kadrus',
+    cameraTip: 'Visasākā fotogrāfija sanāk ar telefona kameru (2x, pie loga): nofotografējiet un augšupielādējiet to šeit.',
+    takePhoto: 'Fotografēt aci',
+    pickShots: 'Augšupielādēt foto',
     consent: 'Saglabāt manas acs fotogrāfiju un rezultātu SnapEyes mācību atmiņā, lai atjaunošana ar laiku kļūtu arvien labāka. Anonīmi, bez vārda un sejas. Dzēšanu varat lūgt jebkurā brīdī.',
   },
 

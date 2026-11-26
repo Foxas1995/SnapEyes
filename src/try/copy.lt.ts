@@ -50,9 +50,9 @@ export const lt: TryCopy = {
 
   capture: {
     // the first screen's heading: the second part is set in gold
-    titleA: 'JŪSŲ AKIS ',
-    titleB: 'KAIP MENO KŪRINYS.',
-    lead: 'Nufotografuokite vieną akį ir maždaug po minutės pamatykite ją atkurtą.',
+    titleA: 'NUFOTOGRAFUOKITE',
+    titleB: ' SAVO AKĮ.',
+    lead: 'Po minutės pamatysite ją paverstą kūriniu. Nemokamai.',
     addTitle: (n: number) => `Pridėti akį ${n}`,
     addLead: 'Partnerio, vaiko arba kita Jūsų akis. Tie patys žingsniai kaip anksčiau: padarykite kelis kadrus, o mes pasiliksime geriausią.',
     takeTurns: 'Fotografuojate vienas kitą? Darykite tai paeiliui: vienas laiko telefoną, kitas žiūri tiesiai į priekį. Tada apsikeiskite.',
@@ -73,9 +73,9 @@ export const lt: TryCopy = {
     stepsOpenMore: 'Žiūrėkite tiesiai į priekį ir piršto galiuku švelniai pakelkite viršutinį voką, kad nei vokas, nei blakstienos nedengtų rainelės.',
     stepsShots: 'Padarykite 3-5 kadrus ir siųskite visus.',
     stepsShotsMore: ' Tarp kadrų šiek tiek pasisukite. Įvertiname kiekvieną ir naudojame ryškiausią; tikrame bandyme geriausias kadras turėjo 3,7 karto daugiau detalių nei prasčiausias.',
-    cameraFirst: 'Nufotografuokite akį savo telefono kamera (2x, prie lango) ir pasirinkite nuotrauką: taip ji ryškiausia.',
-    takePhoto: 'Fotografuoti',
-    pickShots: 'Pasirinkti 3-5 kadrus',
+    cameraTip: 'Ryškiausia nuotrauka išeina telefono kamera (2x, prie lango): nufotografuokite ir įkelkite ją čia.',
+    takePhoto: 'Fotografuoti akį',
+    pickShots: 'Įkelti nuotrauką',
     consent: 'Išsaugoti mano akies nuotrauką ir rezultatą SnapEyes mokymosi atmintyje, kad atkūrimas laikui bėgant gerėtų. Anonimiškai, be vardo ir veido. Bet kada galite paprašyti juos ištrinti.',
   },
 

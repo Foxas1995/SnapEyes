@@ -317,7 +317,7 @@ check("the buyer gets one email in Lithuanian with the code, its value, its last
       len(mails) == 1 and V.shown(code) in m.get("subject", "") and V.shown(code) in m.get("text", "") and pay.price_text(2497, "lt", "eur") in m.get("text", "")
       and "/try?lang=lt" in m.get("text", "") and "Dovanų kuponai" in m.get("text", "") and "14 dienų" in m.get("text", "")
       and len(m.get("text", "")) > 5000 and "Turiu dovanų kuponą" in m.get("text", ""), (len(mails), m.get("subject"), m.get("text", "")[:400]))
-check("the owner is told once that a voucher was sold, with the coupon and how to cancel it", any("gift voucher sold" in x.get("subject", "") and cid in x.get("text", "")
+check("the owner is told once that a voucher was sold, with the coupon and how to cancel it", any("nupirktas dovanų kuponas" in x.get("subject", "") and cid in x.get("text", "")
       for x, _i in H.Fake.emails), [x.get("subject") for x, _i in H.Fake.emails])
 n_mail, n_cp = len(H.Fake.emails), len(COUPON_CREATES)
 c, j = webhook(sess)
@@ -344,7 +344,7 @@ cb2, jb2 = webhook(H.Fake.sessions[sid_b])
 mails_b = [m for m, _i in H.Fake.emails if m.get("to") == ["kupac@example.com"]]
 check("Resend busy: the webhook answers 503 (Stripe retries), the retry sends the Croatian email once and the owner's note", cb == 503 and cb2 == 200
       and jb2.get("mail") == "sent" and len(mails_b) == 1 and "poklon-bon" in mails_b[0].get("subject", "").lower()
-      and sum(1 for x, _i in H.Fake.emails if "gift voucher sold" in x.get("subject", "") and sid_b in x.get("text", "")) == 1, (cb, jb, cb2, jb2, len(mails_b)))
+      and sum(1 for x, _i in H.Fake.emails if "nupirktas dovanų kuponas" in x.get("subject", "") and sid_b in x.get("text", "")) == 1, (cb, jb, cb2, jb2, len(mails_b)))
 # a voucher session paid at another amount: no code
 sid_x = old_session("one", "eu", "en")
 sx = H.pay_session(sid_x, "odd@example.com")

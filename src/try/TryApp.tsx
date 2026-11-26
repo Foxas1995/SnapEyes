@@ -1088,7 +1088,7 @@ export const TryApp: React.FC = () => {
               </div>
             ) : (
               <div className="text-center mt-2">
-                <h1 ref={stepHead} tabIndex={-1} className="font-luxury text-3xl sm:text-4xl font-bold focus:outline-none">{T.capture.titleA}<span className="text-gold">{T.capture.titleB}</span></h1>
+                <h1 ref={stepHead} tabIndex={-1} className="font-luxury text-[min(1.875rem,7.4vw)] sm:text-4xl font-bold focus:outline-none">{T.capture.titleA}<span className="text-gold">{T.capture.titleB}</span></h1>
                 <p className="text-zinc-400 text-sm mt-2">{T.capture.lead}</p>
               </div>
             )}
@@ -1098,12 +1098,14 @@ export const TryApp: React.FC = () => {
                 window tall, so the steps and the photo button stay on the first screen of a 412 x 915 phone; it loads and plays only on screen (src/shared/GuideVideo.tsx) */}
             <GuideVideo key={lang} src={`/assets/howto/howto-11-${lang}.mp4`} poster={`/assets/howto/howto-11-${lang}.jpg`} w={720} h={720}
               play={T.capture.videoPlay} pause={T.capture.videoPause} className="mx-auto rounded-2xl overflow-hidden border border-white/10"
-              style={{ width: 'min(100%, 36vh, calc(100vh - 380px))' }} />{/* 2026-11-25: the line about the phone's own camera stands above the gold button, the guide is at most
-                36 percent of the window tall (40 before) and on a screen under about 600 px less still (the button stays on the first screen of a 320 x 568 phone, check:polish fold) */}
+              style={{ width: 'min(100%, 40vh, calc(100vh - 400px))' }} />{/* 2026-11-25: the line about the phone's own camera stands above the gold button, the guide is at most
+                36 percent of the window tall (40 before) and on a screen under about 600 px less still (the button stays on the first screen of a 320 x 568 phone, check:polish fold)
+                2026-11-26: on a phone the four steps come after the buttons, so the gold button and the quiet row are on the first screen of 360 x 740, 390 x 844 and 412 x 915 */}
 
-            {/* on a short screen (a phone under 820 px tall) the steps come after the buttons: the way to take the photo is on the first screen, the steps are one scroll away (QA of 2026-10-20: at 360 x 740 the button was below the fold) */}
+            {/* on a phone (under 768 px wide, since 2026-11-26: the buttons on the first screen of 360 x 740, 390 x 844 and 412 x 915) and on a short screen (under
+                820 px tall) the steps come after the buttons: the way to take the photo is on the first screen, the steps are one scroll away (QA of 2026-10-20: at 360 x 740 the button was below the fold) */}
             {/* the four steps, one line each (the video shows them); the open eye, the 3-5 shots and the pair are one tap away in a closed disclosure (the owner, 2026-10-20: "a lot of text before the photo") */}
-            <div data-testid="capture-guide" className="[@media(max-height:820px)]:order-last bg-[#0b0e17] border border-white/10 rounded-2xl p-4 text-sm text-zinc-300 flex flex-col gap-2">
+            <div data-testid="capture-guide" className="max-md:order-last [@media(max-height:820px)]:order-last bg-[#0b0e17] border border-white/10 rounded-2xl p-4 text-sm text-zinc-300 flex flex-col gap-2">
               <ol className="flex flex-col gap-2">
                 {T.capture.steps.map((s, i) => (
                   <li key={i}><span className="text-gold font-bold">{i + 1}.</span> {s}</li>
@@ -1113,6 +1115,7 @@ export const TryApp: React.FC = () => {
               <details data-testid="more-tips" className="border-t border-white/10 text-xs">
                 <summary className="cursor-pointer py-3 min-h-[44px] font-semibold text-zinc-200">{T.capture.moreTips}</summary>
                 <div className="flex flex-col gap-2 pb-1">
+                  <p>{T.capture.cameraTip}</p>
                   <p><span className="text-gold font-bold">{T.capture.stepsOpen}</span>{T.capture.stepsOpenMore}</p>
                   <p><span className="text-gold font-bold">{T.capture.stepsShots}</span>{T.capture.stepsShotsMore}</p>
                   {!adding && <p className="text-zinc-400">{T.capture.helper}</p>}
@@ -1120,18 +1123,19 @@ export const TryApp: React.FC = () => {
               </details>
             </div>
 
-            {/* the better way first (the owner's decision of 2026-11-25: the same eye taken with the page's camera button, the phone's reduced capture mode of
-                capture="environment", came out visibly softer than with the phone's own camera app): one line, then the gold button opens the picker WITHOUT the
-                capture attribute (an iPhone offers its photo library, the camera and files; an Android phone its photo picker or a chooser with the camera) */}
-            <p data-testid="camera-first" className="text-xs text-zinc-300 text-center">{T.capture.cameraFirst}</p>
-            <button data-testid="pick-first" onClick={() => galleryRef.current?.click()} className="fx-gold gold-metal w-full py-4 rounded-2xl font-luxury font-bold uppercase tracking-widest text-sm flex items-center justify-center gap-2">
-              <Upload className="w-5 h-5" /> {T.capture.pickShots}
+            {/* which button comes first: 2026-11-25, the owner: the gallery first, because the same eye taken with the page's camera button (the phone's reduced
+                capture mode of capture="environment") came out visibly softer than with the phone's own camera app, and a grey line asked for that app first.
+                2026-11-26, the owner ("everything must happen in the page": leaving for the camera app and coming back lost the first ad visitors): the page's
+                camera is the gold button again, the gallery the quiet one beside the sample eye, and the advice about the phone's own camera is one tip under
+                "more tips". Next planned: a live camera inside the page, with zoom and several frames. The first camera shot starts a fresh collection. */}
+            <button data-testid="camera-direct" onClick={() => { clearShots(); fileRef.current?.click(); }} className="fx-gold gold-metal w-full py-4 rounded-2xl font-luxury font-bold uppercase tracking-widest text-sm flex items-center justify-center gap-2">
+              <Camera className="w-5 h-5" /> {T.capture.takePhoto}
             </button>
 
             <div className={`grid gap-3 ${offerSample ? 'grid-cols-2' : 'grid-cols-1'}`}>
-              {/* the page's own camera, the second and quieter choice; the first camera shot starts a fresh collection */}
-              <button data-testid="camera-direct" onClick={() => { clearShots(); fileRef.current?.click(); }} className="py-3 rounded-xl bg-white/5 border border-white/10 text-sm font-semibold flex items-center justify-center gap-2 hover:bg-white/10">
-                <Camera className="w-4 h-4 text-gold" /> {T.capture.takePhoto}
+              {/* a photo already on the phone, without the capture attribute (several at once: the gallery input is multiple) */}
+              <button data-testid="pick-photo" onClick={() => galleryRef.current?.click()} className="py-3 rounded-xl bg-white/5 border border-white/10 text-sm font-semibold flex items-center justify-center gap-2 hover:bg-white/10">
+                <Upload className="w-4 h-4 text-gold" /> {T.capture.pickShots}
               </button>
               {offerSample && (
                 <button onClick={trySample} className="py-3 rounded-xl bg-white/5 border border-white/10 text-sm font-semibold flex items-center justify-center gap-2 hover:bg-white/10">

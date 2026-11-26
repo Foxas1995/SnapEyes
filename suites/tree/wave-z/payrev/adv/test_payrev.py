@@ -153,7 +153,7 @@ r_a = hook(s2, eid=eid)
 r_b = hook(s2, eid=eid)
 r_c = hook(s2, typ="checkout.session.async_payment_succeeded")
 conf2 = mails_to("replay@example.com", n0)
-notes2 = [m for m in mails_to("info@snapeyes.com", n0) if m["subject"].startswith("SnapEyes: new order")]
+notes2 = [m for m in mails_to("info@snapeyes.com", n0) if m["subject"].startswith("SnapEyes: naujas užsakymas")]
 p2 = read_json(f"orders/{o2}/paid.json")
 check("2a AUD webhook replayed 3x: paid once, one confirmation, one owner note, A$49",
       r_a[1].get("new") is True and r_b[1].get("new") is False and r_c[1].get("new") is False and len(conf2) == 1

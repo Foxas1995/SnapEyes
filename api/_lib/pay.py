@@ -2973,9 +2973,10 @@ def note_wrong_currency(order, sess):
 def note_paid(order, paid):
     spec = paid.get("spec") or {}
     cur = paid.get("currency")
-    subject = f"SnapEyes: new order {order}, {amount_text(paid.get('amount_total') or 0, 'en', cur)}"
+    # the subject and the first line in Lithuanian, read at a glance in Gmail (the owner, 2026-11-26), the amount as the site writes it in Lithuanian ("24,97 €")
+    subject = f"SnapEyes: naujas užsakymas, {price_text(paid.get('amount_total') or 0, 'lt', cur)}"
     mm = paid.get("amount_mismatch") if isinstance(paid.get("amount_mismatch"), dict) else None
-    text = (f"Order {order} is paid ({'live' if paid.get('livemode') else 'TEST mode'}).\n"
+    text = (f"Apmokėtas užsakymas {order}{'' if paid.get('livemode') else ' (TEST režimas)'}\n"
             f"Eyes: {spec.get('eyes')}, style {spec.get('style')}, layout {spec.get('layout')}\n"
             # the names are a list for every new order: the owner reads them as the customer wrote them, with the date and the options that decide the picture
             f"Names: {names_text(spec) or '-'}\nDate: {W.date_clean(spec.get('date')) or '-'}\nOptions: {opts_text(spec) or '-'}\n"

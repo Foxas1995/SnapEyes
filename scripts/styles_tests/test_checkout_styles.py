@@ -986,6 +986,8 @@ finally:
 t_new, t_old = sent[0][2], sent[1][2]
 check("review of WP12: the owner's new-order note prints the names as 'Jūratė, Tomas' (never a Python list), the date and the options that decide the picture (swap, rotate, look)",
       "Names: Jūratė, Tomas\n" in t_new and "Date: 12 05\n" in t_new and "Options: swap, rotate 2, look vortex\n" in t_new and "['" not in t_new and '["' not in t_new, t_new)
+check("2026-11-26: the subject and the first line in Lithuanian, read at a glance in Gmail (the amount as the site writes it in Lithuanian)",
+      sent[0][1] == "SnapEyes: naujas užsakymas, " + pay.price_text(base_paid["amount_total"], "lt", "eur") and t_new.startswith("Apmokėtas užsakymas 260101-ab (TEST režimas)" + chr(10)), (sent[0][1], t_new[:80]))
 check("... an order of the old form (names as one text, no date, no options) prints as it did, with dashes for what it has not", "Names: Anna;Max\n" in t_old and "Date: -\n" in t_old and "Options: -\n" in t_old, t_old)
 check("opts_text: only the options that are on (swap false and rotate 0 are not), '' for none or for anything that is not options",
       pay.opts_text({"opts": {"swap": False, "rotate": 0}}) == "" and pay.opts_text({"opts": {"look": "echo"}}) == "look echo" and pay.opts_text({}) == "" and pay.opts_text(None) == ""

@@ -61,9 +61,9 @@ export const hr: TryCopy = {
 
   capture: {
     // the first screen's heading: the second part is set in gold
-    titleA: 'VAŠE OKO, ',
-    titleB: 'KAO UMJETNOST.',
-    lead: 'Fotografirajte jedno oko i za otprilike minutu vidjet ćete ga obnovljeno.',
+    titleA: 'FOTOGRAFIRAJTE',
+    titleB: ' SVOJE OKO.',
+    lead: 'Za minutu ćete ga vidjeti kao umjetničko djelo. Besplatno.',
     addTitle: (n: number) => `Dodajte ${n}. oko`,
     addLead: 'Oko vašeg partnera, vašeg djeteta ili vaše drugo oko. Isti koraci kao i prije: napravite nekoliko snimaka, a mi zadržavamo najbolju.',
     takeTurns: 'Fotografirate jedno drugo? Izmjenjujte se: jedno drži mobitel, drugo gleda ravno naprijed. Zatim se zamijenite.',
@@ -84,9 +84,9 @@ export const hr: TryCopy = {
     stepsOpenMore: 'Gledajte ravno naprijed i vrhom prsta nježno podignite gornji kapak, tako da ni kapak ni trepavice ne prelaze preko šarenice.',
     stepsShots: 'Napravite 3-5 snimaka i pošaljite sve.',
     stepsShotsMore: ' Između snimaka se malo okrenite. Mjerimo svaku i koristimo najoštriju; u pravom testu najbolja je snimka imala 3,7 puta više detalja od najslabije.',
-    cameraFirst: 'Fotografirajte oko kamerom svojeg mobitela (2x, uz prozor), a zatim ovdje odaberite fotografiju: tako je najoštrija.',
-    takePhoto: 'Snimite fotografiju',
-    pickShots: 'Odaberite 3-5 snimaka',
+    cameraTip: 'Najoštrija fotografija nastaje kamerom mobitela (2x, uz prozor): snimite je i učitajte ovdje.',
+    takePhoto: 'Fotografirajte oko',
+    pickShots: 'Učitajte fotografiju',
     consent: 'Spremiti fotografiju mojeg oka i rezultat u SnapEyes memoriju za učenje kako bi obnove s vremenom bile sve bolje. Anonimno, bez imena i lica. Brisanje možete zatražiti u bilo kojem trenutku.',
   },
 

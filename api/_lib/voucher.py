@@ -580,7 +580,7 @@ def on_paid(sess, source):
             rec = store.get_json(path, timeout=8.0) or rec
     # the owner's note, once (claimed: a note Resend could not take is tried again at the next call, the webhook's retry or the success page)
     pay.note_once(f"{TOP}/note_sold_{cid}.json", "voucher_sold",
-                  f"SnapEyes: gift voucher sold, {pay.amount_text(rec['value'], 'en', rec['currency'])}",
+                  f"SnapEyes: nupirktas dovanų kuponas, {pay.price_text(rec['value'], 'lt', rec['currency'])}",   # Lithuanian, at a glance (the owner, 2026-11-26)
                   f"A gift voucher was bought ({rec['kind']}: {pay.amount_text(rec['value'], 'en', rec['currency'])}, "
                   f"{'live' if rec.get('livemode') else 'TEST mode'}), valid until {rec.get('valid_until')}.\nStripe session {sid}, coupon {cid} "
                   f"(code ending {code[-4:]}).\nIf the buyer withdraws within 14 days and the voucher is unused: refund the payment "

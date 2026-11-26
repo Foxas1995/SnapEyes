@@ -7,8 +7,8 @@
 //             src/notfound/notfound.json, a way home that keeps the language and is 44 px high
 //   targets   the language buttons, the logo, the quiet link and the footer's links of the landing (390 px) and of /try (360 px) answer a touch 22 px above and below their
 //             centre (their hit area is 44 px high; elementFromPoint says what a finger would hit), without the layout moving
-//   fold      on a short phone (360 x 740, 375 x 667, 320 x 568) the "Take a photo" button is on the first screen of /try in all four languages, and on a tall one the guide is
-//             still read before it
+//   fold      on a phone (360 x 740, 390 x 844, 412 x 915, 375 x 667, 320 x 568) the gold camera button is on the first screen of /try in every language, on the first
+//             three the quiet row (upload, sample eye) too and the steps after it (2026-11-26)
 //   heic      a photo the browser cannot open (a .heic file) gets a sentence that says what to do (JPEG or PNG, or the phone), in all four languages
 import { mkdtempSync, readFileSync, existsSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -134,29 +134,21 @@ try {
     await page.close();
   }
 
-  // ---- the fold of /try
-  for (const [w, h] of [[360, 740], [375, 667], [320, 568]]) {
+  // ---- the fold of /try (2026-11-26: ads send strangers straight to /try; the gold button is the page's camera again, the quiet row under it uploads a photo or
+  // tries the sample eye). On every phone the gold button is on the first screen in every language; on 360 x 740, 390 x 844 and 412 x 915 the quiet row too,
+  // and the four steps come after the buttons
+  for (const [w, h, row] of [[360, 740, true], [390, 844, true], [412, 915, true], [375, 667, false], [320, 568, false]]) {
     for (const l of LANGS) {
       const page = await fresh(w, h);
       await page.goto(`${origin}/try?lang=${l}`);
       await page.loaded();
       await waitFor(page, "[...document.querySelectorAll('main button')].some((b) => b.className.includes('fx-gold'))", 20000);
       await sleep(3200);
-      const r = JSON.parse(await page.eval(`(() => { const b = [...document.querySelectorAll('main button')].find((x) => x.className.includes('fx-gold')); const q = b.getBoundingClientRect(); return JSON.stringify({ top: Math.round(q.top), bottom: Math.round(q.bottom), h: innerHeight }); })()`));
-      ok('fold', r.top >= 0 && r.bottom <= r.h, `${l} ${w}x${h}: the "Take a photo" button is at ${r.top}-${r.bottom}, the screen is ${r.h} px high`);
+      const r = JSON.parse(await page.eval(`(() => { const s = document.querySelector('main section'); const box = (e) => { const q = e.getBoundingClientRect(); return [Math.round(q.top), Math.round(q.bottom)]; }; const b = [...s.querySelectorAll('button')].find((x) => x.className.includes('fx-gold')); return JSON.stringify({ gold: box(b), camera: b.dataset.testid, row: [...s.querySelectorAll('.grid button')].map(box), guide: box(s.querySelector('[data-testid=capture-guide]')), h: innerHeight }); })()`));
+      ok('fold', r.camera === 'camera-direct' && r.gold[0] >= 0 && r.gold[1] <= r.h, `${l} ${w}x${h}: the gold camera button (${r.camera}) is at ${r.gold.join('-')}, the screen is ${r.h} px high`);
+      if (row) ok('fold', r.row.length >= 1 && r.row.every(([t, b]) => t >= 0 && b <= r.h) && r.guide[0] > Math.max(...r.row.map(([, b]) => b)), `${l} ${w}x${h}: the quiet row ${JSON.stringify(r.row)} on the first screen of ${r.h} px and the steps after it (${r.guide.join('-')})`);
       await page.close();
     }
-  }
-  for (const [w, h, wantCardFirst] of [[412, 915, true], [390, 844, false]]) {
-    const page = await fresh(w, h);
-    await page.goto(`${origin}/try?lang=en`);
-    await page.loaded();
-    await sleep(3500);
-    // the card of the steps by its test id (2026-10-22: the steps are one line each under the guide video, a list and no longer a grid)
-    const r = JSON.parse(await page.eval(`(() => { const s = document.querySelector('main section'); const card = s.querySelector('[data-testid=capture-guide]'); const b = [...s.children].find((c) => c.tagName === 'BUTTON'); return JSON.stringify({ card: Math.round(card.getBoundingClientRect().top), button: Math.round(b.getBoundingClientRect().top) }); })()`));
-    if (wantCardFirst) ok('fold', r.card < r.button, `${w}x${h}: on a tall phone the guide is read before the button (${JSON.stringify(r)})`);
-    else ok('fold', r.button < h, `${w}x${h}: ${JSON.stringify(r)}`);
-    await page.close();
   }
 
   // ---- a photo the browser cannot open

@@ -63,9 +63,9 @@ export const et: TryCopy = {
 
   capture: {
     // the first screen's heading: the second part is set in gold
-    titleA: 'SINU SILM, ',
-    titleB: 'KUNSTINA.',
-    lead: 'Pildista üht silma ja umbes minuti pärast näed seda taastatuna.',
+    titleA: 'PILDISTA',
+    titleB: ' OMA SILMA.',
+    lead: 'Minuti pärast näed seda kunstiteosena. Tasuta.',
     addTitle: (n: number) => `Lisa silm ${n}`,
     addLead: 'Sinu partner, sinu laps või sinu teine silm. Samad sammud mis enne: tee paar võtet ja me jätame alles parima.',
     takeTurns: 'Pildistate teineteist? Tehke seda kordamööda: üks hoiab telefoni, teine vaatab otse ette. Siis vahetage.',
@@ -86,9 +86,9 @@ export const et: TryCopy = {
     stepsOpenMore: 'Vaata otse ette ja tõsta ülemist laugu õrnalt sõrmeotsaga, et laug ega ripsmed ei ulatuks iirise peale.',
     stepsShots: 'Tee 3-5 võtet ja saada kõik.',
     stepsShotsMore: ' Pööra end võtete vahel veidi. Mõõdame iga võtet ja kasutame kõige teravamat; päris katses oli parimal võttel 3,7 korda rohkem detaile kui kõige nõrgemal.',
-    cameraFirst: 'Pildista silma oma telefoni kaameraga (2x, akna juures) ja vali siis foto siit: nii on see kõige teravam.',
-    takePhoto: 'Tee foto',
-    pickShots: 'Vali 3-5 võtet',
+    cameraTip: 'Kõige teravam foto tuleb telefoni kaameraga (2x, akna juures): pildista ja laadi see siia üles.',
+    takePhoto: 'Pildista silma',
+    pickShots: 'Laadi foto üles',
     consent: 'Salvesta minu silmafoto ja tulemus SnapEyesi õppemällu, et taastamine muutuks ajaga paremaks. Anonüümselt, ilma nime ja näota. Võid igal ajal paluda meil selle kustutada.',
   },
 

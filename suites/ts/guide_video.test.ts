@@ -70,8 +70,8 @@ export async function run(): Promise<Row[]> {
   // both pages ask for the page language's file, with the size of the poster
   const tryApp = read('src/try/TryApp.tsx'), how = read('src/landing/HowItWorks.tsx');
   const call = (head: string) => new RegExp(`<GuideVideo ${head}src=\\{\`/assets/howto/howto-11-\\$\\{lang\\}\\.mp4\`\\} poster=\\{\`/assets/howto/howto-11-\\$\\{lang\\}\\.jpg\`\\} w=\\{720\\} h=\\{720\\}`);
-  check('/try: the capture screen shows the guide in the page\'s language above the steps, at most 36 percent of the window tall (40 until 2026-11-25), less on a screen under about 600 px since the line about the phone\'s own camera (2026-11-25) (the photo button stays on the first screen)',
-    call('key=\\{lang\\} ').test(tryApp) && tryApp.indexOf('<GuideVideo') < tryApp.indexOf('data-testid="capture-guide"') && tryApp.includes("width: 'min(100%, 36vh, calc(100vh - 380px))'") && !/CaptureDiagram/.test(tryApp));
+  check('/try: the capture screen shows the guide in the page\'s language above the steps, at most 40 percent of the window tall (36 from 2026-11-25 to 11-26), less on a short screen (the gold camera button and the quiet row stay on the first screen: check:polish fold)',
+    call('key=\\{lang\\} ').test(tryApp) && tryApp.indexOf('<GuideVideo') < tryApp.indexOf('data-testid="capture-guide"') && tryApp.includes("width: 'min(100%, 40vh, calc(100vh - 400px))'") && !/CaptureDiagram/.test(tryApp));
   check('the landing: the first step of "How it works" shows the guide in the page\'s language instead of the camera phone (the owner: it showed the eye far too close)',
     call('').test(how) && !/kind="camera"/.test(how) && !/lp-cam/.test(read('src/landing/css/how.css')));
 
