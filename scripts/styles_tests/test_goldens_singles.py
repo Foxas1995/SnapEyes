@@ -164,10 +164,11 @@ DESIGNS_IN_REGISTRY = sorted(CT.ENGINE[i]["engine"]["design"] for i in SINGLES_S
 check("the registry's five single styles and the family agree: the designs of the family but powder (no registry style since 2026-10-28), same canvases (the geometry table of the kit has a row per design and canvas)",
       DESIGNS_IN_REGISTRY == sorted(d for d in S.DESIGNS if d != "powder") and "powder" in S.DESIGNS and all(CT.ENGINE[i]["canvases"] == list(S.FORMATS) for i in SINGLES_STYLES)
       and set(K.SPECS) == set(S.DESIGNS) and all(set(K.SPECS[d]["r"]) == set(S.FORMATS) and set(K.SPECS[d]["cy"]) == set(S.FORMATS) for d in K.SPECS), (DESIGNS_IN_REGISTRY, K.SPECS.keys()))
-PROTO_PICK = {"own": "solo.powder", "dark_brown": "solo.gold", "grey": "solo.radiance"}      # the prototype's PICK table: the recommended style per colour class
-check("the prototype's recommend and PICK are the registry's pick: own colours Powder Burst (its style, which draws the light family's dust since 2026-10-28), dark brown Celestial Gold, "
-      "grey Radiance (each with a reason key), and no other single style is picked",
-      {c: [i for i in SINGLES_STYLES + ["solo.powder"] if c in CT.STYLES[i]["pick"]] for c in PROTO_PICK} == {c: [d] for c, d in PROTO_PICK.items()}
+PROTO_PICK = {"own": None, "dark_brown": "solo.gold", "grey": "solo.radiance"}      # the prototype's PICK table: the recommended style per colour class (own colours: none of this family since 2026-11-26)
+check("the prototype's recommend and PICK are the registry's pick: dark brown Celestial Gold, grey Radiance (each with a reason key), and no other single style is picked; own colours are "
+      "no longer Powder Burst's (the owner's word of 2026-11-26: Halo of the light family is the first style chosen)",
+      {c: [i for i in SINGLES_STYLES + ["solo.powder"] if c in CT.STYLES[i]["pick"]] for c in PROTO_PICK} == {c: ([d] if d else []) for c, d in PROTO_PICK.items()}
+      and CT.STYLES["solo.halo"]["pick"] == ["own"]
       and all(CT.STYLES[i]["reason"].keys() == set(CT.STYLES[i]["pick"]) for i in SINGLES_STYLES + ["solo.powder"] if CT.STYLES[i]["pick"]) and not hasattr(S, "recommend") and not hasattr(S, "PICK"))
 check("every cost row the family needs exists: a preview row and a master row for each of the six designs",
       all(CO.known(f"singles.{d}", 1) and 1 in CO.PREVIEW[f"singles.{d}"] for d in S.DESIGNS))
