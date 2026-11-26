@@ -115,6 +115,8 @@ const en = {
 
   working: {
     finding: 'Finding your iris…',
+    // the waiting screens' slideshow (src/try/Slideshow.tsx): its one line
+    slidesLine: 'Soon your eye will look like this.',
     locating: 'Locating the iris and pupil',
     measuringSize: 'Measuring size and sharpness',
     checking: (n: number, done: number) => `Checking ${n} photos: ${done} of ${n} done`,
@@ -441,6 +443,8 @@ const en = {
     },
     // the customer's own words on the artwork: a name per eye, a date and (for an arrangement with a hollow) a family name. Nothing else is ever written on it.
     names: {
+      // the one quiet button that opens the words on the artwork (closed until pressed, open while a word is typed)
+      open: '+ Add a name or date',
       title: 'Words on the artwork (optional)',
       nameFor: (i: number, total: number) => (total === 1 ? 'Name (optional)' : `Name for eye ${i}`),
       date: 'Date (optional)',
@@ -653,6 +657,8 @@ const de: TryCopy = {
 
   working: {
     finding: 'Wir suchen Ihre Iris…',
+    // the waiting screens' slideshow (src/try/Slideshow.tsx): its one line
+    slidesLine: 'Bald sieht auch Ihr Auge so aus.',
     locating: 'Iris und Pupille werden gesucht',
     measuringSize: 'Größe und Schärfe werden gemessen',
     checking: (n: number, done: number) => `${n} Fotos werden geprüft: ${done} von ${n} fertig`,
@@ -923,6 +929,8 @@ const de: TryCopy = {
       look: 'Variante',
     },
     names: {
+      // the one quiet button that opens the words on the artwork (closed until pressed, open while a word is typed)
+      open: '+ Name oder Datum hinzufügen',
       title: 'Worte auf dem Kunstwerk (optional)',
       nameFor: (i: number, total: number) => (total === 1 ? 'Name (optional)' : `Name für Auge ${i}`),
       date: 'Datum (optional)',

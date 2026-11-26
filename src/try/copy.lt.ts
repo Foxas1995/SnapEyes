@@ -82,6 +82,8 @@ export const lt: TryCopy = {
 
   working: {
     finding: 'Ieškome Jūsų rainelės…',
+    // the waiting screens' slideshow (src/try/Slideshow.tsx): its one line
+    slidesLine: 'Tuoj taip atrodys ir Jūsų akis.',
     locating: 'Ieškome rainelės ir vyzdžio',
     measuringSize: 'Matuojame dydį ir ryškumą',
     checking: (n: number, done: number) => `Tikriname nuotraukas: ${done} iš ${n}`,
@@ -361,6 +363,8 @@ export const lt: TryCopy = {
       look: 'Variantas',
     },
     names: {
+      // the one quiet button that opens the words on the artwork (closed until pressed, open while a word is typed)
+      open: '+ Pridėti vardą ar datą',
       title: 'Žodžiai ant kūrinio (nebūtina)',
       nameFor: (i: number, total: number) => (total === 1 ? 'Vardas (nebūtina)' : `Akies ${i} vardas`),
       date: 'Data (nebūtina)',

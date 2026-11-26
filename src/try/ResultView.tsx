@@ -296,14 +296,15 @@ export const ResultView: React.FC<Props> = (p) => {
           </button>
         )}
       </div>
-      <p className="text-[11px] text-zinc-400 mt-2">{n < MAX_EYES ? T.result.addHint(MAX_EYES - n) : T.result.full(MAX_EYES)}</p>
-      {/* the day's free previews (8 per connection): said here, beside the button that spends the next one, so nobody meets the ceiling unwarned */}
-      {p.quota && <p data-testid="quota" className="text-[11px] text-zinc-400 mt-1">{T.result.quota(p.quota.left, p.quota.limit)}</p>}
+      {/* less text around the price (the owner, 2026-11-26): no line under the two buttons while another eye fits; the artwork's limit only once it is reached */}
+      {n >= MAX_EYES && <p className="text-[11px] text-zinc-400 mt-2">{T.result.full(MAX_EYES)}</p>}
+      {/* the day's free previews (8 per connection): said beside the button that spends the next one, and only once 2 or fewer are left */}
+      {p.quota && p.quota.left <= QUOTA_SHOW_AT && <p data-testid="quota" className="text-[11px] text-zinc-400 mt-1">{T.result.quota(p.quota.left, p.quota.limit)}</p>}
     </div>
   );
 
   return (
-    <section className={`flex flex-col gap-6${p.enter ? ' fx-step' : ''}`}>
+    <section className={`flex flex-col gap-6 ${p.enter ? 'fx-step' : ''}`}>{/* gap-6 then a space: written as gap-6${...} the stylesheet never had the class (the scanner reads gap-6$), so the screen's blocks touched until 2026-11-26 */}
       {/* One eye: its before/after is the surprise, so it leads. Two or more: the artwork of all of them is
           what the couple came for, so it leads and the per-eye before/after follows. */}
       {n > 1 ? <>{artwork}{beforeAfter}</> : <>{beforeAfter}{artwork}</>}
@@ -317,6 +318,9 @@ export const ResultView: React.FC<Props> = (p) => {
     </section>
   );
 };
+
+/** The day's free previews are counted on screen only from this many left (the owner, 2026-11-26: less text around the price). */
+export const QUOTA_SHOW_AT = 2;
 
 /** At most this many check lines say what was done (the owner, 2026-10-20: one compact block, no long text under the before/after). */
 const DID_MAX = 3;

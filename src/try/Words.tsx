@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { T } from './copy';
 import { DATE_MAX, FAMILY_MAX, NAME_MAX, NAMES_TOTAL_MAX, type NameProblem } from './names';
 
@@ -42,6 +42,15 @@ export const Words: React.FC<{ model: WordsModel }> = ({ model: w }) => {
   const dateProblems = w.problems.filter((p) => p.code === 'date_long' || (p.code === 'glyph' && p.field === 'date'));
   const general = w.problems.filter((p) => p.code === 'names_long');
   const famProblems = w.problems.filter((p) => p.code === 'family_long' || (p.code === 'glyph' && p.field === 'family'));
+  // closed behind one quiet button until pressed (the owner, 2026-11-26: less text around the price); open whenever a word is typed or one breaks a rule
+  const [opened, setOpened] = useState(false);
+  const typed = w.names.some((x) => x.trim()) || !!w.date.trim() || !!w.family.trim() || w.problems.length > 0;
+  if (!opened && !typed) {
+    return (
+      <button type="button" data-testid="words-open" onClick={() => setOpened(true)}
+        className="mt-3 self-start min-h-[44px] text-sm font-semibold text-zinc-200 underline underline-offset-4 decoration-zinc-500">{T.picker.names.open}</button>
+    );
+  }
   return (
     <fieldset data-testid="words" className="mt-4 border-0 p-0 m-0 min-w-0">
       <legend className="text-[10px] uppercase tracking-widest text-zinc-300 mb-1.5 p-0">{T.picker.names.title}</legend>

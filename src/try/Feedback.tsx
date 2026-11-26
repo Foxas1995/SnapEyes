@@ -44,7 +44,8 @@ export const FeedbackBox: React.FC<{ where: Place; ctx?: string; eyes?: number; 
         <p role="status" data-testid="feedback-thanks" className="mt-2 text-[12px] text-zinc-200">{message}</p>
       ) : (
         <form onSubmit={(e) => void submit(e)} className="mt-1.5 flex flex-col gap-2" noValidate>
-          <p className="text-[11px] text-zinc-400">{F.hint[where]}</p>
+          {/* under the result the heading and the chips say enough (the owner, 2026-11-26: less text around the price); the retake box keeps its line */}
+          {where !== 'result' && <p className="text-[11px] text-zinc-400">{F.hint[where]}</p>}
           <fieldset className="contents">
             <legend className="sr-only">{F.title[where]}</legend>
             <div className="flex flex-wrap gap-1.5">

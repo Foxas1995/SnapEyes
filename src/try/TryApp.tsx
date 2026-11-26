@@ -16,6 +16,7 @@ import { LangMenu, wantsLangMenu } from '../shared/LangMenu';
 import { ResultView } from './ResultView';
 import { quotaOf, type Quota } from './quota';
 import { Working } from './Working';
+import { Slideshow, analyzeSent } from './Slideshow';
 import { GuideVideo } from '../shared/GuideVideo';
 import { usePreviews } from './usePreviews';
 import { sendHelp } from './composeApi';
@@ -153,12 +154,15 @@ async function post<R>(path: string, body: Record<string, unknown>, answerNotOk 
   let r: Response;
   let raw: string;
   try {
-    r = await fetch(path, {
+    const pending = fetch(path, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       // visit: this tab's random visit (src/shared/visit.ts), so that the server's kept copies of its photo step lie together (api/_lib/keep.py)
       body: JSON.stringify(withCamp({ lang: T.lang, market: currentMarket(), visit: VISIT, ...body })),
     });
+    // the waiting screens' pictures load only once the first analysis has left the page (src/try/Slideshow.tsx)
+    if (path === '/api/analyze') analyzeSent();
+    r = await pending;
     // Vercel answers a timeout or an oversized body with text/plain, so read text first and never let
     // JSON.parse throw the real status away
     raw = await r.text();
@@ -1231,6 +1235,9 @@ export const TryApp: React.FC = () => {
             caption={working.sample ? T.working.sampleCaption : undefined} enter={stepped}
             note={calmNote(analysis?.quality) ?? undefined} />
         )}
+        {/* finished artworks while the page waits (the owner, 2026-11-26): one element for both waiting steps, so the show goes on from analysing to restoring;
+            under the progress, its square shrinks on a short screen so the heading and the progress stay on the first screen */}
+        {(step === 'analyzing' || step === 'processing') && <Slideshow size="min(84vw, 320px, max(140px, calc(100svh - 520px)))" />}
 
         {step === 'result' && STUDY && !studyAsk && pendingShots.length > 0 && (
           <p data-testid="study-pending" className="mb-4 text-xs text-sky-200 bg-sky-950/30 border border-sky-400/30 rounded-xl p-3">

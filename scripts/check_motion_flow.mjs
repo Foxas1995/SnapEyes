@@ -706,7 +706,11 @@ async function checkGuide() {
 // The live camera of the photo step (2026-11-26, behind ?cam=1: its switch, its codes for the counter and its words in eight languages in the page's own chunk; the
 // view itself is a chunk loaded only when the camera opens) moved the base of /try by +1,970 B JS (201,393 to 203,363 B) and of both pages by +197 B CSS (the
 // utilities of the camera view in the shared stylesheet: 14,282 to 14,479 B), measured on c85de06 against the tree with it. A product, not motion.
-const BEFORE = { try: { js: 152765 + 1961 + 4483 + 1144 + 1108 - 1373 - 3730 + 8838 + 5366 + 3068 + 29190 - 5390 + 632 + 1970, css: 10975 + 245 + 494 + 261 + 74 + 135 + 94 + 36 + 197 }, order: { js: 108723 + 414 + 110 + 3953 + 4052 + 794 + 13127 + 7903 + 483 + 2024 + 709 + 117 + 1707, css: 10975 + 245 + 494 + 261 + 74 + 135 + 94 + 36 + 197 } };
+// The owner's phone test of 2026-11-26 (calm): the waiting screens' slideshow of finished artworks (its small component and its line in eight languages; the
+// pictures themselves load only while the page waits), the words on the artwork behind one button and less text around the price, moved the base of /try by
+// +1,077 B JS (203,363 to 204,440 B) and of both pages by +66 B CSS (14,479 to 14,545 B: with the result screen's gap-6, missing from the stylesheet till now), measured on 5d918ac against the tree with it (/order -1 B JS, left in the
+// budget). The slideshow's fade and slow zoom are motion, but its JS is a product's (which pictures, when to load them); the budget is kept for the motion work.
+const BEFORE = { try: { js: 152765 + 1961 + 4483 + 1144 + 1108 - 1373 - 3730 + 8838 + 5366 + 3068 + 29190 - 5390 + 632 + 1970 + 1077, css: 10975 + 245 + 494 + 261 + 74 + 135 + 94 + 36 + 197 + 66 }, order: { js: 108723 + 414 + 110 + 3953 + 4052 + 794 + 13127 + 7903 + 483 + 2024 + 709 + 117 + 1707, css: 10975 + 245 + 494 + 261 + 74 + 135 + 94 + 36 + 197 + 66 } };
 function firstLoad(page) {
   const html = readFileSync(join(dist, page), 'utf8');
   const seen = new Map();

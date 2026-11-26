@@ -1,10 +1,9 @@
 import React from 'react';
 import { Lock, RefreshCcw } from 'lucide-react';
 import { T } from './copy';
-import { type Eye, MAX_EYES, billableEyes } from './multi';
+import { type Eye, billableEyes } from './multi';
 import { type BuyState, type RetakeView, lookName } from './picker';
 import { RetakeButtons } from './StylePicker';
-import { classStyle, styleName } from '../shared/styles';
 import { currencyOf, currentMarket, money, priceMinor, type PriceList } from '../shared/markets';
 import { listFor } from '../shared/pricing';
 import { checkoutLegal, legalEdition, ownConsent, consentBox } from '../shared/legal';
@@ -141,19 +140,15 @@ export const BuyCard: React.FC<Props> = (props) => {
   const cents = priceMinor(n, p.style, market, list);
   // the card names the selected style and the price of THAT style; the hints name price classes, and print a number of eyes only as far as this
   // deployment sells (orderable_max_eyes of GET /api/checkout): the pair price is not printed where two eyes cannot be ordered
-  const most = Math.max(1, Math.min(MAX_EYES, p.ordering?.maxEyes ?? MAX_EYES));
   const label = T.price.eyes(n, p.styleName);
-  const hint = n === 1
-    ? [T.price.black(styleName(classStyle('black')), fmt(list.one_eye_studio_black), fmt(list.one_eye_art)), most >= 2 ? T.price.duoOffer(fmt(list.two_eyes)) : ''].filter(Boolean).join(' ')
-    : most > 2 ? T.price.extra(fmt(list.two_eyes), fmt(list.each_further_eye), most) : '';
+  // the title row alone (the owner, 2026-11-26: "too many lines around the price"): no eyebrow over it and no paragraph of the other prices under it (the
+  // style tiles show each price); the card's name stays for a screen reader (aria-label)
   const head = (
     <>
-      <p className="text-[10px] uppercase tracking-widest text-zinc-400">{T.price.title}</p>
-      <div className="flex items-baseline justify-between gap-3 mt-1.5">
+      <div className="flex items-baseline justify-between gap-3">
         <span className="text-sm font-semibold text-zinc-100">{label}</span>
         <span data-testid="price" className="font-luxury text-2xl font-bold text-gold-light whitespace-nowrap">{fmt(cents)}</span>
       </div>
-      {hint && <p className="text-[11px] text-zinc-300 mt-2">{hint}</p>}
       {samples > 0 && <p className="text-[11px] text-amber-200/90 mt-2">{T.price.sampleNotCounted(samples)}</p>}
     </>
   );
@@ -225,9 +220,6 @@ export const BuyCard: React.FC<Props> = (props) => {
           <span>{waiverText}</span>
         </label>
       )}
-      {giftHere && <GiftField market={market} applied={gift} onApplied={(g) => p.onGift?.(g)} fmt={fmt} busy={p.busy} order={p.giftOrder ?? null} />}
-      <p className="text-[11px] text-zinc-400 mt-2 leading-relaxed"><LegalParts parts={legal.acceptance} lang={lang} /></p>
-
       <button data-testid="buy" type="button" onClick={p.onBuy} disabled={disabled}
         className={`mt-3 w-full min-h-[48px] px-3 py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 text-center ${disabled
           ? 'bg-white/5 border border-white/10 text-zinc-500 cursor-not-allowed'
@@ -245,9 +237,13 @@ export const BuyCard: React.FC<Props> = (props) => {
       {p.error && (
         <p role="alert" data-testid="buy-error" className="mt-3 text-xs text-rose-200 bg-rose-950/40 border border-rose-500/40 rounded-xl p-3">{p.error}</p>
       )}
-      {/* less text (the owner's decision of 2026-11-25: "people will not read that much"): the paragraph about Stripe's page went, the file line is one short line, and the tax sentences
-          are in the terms' price sections; the one line with the terms and the privacy policy is above the button */}
-      <p className="text-[11px] text-zinc-400 mt-3">{T.buy.footnote}</p>
+      {/* less text (2026-11-25: the paragraph about Stripe's page went, the file line is one short line, the tax sentences are in the terms' price sections;
+          2026-11-26: the gold button right under the price, then the file line, then in small print the gift voucher and the line with the terms, the privacy
+          policy and the withdrawal information. That line may follow our button: the button only opens Stripe's page, the order is made on Stripe's own pay
+          button (§ 312j Abs. 3 BGB, src/shared/legal.ts continueButton), so the terms are read before anything is bought) */}
+      <p data-testid="buy-file" className="text-[11px] text-zinc-300 mt-2">{T.buy.footnote}</p>
+      {giftHere && <GiftField market={market} applied={gift} onApplied={(g) => p.onGift?.(g)} fmt={fmt} busy={p.busy} order={p.giftOrder ?? null} />}
+      <p data-testid="buy-legal" className="text-[10px] text-zinc-400 mt-2 leading-relaxed"><LegalParts parts={legal.acceptance} lang={lang} /></p>
     </section>
   );
 };

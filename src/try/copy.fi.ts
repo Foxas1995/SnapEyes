@@ -91,6 +91,8 @@ export const fi: TryCopy = {
 
   working: {
     finding: 'Etsimme iiristäsi…',
+    // the waiting screens' slideshow (src/try/Slideshow.tsx): its one line
+    slidesLine: 'Pian silmäsikin näyttää tältä.',
     locating: 'Paikannamme iiriksen ja pupillin',
     measuringSize: 'Mittaamme koon ja terävyyden',
     checking: (n: number, done: number) => `Tarkistamme kuvia: ${done}/${n} valmiina`,
@@ -374,6 +376,8 @@ export const fi: TryCopy = {
       look: 'Ilme',
     },
     names: {
+      // the one quiet button that opens the words on the artwork (closed until pressed, open while a word is typed)
+      open: '+ Lisää nimi tai päivämäärä',
       title: 'Teksti taideteoksessa (valinnainen)',
       nameFor: (i: number, total: number) => (total === 1 ? 'Nimi (valinnainen)' : `Nimi silmälle ${i}`),
       date: 'Päivämäärä (valinnainen)',

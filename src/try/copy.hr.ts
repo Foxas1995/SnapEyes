@@ -93,6 +93,8 @@ export const hr: TryCopy = {
 
   working: {
     finding: 'Tražimo vašu šarenicu…',
+    // the waiting screens' slideshow (src/try/Slideshow.tsx): its one line
+    slidesLine: 'Uskoro će i vaše oko ovako izgledati.',
     locating: 'Pronalazimo šarenicu i zjenicu',
     measuringSize: 'Mjerimo veličinu i oštrinu',
     checking: (n: number, done: number) => `Provjeravamo fotografije: ${done} od ${n} gotovo`,
@@ -377,6 +379,8 @@ export const hr: TryCopy = {
       look: 'Varijanta',
     },
     names: {
+      // the one quiet button that opens the words on the artwork (closed until pressed, open while a word is typed)
+      open: '+ Dodajte ime ili datum',
       title: 'Riječi na umjetničkom djelu (nije obavezno)',
       nameFor: (i: number, total: number) => (total === 1 ? 'Ime (nije obavezno)' : `Ime za ${i}. oko`),
       date: 'Datum (nije obavezno)',

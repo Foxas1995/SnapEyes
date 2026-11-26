@@ -141,9 +141,15 @@ export async function run(): Promise<Row[]> {
   const hc = buy({ state: { kind: 'countSoon', n: 2 }, eyes: [eyeObj('a'), eyeObj('b')] });
   check('a count no style of can be bought: "Ordering for 2 eyes opens soon." and nothing to press', text(hc).includes('Ordering for 2 eyes opens soon.') && !has(hc, 'buy') && !has(hc, 'price'));
   const hn = buy({ state: { kind: 'normal' } });
+  // 2026-11-26 (the owner: too many lines around the price): the title row, then at once the gold button, the file line, and in small print the legal line;
+  // no eyebrow and no paragraph of the other prices (the style tiles show each price)
+  const at = (h: string, id: string) => h.indexOf(`data-testid="${id}"`);
   check('a style that can be bought: the price of the selected style on the label, the button, no named style the customer did not choose',
-    text(hn).includes('1 eye · Powder Burst') && has(hn, 'price') && has(hn, 'buy') && !/Couple Duo/.test(hn) && text(hn).includes('1 eye: €19.97 for') && text(hn).includes('€24.97 for every other style.'));
-  check('the hint names the pair price only where two eyes can be ordered (max_eyes)', text(buy({ ordering: { open: true, prices: { one_eye_studio_black: 1997, one_eye_art: 2497, two_eyes: 3997, each_further_eye: 1500 }, maxEyes: 1 } })).includes('Add a second eye') === false && text(hn).includes('Add a second eye: €39.97 for both.'));
+    text(hn).includes('1 eye · Powder Burst') && has(hn, 'price') && has(hn, 'buy') && !/Couple Duo/.test(hn));
+  check('the price row is followed at once by the button, then the file line, then the legal line; no eyebrow, no other price on the card',
+    at(hn, 'price') < at(hn, 'buy') && at(hn, 'buy') < at(hn, 'buy-file') && at(hn, 'buy-file') < at(hn, 'buy-legal') && !text(hn).includes('Price for this artwork')
+      && !text(hn).includes('€19.97') && !text(hn).includes('€39.97') && !text(hn).includes('Add a second eye')
+      && text(hn).includes('Terms of sale') && text(hn).includes('information on the right of withdrawal'), text(hn));
   const hw = buy({ wordsBlocked: true, waiver: true });
   check('a word the artwork font cannot draw shuts the button and says why', /data-testid="buy"[^>]*disabled/.test(hw) && text(hw).includes('Please fix the words on the artwork first'));
   check('while the tile list is asked for the card waits and says so; with nothing to select and nothing loading it is not shown at all', has(buy({ loading: true, state: { kind: 'none' } }), 'buy-wait') && buy({ state: { kind: 'none' } }) === '');
@@ -296,8 +302,12 @@ export async function run(): Promise<Row[]> {
   const hw2 = renderToStaticMarkup(createElement(Words, { model: wm }));
   check('a name field per eye with its own label and the 24 letter limit; a letter the font cannot draw is told under its field and marks it invalid',
     (hw2.match(/maxLength="24"/g) ?? []).length === 2 && text(hw2).includes('Name for eye 1') && text(hw2).includes('Name for eye 2') && hw2.includes('aria-invalid="true"') && text(hw2).includes('The artwork font cannot draw Ж. Please use another letter.') && /maxLength="20"/.test(hw2));
-  check('one eye: a single "Name (optional)"; the family name is not offered (no arrangement draws it yet)', text(renderToStaticMarkup(createElement(Words, { model: emptyWords(1) }))).includes('Name (optional)') && !has(renderToStaticMarkup(createElement(Words, { model: emptyWords(2) })), 'words-family')
-    && has(renderToStaticMarkup(createElement(Words, { model: { ...emptyWords(2), showFamily: true } })), 'words-family'));
+  // 2026-11-26: the words stay behind one quiet button until it is pressed or a word is typed (the owner: less text around the price)
+  const closed = renderToStaticMarkup(createElement(Words, { model: emptyWords(1) }));
+  check('the words on the artwork are closed behind one button ("+ Add a name or date") until pressed; a word already typed keeps them open',
+    has(closed, 'words-open') && text(closed) === '+ Add a name or date' && !has(closed, 'name-1') && has(renderToStaticMarkup(createElement(Words, { model: { ...emptyWords(1), date: '1 May' } })), 'name-1'), closed);
+  check('one eye: a single "Name (optional)"; the family name is not offered (no arrangement draws it yet)', text(renderToStaticMarkup(createElement(Words, { model: { ...emptyWords(1), names: ['A'] } }))).includes('Name (optional)') && !has(renderToStaticMarkup(createElement(Words, { model: { ...emptyWords(2), names: ['A', ''] } })), 'words-family')
+    && has(renderToStaticMarkup(createElement(Words, { model: { ...emptyWords(2), names: ['A', ''], showFamily: true } })), 'words-family'));
 
   // ---- reduced motion: nothing of the picker moves unless the visitor allows motion
   const rmHtml = hLoad + hLoadTile + renderToStaticMarkup(createElement(ResultView, rvProps([eyeObj('e1')], m1, { art: undefined })));

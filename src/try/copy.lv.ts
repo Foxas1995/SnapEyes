@@ -94,6 +94,8 @@ export const lv: TryCopy = {
 
   working: {
     finding: 'Meklējam jūsu varavīksneni…',
+    // the waiting screens' slideshow (src/try/Slideshow.tsx): its one line
+    slidesLine: 'Drīz arī jūsu acs izskatīsies tā.',
     locating: 'Atrodam varavīksneni un zīlīti',
     measuringSize: 'Mērām izmēru un asumu',
     checking: (n: number, done: number) => `Pārbaudām fotogrāfijas: gatavas ${done} no ${n}`,
@@ -379,6 +381,8 @@ export const lv: TryCopy = {
       look: 'Variants',
     },
     names: {
+      // the one quiet button that opens the words on the artwork (closed until pressed, open while a word is typed)
+      open: '+ Pievienot vārdu vai datumu',
       title: 'Vārdi mākslas darbā (nav obligāti)',
       nameFor: (i: number, total: number) => (total === 1 ? 'Vārds (nav obligāti)' : `Vārds ${i}. acij`),
       date: 'Datums (nav obligāti)',

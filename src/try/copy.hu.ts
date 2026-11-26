@@ -111,6 +111,8 @@ export const hu: TryCopy = {
 
   working: {
     finding: 'Keressük az íriszedet…',
+    // the waiting screens' slideshow (src/try/Slideshow.tsx): its one line
+    slidesLine: 'Hamarosan a te szemed is ilyen lesz.',
     locating: 'Az írisz és a pupilla megkeresése',
     measuringSize: 'Méret és élesség mérése',
     checking: (n: number, done: number) => `${n} fotó ellenőrzése: ${done}/${n} kész`,
@@ -387,6 +389,8 @@ export const hu: TryCopy = {
       look: 'Változat',
     },
     names: {
+      // the one quiet button that opens the words on the artwork (closed until pressed, open while a word is typed)
+      open: '+ Név vagy dátum hozzáadása',
       title: 'Szavak az alkotáson (nem kötelező)',
       nameFor: (i: number, total: number) => (total === 1 ? 'Név (nem kötelező)' : `${i}. szem neve`),
       date: 'Dátum (nem kötelező)',

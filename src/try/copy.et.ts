@@ -95,6 +95,8 @@ export const et: TryCopy = {
 
   working: {
     finding: 'Otsime sinu iirist…',
+    // the waiting screens' slideshow (src/try/Slideshow.tsx): its one line
+    slidesLine: 'Varsti näeb ka sinu silm nii välja.',
     locating: 'Leiame iirise ja pupilli',
     measuringSize: 'Mõõdame suurust ja teravust',
     checking: (n: number, done: number) => `Kontrollime fotosid: valmis ${done}/${n}`,
@@ -381,6 +383,8 @@ export const et: TryCopy = {
       look: 'Variant',
     },
     names: {
+      // the one quiet button that opens the words on the artwork (closed until pressed, open while a word is typed)
+      open: '+ Lisa nimi või kuupäev',
       title: 'Sõnad kunstiteosel (valikuline)',
       nameFor: (i: number, total: number) => (total === 1 ? 'Nimi (valikuline)' : `Nimi silmale ${i}`),
       date: 'Kuupäev (valikuline)',
