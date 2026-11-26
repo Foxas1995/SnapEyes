@@ -3,7 +3,7 @@
 // (the numbers measured and the anonymous context), the page drawn with a visit, and the photo step's visit (src/shared/visit.ts: random, per page load, never
 // stored). Pure page code, loaded through Vite's module runner by scripts/run_ts_tests.mjs; returns its results.
 import { readFileSync } from 'node:fs';
-import { areaText, codesText, outcomeText, type KeptStep } from '../../src/admin/Previews';
+import { areaText, codesText, missingText, outcomeText, stepTime, type KeptStep } from '../../src/admin/Previews';
 import { checkoutLegal } from '../../src/shared/legal';
 import { TAB_GROUPS } from '../../src/admin/AdminApp';
 import { VISIT } from '../../src/shared/visit';
@@ -44,6 +44,14 @@ export async function run(): Promise<Row[]> {
   check('the area line: the size against the cap and the visits of today against the ceiling; when the cap or the ceiling of the day holds keeping back, it says so and names the setting that raises it',
     a0.text.includes('123.4 MB iš 500 MB') && a0.text.includes('40 iš 100') && a0.held === null && !!a1.held && a1.held.includes('SNAPEYES_KEEP_MAX_MB')
       && !!a2.held && a2.held.includes('SNAPEYES_KEEP_VISITS_DAY') && areaText(undefined).held === null, JSON.stringify([a0, a1, a2]));
+  const local = new Date('2026-11-26T10:26:17Z');
+  const want = [local.getHours(), local.getMinutes(), local.getSeconds()].map((n) => String(n).padStart(2, '0')).join(':');
+  check('the time of a step is shown in the time zone of the browser (the files carry UTC); without a day, the UTC time as it is',
+    stepTime('2026-11-26', '102617') === want && stepTime(null, '102617') === '10:26:17', `${stepTime('2026-11-26', '102617')} / ${want}`);
+  const unread = missingText({ ...step(null), meta_error: true });
+  const broke = missingText(step(null));
+  check('a step whose record could not be read now says so (not red) and asks to refresh; only a step with no record at all "broke off" (red)',
+    unread.text.includes('nepavyko įkelti') && !unread.bad && broke.text.includes('nutrūko') && broke.bad, JSON.stringify([unread, broke]));
   const us = JSON.stringify(checkoutLegal('en', 'us').photoNotice);
   const eu = JSON.stringify(checkoutLegal('en', 'eu').photoNotice);
   check('the line of the photo step: the US one as before (only to make the artwork: a US visitor is not kept), the EU one without only and without the 30 days', us.includes('used only to make your artwork')

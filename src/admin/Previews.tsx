@@ -13,6 +13,8 @@ export interface KeptStep {
   time: string;
   step: 'analyze' | 'enhance' | 'compose';
   meta: Record<string, unknown> | null;
+  /** the step's record exists and could not be read now (not a step that broke off) */
+  meta_error?: boolean;
   pictures: Partial<Record<'photo' | 'before' | 'after' | 'art', string>>;
 }
 export interface KeptVisit { visit: string; steps: KeptStep[] }
@@ -78,15 +80,29 @@ export function codesText(s: KeptStep): string {
   return parts.filter(Boolean).join(' · ');
 }
 
-const StepRow: React.FC<{ s: KeptStep }> = ({ s }) => {
-  const out = outcomeText(s);
+/** A step's time in the browser's own time zone (the folder's day and the file's time are UTC): "12:26:17". */
+export function stepTime(day: string | null, t: string): string {
+  const utc = `${t.slice(0, 2)}:${t.slice(2, 4)}:${t.slice(4, 6)}`;
+  const d = day ? new Date(`${day}T${utc}Z`) : null;
+  if (!d || Number.isNaN(d.getTime())) return utc;
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+}
+
+/** What to say of a step without a record: it could not be read now (try again), or the step broke off before it wrote one. */
+export function missingText(s: KeptStep): { text: string; bad: boolean } {
+  return s.meta_error ? { text: 'Įrašo nepavyko įkelti: spauskite „Atnaujinti“', bad: false } : { text: 'Nėra rezultato (žingsnis nutrūko)', bad: true };
+}
+
+const StepRow: React.FC<{ s: KeptStep; day: string | null }> = ({ s, day }) => {
+  const out = outcomeText(s) ?? missingText(s);
   const pics = (['photo', 'before', 'after', 'art'] as const).filter((p) => s.pictures[p]);
   return (
     <li className="rounded-xl border border-white/10 bg-black/20 p-3 flex flex-col gap-2" data-testid="kept-step">
       <p className="text-sm flex flex-wrap gap-x-2">
-        <span className="font-mono text-white/70">{`${s.time.slice(0, 2)}:${s.time.slice(2, 4)}:${s.time.slice(4, 6)}`}</span>
+        <span className="font-mono text-white/70">{stepTime(day, s.time)}</span>
         <b>{STEP_LT[s.step] ?? s.step}</b>
-        {out ? <span className={out.bad ? 'text-red-300' : 'text-emerald-300'}>{out.text}</span> : <span className="text-red-300">Nėra rezultato (žingsnis nutrūko)</span>}
+        <span className={out.bad ? 'text-red-300' : s.meta ? 'text-emerald-300' : 'text-amber-300'}>{out.text}</span>
       </p>
       {pics.length > 0 && <div className="flex flex-wrap gap-2">{pics.map((p) => <Thumb key={p} src={s.pictures[p]} alt={PIC_LT[p]} size={150} />)}</div>}
       <p className={`text-[11px] ${MUTED} break-words`}>{codesText(s)}</p>
@@ -124,7 +140,7 @@ export const PreviewsPage: React.FC<{ call: Call }> = ({ call }) => {
   return (
     <div className="flex flex-col gap-4">
       <H2 right={<button type="button" className={BTN} onClick={() => void load()} disabled={busy}>Atnaujinti</button>}>Peržiūros</H2>
-      <p className={`text-xs ${MUTED}`}>Kiekviena nemokamos peržiūros nuotrauka ir rezultatas saugomi iki {data?.keep_days ?? 30} dienų (seniausios dienos ištrinamos anksčiau, jei viršijama riba). JAV lankytojų peržiūros nesaugomos. Be vardo, el. pašto ir IP adreso. Nuorodos galioja 10 min.</p>
+      <p className={`text-xs ${MUTED}`}>Kiekviena nemokamos peržiūros nuotrauka ir rezultatas saugomi iki {data?.keep_days ?? 30} dienų (seniausios dienos ištrinamos anksčiau, jei viršijama riba). JAV lankytojų peržiūros nesaugomos. Be vardo, el. pašto ir IP adreso.</p>
       {data && (() => { const a = areaText(data.area); return (
         <div className="flex flex-col gap-1" data-testid="kept-area">
           <p className={`text-xs ${MUTED}`}>{a.text}</p>
@@ -153,7 +169,7 @@ export const PreviewsPage: React.FC<{ call: Call }> = ({ call }) => {
             <h3 className="text-sm font-bold font-mono break-all">{v.visit}</h3>
             <button type="button" className={`${DANGER} !min-h-[32px] !px-2`} onClick={() => remove(v)}>Ištrinti</button>
           </div>
-          <ul className="flex flex-col gap-2">{v.steps.map((s) => <StepRow key={`${s.time}-${s.step}-${Object.keys(s.pictures).join()}`} s={s} />)}</ul>
+          <ul className="flex flex-col gap-2">{v.steps.map((s) => <StepRow key={`${s.time}-${s.step}-${Object.keys(s.pictures).join()}`} s={s} day={data.day} />)}</ul>
         </section>
       ))}
       {data && (data.offset > 0 || data.more) && (

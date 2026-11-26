@@ -731,7 +731,7 @@ def act_feedback_delete(body, who):
     return {"ok": True, "result": "deleted" if gone else "not_found", "audit_detail": "1 text" if gone else "none"}
 
 
-KEPT_SIGN = 600              # the links of the page Peržiūros: ten minutes
+KEPT_SIGN = 3600             # the links of the page Peržiūros: an hour (ten minutes until 2026-11-26: a page left open showed broken pictures)
 KEPT_PAGE = 12               # visits in one reply of that page
 
 
@@ -768,7 +768,7 @@ def a_kept(body, who):
         for k in order:
             s = steps[k]
             if s.get("meta_path"):
-                jobs.append(lambda s=s: s.__setitem__("meta", store.get_json(s.pop("meta_path"), timeout=6.0)))
+                jobs.append(lambda s=s: _kept_meta(s))
             for pic, path in list(s["pictures"].items()):
                 jobs.append(lambda s=s, pic=pic, path=path: s["pictures"].__setitem__(pic, store.signed_url(path, KEPT_SIGN)))
         each(jobs, width=12)
@@ -785,6 +785,21 @@ def a_kept(body, who):
     rows = [r for r in each([lambda v=v: one(v) for v in page], width=4) if isinstance(r, dict)]
     return {"ok": True, "on": KP.on(), "keep_days": KP.KEEP_DAYS, "days": all_days, "day": day, "visits": rows, "total": len(names), "offset": off,
             "more": off + KEPT_PAGE < len(names), "sign_seconds": KEPT_SIGN, "area": area}
+
+
+def _kept_meta(s):
+    """A step's JSON beside its pictures, read twice before giving up. A record that exists and could not be read is not a step that broke off:
+    meta_error tells the page to say so (2026-11-26: a slow first read showed the owner "the step broke off" for an accepted photo)."""
+    path = s.pop("meta_path")
+    for timeout in (6.0, 8.0):
+        try:
+            v = store.get_json(path, timeout=timeout)
+        except Exception:  # noqa
+            v = None
+        if v is not None:
+            s["meta"] = v
+            return
+    s["meta_error"] = True
 
 
 def act_kept_delete(body, who):

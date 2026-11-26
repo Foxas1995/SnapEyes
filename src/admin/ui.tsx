@@ -162,13 +162,18 @@ export const ExtLink: React.FC<{ href: unknown; children: React.ReactNode }> = (
 /** A thumbnail of a signed image link (only http(s)); a 4K file is loaded only on request. */
 export const Thumb: React.FC<{ src: unknown; alt: string; heavy?: boolean; size?: number }> = ({ src, alt, heavy = false, size = 140 }) => {
   const [show, setShow] = useState(!heavy);
+  // a picture that did not load is asked for once more (a signed link's first request sometimes fails); after that the box says so instead of a broken image
+  const [tries, setTries] = useState(0);
   const u = safeUrl(src);
+  useEffect(() => { setTries(0); }, [u]);
   if (!u) return null;
   return (
     <figure className="flex flex-col gap-1 min-w-0" style={{ width: size }}>
-      {show ? (
+      {show && tries >= 2 ? (
+        <div className="rounded-lg border border-white/10 bg-black flex items-center justify-center text-center text-[11px] text-amber-300 p-2" style={{ width: size, height: size }}>Nepavyko įkelti: spauskite „Atnaujinti“</div>
+      ) : show ? (
         <a href={u} target="_blank" rel="noopener noreferrer">
-          <img src={u} alt={alt} loading="lazy" width={size} height={size} className="rounded-lg border border-white/10 bg-black object-contain" style={{ width: size, height: size }} />
+          <img key={tries} src={u} alt={alt} loading="lazy" onError={() => window.setTimeout(() => setTries((n) => n + 1), 1200)} width={size} height={size} className="rounded-lg border border-white/10 bg-black object-contain" style={{ width: size, height: size }} />
         </a>
       ) : (
         <button type="button" className={`${BTN} !min-h-0`} style={{ width: size, height: size }} onClick={() => setShow(true)}>Rodyti 4K</button>
