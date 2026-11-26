@@ -65,17 +65,23 @@ export function capText(c: unknown): string {
     .filter(Boolean).join(', ');
 }
 
-/** The codes beside a step, short: the numbers the server measured and the anonymous context. */
-export function codesText(s: KeptStep): string {
-  const m = s.meta ?? {};
+/** The anonymous context of a step (the same for every step of a visit): campaign, device, browser, language, country. */
+export function contextText(s: KeptStep | undefined): string {
+  const m = s?.meta ?? {};
   const ctx = (m.ctx && typeof m.ctx === 'object' ? m.ctx : {}) as Record<string, unknown>;
   const camp = campText(['src', 'med', 'cmp', 'trm', 'cnt'].map((k) => str(ctx[k])).join('|').replace(/[|]+$/, ''));
+  return [camp, ctx.dev ? label(DEV_LT, str(ctx.dev)) : '', ctx.br ? label(BR_LT, str(ctx.br)) : '', ctx.lang ? label(LANG_LT, str(ctx.lang)) : '', ctx.cc ? str(ctx.cc).toUpperCase() : '']
+    .filter(Boolean).join(' · ');
+}
+
+/** The codes beside a step, short: the numbers the server measured and, unless the caller shows it once for the whole attempt, the anonymous context. */
+export function codesText(s: KeptStep, withContext = true): string {
+  const m = s.meta ?? {};
   const parts = [
     m.detail !== undefined ? `detalumas ${str(m.detail)}` : '', m.diameter_px !== undefined ? `rainelė ${str(m.diameter_px)} px` : '',
     m.glare_on_fibres_pct !== undefined ? `atspindys ${str(m.glare_on_fibres_pct)} %` : '', m.lid_wedge_pct ? `vokas ${str(m.lid_wedge_pct)} %` : '',
     m.source ? str(m.source) : '', capText(m.cap), m.qa_ok === false ? 'spalvos patikra nepraėjo' : '', m.retry ? `antras bandymas ${str(m.retry)}` : '',
-    m.eyes ? `${str(m.eyes)} ${m.eyes === 1 ? 'akis' : 'akys'}` : '', camp, ctx.dev ? label(DEV_LT, str(ctx.dev)) : '', ctx.br ? label(BR_LT, str(ctx.br)) : '',
-    ctx.lang ? label(LANG_LT, str(ctx.lang)) : '', ctx.cc ? str(ctx.cc).toUpperCase() : '',
+    m.eyes ? `${str(m.eyes)} ${m.eyes === 1 ? 'akis' : 'akys'}` : '', withContext ? contextText(s) : '',
   ];
   return parts.filter(Boolean).join(' · ');
 }
@@ -94,7 +100,39 @@ export function missingText(s: KeptStep): { text: string; bad: boolean } {
   return s.meta_error ? { text: 'Įrašo nepavyko įkelti: spauskite „Atnaujinti“', bad: false } : { text: 'Nėra rezultato (žingsnis nutrūko)', bad: true };
 }
 
-const StepRow: React.FC<{ s: KeptStep; day: string | null }> = ({ s, day }) => {
+export interface KeptAttempt { n: number; time: string; photos: KeptStep[]; rest: KeptStep[] }
+const secs = (t: string) => Number(t.slice(0, 2)) * 3600 + Number(t.slice(2, 4)) * 60 + Number(t.slice(4, 6));
+/** A visit's steps (in time order) as attempts, the NEWEST first, like the visits themselves: an attempt is the photos of one go (one tap of the camera or
+ *  one pick, sent within ATTEMPT_GAP_S of each other) with the restoration and the previews that followed. A photo after a restoration or a preview,
+ *  or after a pause, starts the next attempt. Inside an attempt the order is the order things happened in. (2026-11-26: the owner tried four times in one
+ *  tab and read one long list, newest at the bottom, as out of order.) */
+export const ATTEMPT_GAP_S = 45;
+export function attemptsOf(steps: KeptStep[]): KeptAttempt[] {
+  const out: KeptAttempt[] = [];
+  let prev: KeptStep | null = null;
+  for (const s of steps) {
+    const fresh = !prev || (s.step === 'analyze' && (prev.step !== 'analyze' || secs(s.time) - secs(prev.time) > ATTEMPT_GAP_S));
+    if (fresh) out.push({ n: out.length + 1, time: s.time, photos: [], rest: [] });
+    const a = out[out.length - 1];
+    (s.step === 'analyze' ? a.photos : a.rest).push(s);
+    prev = s;
+  }
+  return out.reverse();
+}
+
+/** One photo of an attempt, small: the picture, what the analysis said of it, its numbers. */
+const PhotoTile: React.FC<{ s: KeptStep }> = ({ s }) => {
+  const out = outcomeText(s) ?? missingText(s);
+  return (
+    <li className="rounded-xl border border-white/10 bg-black/20 p-2 flex flex-col gap-1" style={{ width: 166 }} data-testid="kept-step">
+      {s.pictures.photo ? <Thumb src={s.pictures.photo} alt={PIC_LT.photo} size={150} /> : <div className="rounded-lg border border-white/10 bg-black" style={{ width: 150, height: 150 }} />}
+      <p className={`text-xs font-semibold ${out.bad ? 'text-red-300' : s.meta ? 'text-emerald-300' : 'text-amber-300'}`}>{out.text}</p>
+      <p className={`text-[11px] ${MUTED} break-words`}>{codesText(s, false)}</p>
+    </li>
+  );
+};
+
+const StepRow: React.FC<{ s: KeptStep; day: string | null; withContext?: boolean }> = ({ s, day, withContext = true }) => {
   const out = outcomeText(s) ?? missingText(s);
   const pics = (['photo', 'before', 'after', 'art'] as const).filter((p) => s.pictures[p]);
   return (
@@ -105,8 +143,24 @@ const StepRow: React.FC<{ s: KeptStep; day: string | null }> = ({ s, day }) => {
         <span className={out.bad ? 'text-red-300' : s.meta ? 'text-emerald-300' : 'text-amber-300'}>{out.text}</span>
       </p>
       {pics.length > 0 && <div className="flex flex-wrap gap-2">{pics.map((p) => <Thumb key={p} src={s.pictures[p]} alt={PIC_LT[p]} size={150} />)}</div>}
-      <p className={`text-[11px] ${MUTED} break-words`}>{codesText(s)}</p>
+      <p className={`text-[11px] ${MUTED} break-words`}>{codesText(s, withContext)}</p>
     </li>
+  );
+};
+
+/** One attempt of a visit: its number and time, the context once, its photos side by side, then the restoration and the previews. */
+const AttemptBlock: React.FC<{ a: KeptAttempt; day: string | null; only: boolean }> = ({ a, day, only }) => {
+  const ctx = contextText([...a.photos, ...a.rest].find((s) => s.meta));
+  return (
+    <div className="flex flex-col gap-2" data-testid="kept-attempt">
+      <p className="text-sm flex flex-wrap gap-x-2 items-baseline">
+        <b>{only ? 'Bandymas' : `Bandymas ${a.n}`}</b>
+        <span className="font-mono text-white/70">{stepTime(day, a.time)}</span>
+        {ctx && <span className={`text-[11px] ${MUTED}`}>{ctx}</span>}
+      </p>
+      {a.photos.length > 0 && <ul className="flex flex-wrap gap-2">{a.photos.map((s, i) => <PhotoTile key={`${s.time}-${i}`} s={s} />)}</ul>}
+      {a.rest.length > 0 && <ul className="flex flex-col gap-2">{a.rest.map((s, i) => <StepRow key={`${s.time}-${s.step}-${i}`} s={s} day={day} withContext={false} />)}</ul>}
+    </div>
   );
 };
 
@@ -169,7 +223,9 @@ export const PreviewsPage: React.FC<{ call: Call }> = ({ call }) => {
             <h3 className="text-sm font-bold font-mono break-all">{v.visit}</h3>
             <button type="button" className={`${DANGER} !min-h-[32px] !px-2`} onClick={() => remove(v)}>Ištrinti</button>
           </div>
-          <ul className="flex flex-col gap-2">{v.steps.map((s) => <StepRow key={`${s.time}-${s.step}-${Object.keys(s.pictures).join()}`} s={s} day={data.day} />)}</ul>
+          {(() => { const at = attemptsOf(v.steps); return at.map((a, i) => (
+            <div key={`${a.n}-${a.time}`} className={i > 0 ? 'border-t border-white/10 pt-3' : ''}><AttemptBlock a={a} day={data.day} only={at.length === 1} /></div>
+          )); })()}
         </section>
       ))}
       {data && (data.offset > 0 || data.more) && (

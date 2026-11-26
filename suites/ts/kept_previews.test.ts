@@ -3,7 +3,7 @@
 // (the numbers measured and the anonymous context), the page drawn with a visit, and the photo step's visit (src/shared/visit.ts: random, per page load, never
 // stored). Pure page code, loaded through Vite's module runner by scripts/run_ts_tests.mjs; returns its results.
 import { readFileSync } from 'node:fs';
-import { areaText, codesText, missingText, outcomeText, stepTime, type KeptStep } from '../../src/admin/Previews';
+import { areaText, attemptsOf, codesText, contextText, missingText, outcomeText, stepTime, type KeptStep } from '../../src/admin/Previews';
 import { checkoutLegal } from '../../src/shared/legal';
 import { TAB_GROUPS } from '../../src/admin/AdminApp';
 import { VISIT } from '../../src/shared/visit';
@@ -52,6 +52,20 @@ export async function run(): Promise<Row[]> {
   const broke = missingText(step(null));
   check('a step whose record could not be read now says so (not red) and asks to refresh; only a step with no record at all "broke off" (red)',
     unread.text.includes('nepavyko įkelti') && !unread.bad && broke.text.includes('nutrūko') && broke.bad, JSON.stringify([unread, broke]));
+  const st = (time: string, s: KeptStep['step']): KeptStep => ({ time, step: s, meta: { outcome: 'x' }, pictures: {} });
+  // the tab of the owner on 2026-11-26: four photos and a result, then four more photos seven minutes later
+  const at = attemptsOf([st('150157', 'analyze'), st('150157', 'analyze'), st('150158', 'analyze'), st('150212', 'analyze'), st('150306', 'enhance'), st('150322', 'compose'),
+    st('150936', 'analyze'), st('150936', 'analyze'), st('150936', 'analyze'), st('150945', 'analyze')]);
+  check('a visit is shown as attempts, the newest first: the photos of one go together, then the restoration and the previews that followed; a photo after a result starts the next attempt',
+    at.length === 2 && at[0].n === 2 && at[0].time === '150936' && at[0].photos.length === 4 && at[0].rest.length === 0
+      && at[1].n === 1 && at[1].photos.length === 4 && at[1].rest.map((x) => x.step).join() === 'enhance,compose', JSON.stringify(at.map((a) => [a.n, a.time, a.photos.length, a.rest.length])));
+  const gap = attemptsOf([st('100000', 'analyze'), st('100020', 'analyze'), st('100200', 'analyze')]);
+  check('photos sent after a pause are another attempt (two shots of one go, then a retake two minutes later), and steps without a photo first still make one',
+    gap.length === 2 && gap[0].photos.length === 1 && gap[1].photos.length === 2 && attemptsOf([st('100000', 'compose')]).length === 1 && attemptsOf([]).length === 0, JSON.stringify(gap.map((a) => a.photos.length)));
+  const withCtx = step({ outcome: 'accepted', detail: 9, ctx: { src: 'fb', med: 'paid', dev: 'android', br: 'fb', lang: 'lt', cc: 'lt' } });
+  check('the context is written once for an attempt: a photo tile carries its numbers only, the context line the campaign, device, browser, language and country',
+    !codesText(withCtx, false).includes('LT') && codesText(withCtx, false).includes('detalumas 9') && contextText(withCtx).includes('LT') && contextText(withCtx).includes('Lietuvių') && contextText(undefined) === '',
+    `${codesText(withCtx, false)} | ${contextText(withCtx)}`);
   const us = JSON.stringify(checkoutLegal('en', 'us').photoNotice);
   const eu = JSON.stringify(checkoutLegal('en', 'eu').photoNotice);
   check('the line of the photo step: the US one as before (only to make the artwork: a US visitor is not kept), the EU one without only and without the 30 days', us.includes('used only to make your artwork')
