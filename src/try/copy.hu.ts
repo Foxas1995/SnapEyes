@@ -182,6 +182,15 @@ export const hu: TryCopy = {
           STEADY,
         ],
       },
+      // the whole face instead of one eye (api/analyze.py FAR_SHARE, 2026-11-26): only one eye, close; the zoom line and the mirror tip are the capture tips' own words
+      too_far: {
+        title: 'Túl messze a szem. Csak a szem kell, közelről',
+        reason: 'Ezen a fotón az egész arc látszik, ezért az íriszed túl kicsi.',
+        error: 'Csak egy szem legyen a képen, ne az egész arc. Hátsó kamera, kb. 10 cm-re a szemtől.',
+        retakeLine: 'Csak egy szem legyen a képen, ne az egész arc. Hátsó kamera, kb. 10 cm-re a szemtől.',
+        thumb: 'túl messze',
+        steps: ['Csak egy szem a képen, ne az egész arc', 'Hátsó kamera, 2x zoom, kb. 10 cm-re', 'Egyedül? A tükörben látod a kijelzőt'],
+      },
       // a lid over part of the iris (api/analyze.py EYELID_BLOCK_PCT): the studio would have to paint iris over it. The words
       // of the capture guide's open-eye step (stepsOpen, stepsOpenMore) and of api/_lib/analyze_hu.py TEXT_HU["eyelid"]
       eyelid: {

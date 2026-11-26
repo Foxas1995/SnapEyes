@@ -17,7 +17,7 @@ import { lv } from './copy.lv';
 
 /** The reasons api/analyze.py gives for blocking a shot (quality.block_reason). A blocked shot gets no work
  *  ticket, so the page offers only a retake. */
-export type BlockReason = 'too_blurry' | 'too_dark' | 'pupil_too_large' | 'too_small' | 'eyelid';
+export type BlockReason = 'too_blurry' | 'too_dark' | 'pupil_too_large' | 'too_small' | 'eyelid' | 'too_far';
 
 /** What the page says about a blocked shot (no verdict pill any more, the owner, 2026-10-22: the retake card's title says why). title: the retake
  *  card's heading; reason: why, in one line, on the single-photo card (the steps follow in the retake card, so the server's own message,
@@ -192,6 +192,15 @@ const en = {
           FOCUS,
           STEADY,
         ],
+      },
+      // the whole face instead of one eye (api/analyze.py FAR_SHARE, 2026-11-26): only one eye, close; the zoom line and the mirror tip are the capture tips' own words
+      too_far: {
+        title: 'Eye too far. We need just the eye, close up',
+        reason: 'This photo shows the whole face, so your iris is too small to use.',
+        error: 'Only one eye in the frame, not the whole face. Back camera, about 10 cm from the eye.',
+        retakeLine: 'Only one eye in the frame, not the whole face. Back camera, about 10 cm from the eye.',
+        thumb: 'too far',
+        steps: ['Only one eye in the frame, not the whole face', 'Back camera, 2x zoom, 10 cm away', 'Alone? A mirror shows you the screen'],
       },
       // an eyelid over part of the iris (api/analyze.py EYELID_BLOCK_PCT): the studio would paint iris over the lid.
       // A sideways glance lets the upper lid slide across the iris, so looking into the lens comes first
@@ -735,6 +744,15 @@ const de: TryCopy = {
           FOCUS_DE,
           STEADY_DE,
         ],
+      },
+      // the whole face instead of one eye (api/analyze.py FAR_SHARE, 2026-11-26): only one eye, close; the zoom line and the mirror tip are the capture tips' own words
+      too_far: {
+        title: 'Auge zu weit weg. Nur das Auge, von nah',
+        reason: 'Auf diesem Foto ist das ganze Gesicht, daher ist Ihre Iris zu klein.',
+        error: 'Nur ein Auge im Bild, nicht das ganze Gesicht. Rückkamera, etwa 10 cm vor dem Auge.',
+        retakeLine: 'Nur ein Auge im Bild, nicht das ganze Gesicht. Rückkamera, etwa 10 cm vor dem Auge.',
+        thumb: 'zu weit',
+        steps: ['Nur ein Auge im Bild, nicht das ganze Gesicht', 'Rückkamera, 2-fach Zoom, 10 cm Abstand', 'Allein? Im Spiegel sehen Sie den Bildschirm'],
       },
       eyelid: {
         title: 'Ihr Augenlid verdeckt einen Teil Ihrer Iris',

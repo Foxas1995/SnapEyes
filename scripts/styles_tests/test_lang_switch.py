@@ -278,6 +278,45 @@ ink = {t: round(float((np.asarray(L._watermark_layer(800, 800, 800.0, t).getchan
 check("the address alone is laid closer on the tile (iris.WATERMARK_STEP), so it covers about as much as the long words did (at least 80 % of their ink)",
       ink["SnapEyes.com"] >= 0.8 * ink[OLD_EN_TILE], ink)
 
+# ============================================================================================ 5. too far: the whole face instead of one eye (2026-11-26)
+section("5. too far: a refused photo of the whole face is told to bring one eye close; an accepted photo is never touched")
+from PIL import ImageFilter  # noqa: E402
+
+
+def analyze_photo(photo, lang="lt", **vision):
+    VISION.update({"box": [226, 225, 786, 785], "pupil": [425, 424, 587, 586], "glare": [], "sharp": "sharp", "occl": 2})
+    VISION.update(vision)
+    return post("/api/analyze", {"image": photo, "origWidth": 1024, "origHeight": 1024, "lang": lang})
+
+
+check("the share of the frame: from the locked circle (2r over the shorter side), else from the vision box (its two sides averaged, so the swapped order reads the same)",
+      abs(A.iris_share(True, 100, None, 1000, 800) - 0.25) < 1e-9 and abs(A.iris_share(False, 0, [400, 300, 500, 450], 1000, 800) - (100 + 120) / 2 / 800) < 1e-9
+      and A.iris_share(False, 0, None, 1000, 800) is None and A.FAR_SHARE == 0.20)
+far = {l: analyze_photo(PHOTO, l, box=[478, 478, 560, 560], pupil=[505, 505, 533, 533]) for l in ("lt", "en")}
+fq = {l: (a.get("quality") or {}) for l, (c, a) in far.items()}
+check("an iris spanning 8 % of the frame (a whole face): refused as too_far, no work ticket, the message is the table's sentence in every language",
+      all(c == 200 for c, _ in far.values()) and all(q.get("blocked") is True and q.get("block_reason") == "too_far" for q in fq.values())
+      and not any(a.get("ticket") for _, a in far.values()) and fq["lt"].get("message") == A.TEXT_LT["too_far"] and fq["en"].get("message") == A.BLOCK_MESSAGES["too_far"]
+      and all(fq["en"]["words"][l]["message"] == TABLES[l]["too_far"] for l in TABLES), {l: (q.get("block_reason"), q.get("locked")) for l, q in fq.items()})
+c0, base = analyze_photo(PHOTO, "en")
+_far = A.FAR_SHARE
+A.FAR_SHARE = 0.9                                    # every photo reads "far" now: only refusals may change
+try:
+    c1, same = analyze_photo(PHOTO, "en")
+    blur = base64.b64encode((lambda b: (Image.open(io.BytesIO(base64.b64decode(PHOTO))).filter(ImageFilter.GaussianBlur(9)).save(b, "JPEG", quality=90), b.getvalue())[1])(io.BytesIO())).decode()
+    c3, blur_far = analyze_photo(blur, "en", sharp="soft")
+finally:
+    A.FAR_SHARE = _far
+c2, blur_near = analyze_photo(blur, "en", sharp="soft")
+strip = lambda q: {k: v for k, v in (q or {}).items()}
+check("an accepted photo is never touched, even when its share is under the line: the same verdict, the same numbers, the same words, a work ticket all the same",
+      c0 == c1 == 200 and not base["quality"].get("blocked") and bool(base.get("ticket")) and bool(same.get("ticket")) and strip(same["quality"]) == strip(base["quality"]),
+      (base["quality"].get("verdict"), same["quality"].get("verdict"), same["quality"].get("block_reason")))
+check("a refused close-up keeps its own reason (here too blurry); the same refused photo is told too_far only when its share is under the line",
+      c2 == c3 == 200 and blur_near["quality"].get("blocked") is True and blur_near["quality"].get("block_reason") not in (None, "too_far")
+      and blur_far["quality"].get("block_reason") == "too_far" and not blur_far.get("ticket") and not blur_near.get("ticket"),
+      (blur_near["quality"].get("block_reason"), blur_far["quality"].get("block_reason")))
+
 ok = sum(RESULTS)
 print(f"\n{ok} of {len(RESULTS)} passed")
 sys.exit(0 if ok == len(RESULTS) else 1)

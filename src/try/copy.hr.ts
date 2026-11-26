@@ -164,6 +164,15 @@ export const hr: TryCopy = {
           STEADY,
         ],
       },
+      // the whole face instead of one eye (api/analyze.py FAR_SHARE, 2026-11-26): only one eye, close; the zoom line and the mirror tip are the capture tips' own words
+      too_far: {
+        title: 'Oko je predaleko. Treba samo oko, izbliza',
+        reason: 'Na ovoj fotografiji je cijelo lice, pa je vaša šarenica premala.',
+        error: 'U kadru treba biti samo jedno oko, ne cijelo lice. Stražnja kamera, oko 10 cm od oka.',
+        retakeLine: 'U kadru treba biti samo jedno oko, ne cijelo lice. Stražnja kamera, oko 10 cm od oka.',
+        thumb: 'predaleko',
+        steps: ['Samo jedno oko u kadru, ne cijelo lice', 'Kamera straga, 2x, 10 cm od oka', 'Sami? U ogledalu vidite zaslon'],
+      },
       // a lid over part of the iris (api/analyze.py EYELID_BLOCK_PCT): the studio would have to paint iris over it. The words
       // of the capture guide's open-eye step (stepsOpen, stepsOpenMore) and of api/_lib/analyze_hr.py TEXT_HR["eyelid"]
       eyelid: {

@@ -162,6 +162,15 @@ export const fi: TryCopy = {
           STEADY,
         ],
       },
+      // the whole face instead of one eye (api/analyze.py FAR_SHARE, 2026-11-26): only one eye, close; the zoom line and the mirror tip are the capture tips' own words
+      too_far: {
+        title: 'Silmä liian kaukana. Vain silmä, läheltä',
+        reason: 'Tässä kuvassa on koko kasvot, joten iiriksesi on liian pieni.',
+        error: 'Kuvaan vain yksi silmä, ei koko kasvoja. Takakamera, noin 10 cm silmästä.',
+        retakeLine: 'Kuvaan vain yksi silmä, ei koko kasvoja. Takakamera, noin 10 cm silmästä.',
+        thumb: 'liian kaukana',
+        steps: ['Vain yksi silmä kuvassa, ei koko kasvoja', 'Takakamera, 2x-zoomi, noin 10 cm silmästä', 'Yksin? Peilistä näet näytön'],
+      },
       // a lid over part of the iris (api/analyze.py EYELID_BLOCK_PCT): the studio would have to paint iris over it. The words
       // of the capture guide's open-eye step (stepsOpen, stepsOpenMore) and of api/_lib/analyze_fi.py TEXT_FI["eyelid"]
       eyelid: {

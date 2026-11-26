@@ -37,6 +37,7 @@ TEXT_HU = {
     "too_small": "Az íriszed túl kicsi ezen a fotón, ezért túl kevés látszik a saját mintázatából: a stúdiónak ki kellene "
                  "találnia. Tartsd a telefont kb. 10 cm-re a szemedtől, a hátsó kamerával 2x-es zoommal, hogy az írisz a "
                  "kép kb. harmadát kitöltse, koppints az íriszre az élességállításhoz, és fotózz újra.",
+    "too_far": "Túl messze van a szemed. Csak egy szem legyen a képen, ne az egész arc. Hátsó kamera, kb. 10 cm-re a szemtől.",
     "eyelid": "A szemhéjad ezen a fotón eltakarja az íriszed egy részét, ezért nem használtuk: a stúdiónak az íriszt a "
               "szemhéjra kellene festenie, és ez hamisnak tűnik. Kérjük, fotózd újra: nézz egyenesen a kamerába, ne "
               "ferdén, nyisd tágra a szemedet, egy ujjheggyel óvatosan emeld meg a felső szemhéjadat, és ügyelj rá, hogy "

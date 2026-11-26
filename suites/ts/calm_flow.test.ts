@@ -49,7 +49,7 @@ export async function run(): Promise<Row[]> {
   check('a usable photo goes straight on to the restoration whatever its verdict: the owner\'s own d01 (weak, Detail 29), an ok one, a good one, and a lamp-tinted good one',
     autoContinue(weak) && autoContinue(shot({ verdict: 'ok', detail: 55 })) && autoContinue(shot({ verdict: 'good', detail: 88 })) && autoContinue(lamp));
   check('... a photo the studio cannot restore still stops: the circle did not lock, or the engine blocked it (each of its reasons)',
-    !autoContinue(shot({ locked: false })) && ['too_blurry', 'too_dark', 'pupil_too_large', 'too_small', 'eyelid', 'something_new'].every((r) => !autoContinue(shot({ blocked: true, block_reason: r }))));
+    !autoContinue(shot({ locked: false })) && ['too_blurry', 'too_dark', 'pupil_too_large', 'too_small', 'eyelid', 'too_far', 'something_new'].every((r) => !autoContinue(shot({ blocked: true, block_reason: r }))));
   check('... "goes on" and "can be restored" are one rule now (autoContinue is usable), so nothing else can park a usable photo on a screen of its own',
     [weak, lamp, shot({ verdict: 'ok' }), shot({ locked: false }), shot({ blocked: true })].every((a) => autoContinue(a) === usable(a)));
   check('... the numbers stay in the answer: the best of several shots is still the one with the better verdict and Detail (the ranking reads them, the page does not show them)',
@@ -80,6 +80,16 @@ export async function run(): Promise<Row[]> {
     LANGS.every((l) => !('tag' in COPY[l].header)) && !/Private Atelier/.test(COPY_SRC + tryApp) && !/T\.header\.tag/.test(tryApp));
   check('a blocked photo keeps its one reason line and its retake steps (the engine\'s hard blocks are the only stop), in every language',
     LANGS.every((l) => { setCopyLang(l); const b = blockOf(shot({ blocked: true, block_reason: 'too_blurry' })); return !!b && b.reason.length > 30 && b.steps.length === 4 && b.title.length > 10; }));
+  // 2026-11-26: the whole face instead of one eye (api/analyze.py FAR_SHARE): short words in every language, three steps, the second and third the capture
+  // tips' own zoom line and mirror tip (one sentence is never written two ways), no dash
+  check('too far: a short title, one line, a short thumb word and three steps in every language; the zoom line and the mirror tip are the capture tips\' own words',
+    LANGS.every((l) => {
+      setCopyLang(l);
+      const b = blockOf(shot({ blocked: true, block_reason: 'too_far' }));
+      const tips = T.capture.steps;
+      return !!b && b === T.quality.blocks.too_far && b.steps.length === 3 && b.steps[1] === tips[1] && b.steps[2] === tips[0] && b.title.length <= 60 && b.thumb.length <= 14
+        && b.error === b.retakeLine && b.retakeLine.length <= 110 && !new RegExp('[' + String.fromCharCode(0x2013, 0x2014) + ']').test(JSON.stringify(b));
+    }) && new Set(LANGS.map((l) => { setCopyLang(l); return T.quality.blocks.too_far.title; })).size === LANGS.length);
   setCopyLang('en');
 
   // ---- 4. the Reveal's drag

@@ -717,7 +717,9 @@ async function checkGuide() {
 // off and the burnt or black stills replaced, 3x zoom, the live tab's distance line, all in the camera's chunk where possible; in the page's own chunk the new
 // words in eight languages and the tips' merged line) moved the base of /try by +1,167 B JS (205,077 to 206,244 B) and of both pages by +35 B CSS (14,549 to
 // 14,584 B), measured on ec3da6e against the tree with it (/order -12 B JS, left in the budget). Words and a product, not motion.
-const BEFORE = { try: { js: 152765 + 1961 + 4483 + 1144 + 1108 - 1373 - 3730 + 8838 + 5366 + 3068 + 29190 - 5390 + 632 + 1970 + 1077 + 637 + 1167, css: 10975 + 245 + 494 + 261 + 74 + 135 + 94 + 36 + 197 + 66 + 4 + 35 }, order: { js: 108723 + 414 + 110 + 3953 + 4052 + 794 + 13127 + 7903 + 483 + 2024 + 709 + 117 + 1707, css: 10975 + 245 + 494 + 261 + 74 + 135 + 94 + 36 + 197 + 66 + 4 + 35 } };
+// The refusal of a photo of the whole face (2026-11-26, too_far: its title, line, thumb word and three steps in eight languages in the page's own chunk)
+// moved the base of /try by +711 B JS (206,245 to 206,956 B), measured on e3c5b79 against the tree with it (the CSS and /order did not move). Words, not motion.
+const BEFORE = { try: { js: 152765 + 1961 + 4483 + 1144 + 1108 - 1373 - 3730 + 8838 + 5366 + 3068 + 29190 - 5390 + 632 + 1970 + 1077 + 637 + 1167 + 711, css: 10975 + 245 + 494 + 261 + 74 + 135 + 94 + 36 + 197 + 66 + 4 + 35 }, order: { js: 108723 + 414 + 110 + 3953 + 4052 + 794 + 13127 + 7903 + 483 + 2024 + 709 + 117 + 1707, css: 10975 + 245 + 494 + 261 + 74 + 135 + 94 + 36 + 197 + 66 + 4 + 35 } };
 function firstLoad(page) {
   const html = readFileSync(join(dist, page), 'utf8');
   const seen = new Map();

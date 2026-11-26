@@ -42,6 +42,7 @@ TEXT_LV = {
                  "to nāktos izdomāt. Turiet telefonu apmēram 10 cm no acs, ar aizmugurējo kameru un 2x tuvinājumu, lai "
                  "varavīksnene aizņem apmēram trešdaļu kadra, pieskarieties varavīksnenei, lai iefokusētu, un "
                  "fotografējiet vēlreiz.",
+    "too_far": "Acs ir pārāk tālu. Kadrā jābūt tikai vienai acij, nevis visai sejai. Aizmugurējā kamera, apmēram 10 cm no acs.",
     "eyelid": "Šajā fotogrāfijā plakstiņš aizsedz daļu jūsu varavīksnenes, tāpēc to neizmantojām: studijai nāktos "
               "uzzīmēt varavīksneni pāri plakstiņam, un tas izskatās neīsti. Lūdzu, nofotografējiet vēlreiz: skatieties "
               "taisni objektīvā, nevis slīpi, ar plaši atvērtu aci, ar pirksta galu saudzīgi paceliet augšējo plakstiņu "

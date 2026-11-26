@@ -40,6 +40,7 @@ TEXT_ET = {
     "too_small": "Sinu iiris on sellel fotol liiga väike, seega on selle enda mustrit näha liiga vähe: stuudio peaks selle "
                  "välja mõtlema. Hoia telefoni umbes 10 cm kaugusel silmast, tagakaamera 2x suurendusega, nii et iiris "
                  "täidab umbes kolmandiku kaadrist, puuduta teravustamiseks iirist ja pildista uuesti.",
+    "too_far": "Silm on liiga kaugel. Kaadrisse ainult üks silm, mitte terve nägu. Tagakaamera, umbes 10 cm silmast.",
     "eyelid": "Silmalaug katab sellel fotol osa sinu iirisest, seega me seda ei kasutanud: stuudio peaks maalima iirise "
               "silmalau peale ja see näeb võlts välja. Palun pildista uuesti, vaadates otse objektiivi, mitte viltu, "
               "silm pärani lahti: tõsta ülemist laugu õrnalt sõrmeotsaga ning hoia ripsmed ja ripsmetušš iiriselt "

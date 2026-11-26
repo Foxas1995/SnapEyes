@@ -40,6 +40,7 @@ TEXT_HR = {
     "too_small": "Vaša je šarenica na ovoj fotografiji premalena, pa se vidi premalo njezina vlastitog uzorka: studio bi ga "
                  "morao izmisliti. Držite telefon oko 10 cm od oka, sa stražnjom kamerom uz zum 2x, tako da šarenica "
                  "ispuni otprilike trećinu kadra, dodirnite šarenicu da se izoštri i fotografirajte ponovno.",
+    "too_far": "Oko je predaleko. U kadru treba biti samo jedno oko, ne cijelo lice. Stražnja kamera, oko 10 cm od oka.",
     "eyelid": "Vaša vjeđa na ovoj fotografiji prekriva dio šarenice, pa tu fotografiju nismo upotrijebili: studio bi morao "
               "naslikati šarenicu preko vjeđe, a to izgleda lažno. Molimo snimite je ponovno: gledajte ravno u objektiv, "
               "ne ukoso, širom otvorenog oka, vrhom prsta nježno podignite gornju vjeđu i pazite da trepavice i maskara "

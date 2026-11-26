@@ -39,6 +39,7 @@ TEXT_LT = {
                  "išgalvoti. Laikykite telefoną maždaug 10 cm nuo akies, galine kamera su 2x priartinimu, kad rainelė "
                  "užpildytų maždaug trečdalį kadro, bakstelėkite rainelę, kad kamera ją sufokusuotų, ir fotografuokite "
                  "dar kartą.",
+    "too_far": "Akis per toli. Kadre turi būti tik viena akis, ne visas veidas. Galinė kamera, apie 10 cm nuo akies.",
     "eyelid": "Šioje nuotraukoje Jūsų vokas dengia dalį rainelės, todėl jos nepanaudojome: studijai tektų ant voko piešti "
               "rainelę, o tai atrodo netikra. Nufotografuokite iš naujo: žiūrėkite tiesiai į kamerą, ne įstrižai, "
               "plačiai atmerkite akį, piršto galiuku švelniai pakelkite viršutinį voką ir saugokite, kad blakstienos ir "

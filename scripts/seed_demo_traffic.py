@@ -183,7 +183,7 @@ def journey(c, t0, dev, br, ordering):
         irs = pick(IRS)
         verdict = pick([("good", 36), ("ok", 34), ("weak", 22), ("no_eye", 8)])
         blocked = verdict == "weak" and R.random() < 0.45
-        reason = pick([("too_blurry", 5), ("too_small", 2), ("eyelid", 2), ("pupil_too_large", 1)]) if blocked else None
+        reason = pick([("too_blurry", 5), ("too_small", 2), ("eyelid", 2), ("pupil_too_large", 1), ("too_far", 2)]) if blocked else None
         usable = usable or (verdict in ("good", "ok") or (verdict == "weak" and not blocked))
         emit(t, "analyze", ok=verdict != "no_eye", verdict=verdict, detail=R.randint(15, 95), blocked=blocked, block_reason=reason,
              locked=verdict != "no_eye", res=res, ori=ori, irs=irs if verdict != "no_eye" else None, source=pick([("camera", 55), ("gallery", 45)]), ms=an_ms, **base)

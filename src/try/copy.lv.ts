@@ -165,6 +165,15 @@ export const lv: TryCopy = {
           STEADY,
         ],
       },
+      // the whole face instead of one eye (api/analyze.py FAR_SHARE, 2026-11-26): only one eye, close; the zoom line and the mirror tip are the capture tips' own words
+      too_far: {
+        title: 'Acs ir pārāk tālu. Vajag tikai aci, no tuvuma',
+        reason: 'Šajā fotogrāfijā ir visa seja, tāpēc jūsu varavīksnene ir pārāk maza.',
+        error: 'Kadrā jābūt tikai vienai acij, nevis visai sejai. Aizmugurējā kamera, apmēram 10 cm no acs.',
+        retakeLine: 'Kadrā jābūt tikai vienai acij, nevis visai sejai. Aizmugurējā kamera, apmēram 10 cm no acs.',
+        thumb: 'pārāk tālu',
+        steps: ['Kadrā tikai viena acs, nevis visa seja', 'Aizmugurējā kamera, 2x, 10 cm no acs', 'Viens? Spogulī redzēsiet ekrānu'],
+      },
       // a lid over part of the iris (api/analyze.py EYELID_BLOCK_PCT): the studio would have to paint iris over it. The words
       // of the capture guide's open-eye step (stepsOpen, stepsOpenMore) and of api/_lib/analyze_lv.py TEXT_LV["eyelid"]
       eyelid: {

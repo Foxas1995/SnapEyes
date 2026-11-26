@@ -486,6 +486,36 @@ BLOCK_SMALL_MESSAGE = ("Your iris is too small in this photo, so too little of i
                        "the iris fills about a third of the frame, tap the iris to focus and shoot again.")
 BLOCK_MESSAGES["too_small"] = BLOCK_SMALL_MESSAGE
 
+# ---- too far: the whole face instead of one eye (2026-11-26: a paid visitor's ten selfies in six minutes, each of the whole face and each from
+# farther away, all refused as too blurry or unlocked; she never learned that we want one eye from about 10 cm). The share of the frame the iris
+# spans (its diameter over the photo's shorter side) tells a face from an eye whatever the camera's resolution. It only RELABELS a photo that is
+# refused anyway (blocked for any reason, or a circle that did not lock): an accepted photo stays accepted with the same verdict, ticket and numbers.
+# For an unlocked circle the vision model's iris box gives the share (the refined circle is not trustworthy there). Closer is the first thing to fix,
+# so it wins over every other reason. FAR_SHARE, measured 2026-11-26 by the local analysis: her ten kept photos read 0.053 to 0.163 (the largest an
+# unlocked circle, read from the vision box); the owner's three private fixtures read 0.27, 0.28 and 0.42 or more (2r of the frame's width, a lower
+# bound), the AI sample eye 0.56, his close shot of today about 0.33 (975 px of about 3000). His far shots of today (about 0.15) were accepted and stay so:
+# the line only relabels refusals. 0.20 sits 0.04 above her largest and 0.07 under the smallest close-up
+FAR_SHARE = 0.20
+BLOCK_MESSAGES["too_far"] = ("Your eye is too far away. We need just one eye in the frame, not the whole face. Back camera, about 10 cm from "
+                             "the eye.")
+
+
+def iris_share(locked, r, box, W, H):
+    """The iris diameter over the photo's shorter side: from the locked circle (radius r in the photo's pixels), else from the vision model's iris
+    box (thousandths of each side; its two sides averaged, so a box in the swapped order reads the same). None when there is nothing to read."""
+    try:
+        side = float(min(W, H))
+        if side <= 0:
+            return None
+        if locked and r:
+            return 2.0 * float(r) / side
+        if isinstance(box, (list, tuple)) and len(box) == 4:
+            d = ((box[2] - box[0]) * W / 1000.0 + (box[3] - box[1]) * H / 1000.0) / 2.0
+            return d / side if d > 0 else None
+    except Exception:  # noqa
+        return None
+    return None
+
 # ---- the eyelid block. Lid skin, the lash line or lashes over part of the iris (a shot at an angle, where the upper
 # lid cuts across the iris, or an eye not opened wide) are painted over with iris fibres by the studio model, and the
 # artwork looks fake, as if seen through the lid (the owner, 2026-09-29: Drive photos d02/d04/d05, test photos 06,
@@ -610,6 +640,7 @@ TEXT_DE = {
                  "müsste es erfinden. Halten Sie das Smartphone etwa 10 cm vor Ihr Auge, mit der Rückkamera und 2-fachem "
                  "Zoom, sodass die Iris etwa ein Drittel des Bildes füllt, tippen Sie zum Scharfstellen auf die Iris und "
                  "fotografieren Sie erneut.",
+    "too_far": "Ihr Auge ist zu weit weg. Wir brauchen nur ein Auge im Bild, nicht das ganze Gesicht. Rückkamera, etwa 10 cm vor dem Auge.",
     "eyelid": "Ihr Augenlid verdeckt auf diesem Foto einen Teil Ihrer Iris, daher haben wir es nicht verwendet: Das Studio "
               "müsste Iris über das Lid malen, und das wirkt unecht. Bitte nehmen Sie es neu auf und schauen Sie dabei gerade "
               "in die Kamera, nicht schräg, mit weit geöffnetem Auge: Heben Sie das Oberlid sanft mit einer Fingerspitze an "
@@ -812,6 +843,10 @@ def _analyze(body, box):
     if shake is not None and shake[0] and shake[1] >= SHAKE_CONF:
         blocked, block_by = True, "shake"
         reason = block_reason(block_by, dark_iris, label)
+    # the whole face instead of one eye: a photo refused anyway is told to come closer (FAR_SHARE); an accepted one is never touched
+    share = iris_share(locked, r, box, W, H)
+    if share is not None and share < FAR_SHARE and (blocked or not locked):
+        blocked, block_by, reason = True, "far", "too_far"
     # a reflection sitting on the pupil hides nothing recoverable: say so instead of pretending to restore it
     on_pupil = False
     if pupil_r and v.get("glare_boxes"):
@@ -884,6 +919,7 @@ def _analyze(body, box):
                "direction_fine": None if direction_fine is None else round(direction_fine, 3),
                "softness": None if softness is None else round(softness, 3),
                "blocked": blocked, "block_by": block_by, "block_reason": reason, "pupil_size": pupil_size,
+               "iris_share": None if share is None else round(share, 3),
                "covered_pct": None if cover is None else cover["covered_pct"],
                "lid_wedge_pct": None if cover is None else cover["wedge_pct"],
                "lid_side": None if cover is None else cover["side"], "lid_tilt": None if cover is None else cover["tilt"]}
@@ -902,6 +938,7 @@ def _analyze(body, box):
                     "verdict": verdict, "detail": detail, "locked": bool(locked), "blocked": bool(blocked), "block_by": block_by, "diameter_px": int(diam_orig),
                     "glare_on_fibres_pct": round(glare_fib, 1), "occlusion_pct": occl, "pupil_size": pupil_size,
                     "lid_wedge_pct": None if cover is None else cover["wedge_pct"], "res": res, "ori": ori, "source": E.device_source(device),
+                    "iris_share": None if share is None else round(share, 3),
                     "cap": E.capture_codes((device or {}).get("cap")) or None})
     E.record("analyze", ok=True, verdict=verdict, detail=detail, blocked=bool(blocked), block_reason=reason, locked=bool(locked), shake_asked=bool(locked) and basis < FIBRE_OK and block_by in (None, "shake"), lang=lang, device=E.device_class(device), source=E.device_source(device),
              res=res, ori=ori, irs=E.photo_classes(ow, oh, diam_orig)[2], kept=kept, **E.capture_codes((device or {}).get("cap")))

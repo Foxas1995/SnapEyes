@@ -40,6 +40,7 @@ TEXT_FI = {
     "too_small": "Iiriksesi on tässä kuvassa liian pieni, joten sen omaa kuviota näkyy liian vähän: studio joutuisi "
                  "keksimään sen. Pidä puhelinta noin 10 cm:n päässä silmästäsi, käytä takakameraa ja 2x-zoomia niin, että "
                  "iiris täyttää noin kolmasosan kuvasta, tarkenna napauttamalla iiristä ja ota kuva uudelleen.",
+    "too_far": "Silmä on liian kaukana. Kuvaan vain yksi silmä, ei koko kasvoja. Takakamera, noin 10 cm silmästä.",
     "eyelid": "Silmäluomesi peittää tässä kuvassa osan iiriksestäsi, joten emme käyttäneet kuvaa: studio joutuisi "
               "maalaamaan iiristä luomen päälle, ja se näyttää tekaistulta. Ota kuva uudelleen: katso suoraan linssiin, "
               "älä vinosti, pidä silmä aivan auki, nosta yläluomea varovasti sormenpäällä ja pidä ripset ja ripsiväri "

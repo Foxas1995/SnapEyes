@@ -153,6 +153,15 @@ export const lt: TryCopy = {
           STEADY,
         ],
       },
+      // the whole face instead of one eye (api/analyze.py FAR_SHARE, 2026-11-26): only one eye, close; the zoom line and the mirror tip are the capture tips' own words
+      too_far: {
+        title: 'Akis per toli. Reikia tik akies, iš arti',
+        reason: 'Šioje nuotraukoje visas veidas, todėl Jūsų rainelė per maža.',
+        error: 'Kadre turi būti tik viena akis, ne visas veidas. Galinė kamera, apie 10 cm nuo akies.',
+        retakeLine: 'Kadre turi būti tik viena akis, ne visas veidas. Galinė kamera, apie 10 cm nuo akies.',
+        thumb: 'per toli',
+        steps: ['Tik viena akis kadre, ne visas veidas', 'Galinė kamera, 2x, 10 cm nuo akies', 'Vienas? Prieš veidrodį matysite ekraną'],
+      },
       // a lid over part of the iris (api/analyze.py EYELID_BLOCK_PCT): the studio would have to paint iris over it. The words
       // of the capture guide's open-eye step (stepsOpen, stepsOpenMore) and of api/_lib/analyze_lt.py TEXT_LT["eyelid"]
       eyelid: {
