@@ -9,7 +9,9 @@ export const giftMarket = (m: Market): boolean => currencyOf(m) === 'eur' && leg
 // prints until it is used up). api/_lib/voucher.py AMOUNTS is the server's list; suites/ts/gift.test.ts holds the two to the same numbers.
 export const GIFT_AMOUNTS = [3000, 6000, 10000, 12000, 17000] as const;
 export type GiftAmount = (typeof GIFT_AMOUNTS)[number];
-export const DEFAULT_GIFT_AMOUNT: GiftAmount = 10000;
+// The amount the page opens with: the smallest (the owner's word of 2026-11-26: the first two ad visitors who went on to pay saw 100 euros preselected
+// and left; 100 until then).
+export const DEFAULT_GIFT_AMOUNT: GiftAmount = 3000;
 
 /** Stripe's minimum charge in euros (0.50 EUR): what is left to pay after a voucher is 0 or at least this (api/_lib/voucher.py MIN_CHARGE). */
 export const MIN_CHARGE = 50;

@@ -33,8 +33,8 @@ export async function run(): Promise<Row[]> {
   const py = readFileSync('api/_lib/voucher.py', 'utf8');
   const m = /^AMOUNTS = \(([0-9, ]+)\)/m.exec(py);
   const server = m ? m[1].split(',').map((x) => Number(x.trim())) : [];
-  check('the five amounts of the gift page are the server\'s (api/_lib/voucher.py AMOUNTS): 30, 60, 100, 120 and 170 EUR, and 100 is chosen first',
-    JSON.stringify([...GIFT_AMOUNTS]) === JSON.stringify(server) && JSON.stringify(server) === '[3000,6000,10000,12000,17000]' && DEFAULT_GIFT_AMOUNT === 10000, JSON.stringify(server));
+  check('the five amounts of the gift page are the server\'s (api/_lib/voucher.py AMOUNTS): 30, 60, 100, 120 and 170 EUR, and the smallest, 30, is chosen first (the owner, 2026-11-26)',
+    JSON.stringify([...GIFT_AMOUNTS]) === JSON.stringify(server) && JSON.stringify(server) === '[3000,6000,10000,12000,17000]' && DEFAULT_GIFT_AMOUNT === 3000, JSON.stringify(server));
 
   // the words of the gift page
   check('every language has one short line per amount, said as an example ("for example"), no dash, and the rule is 12 months without "one order"', LANGS.every((l) => {
