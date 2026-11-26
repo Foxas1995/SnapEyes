@@ -639,6 +639,9 @@ export const TryApp: React.FC = () => {
   /** One photo from the phone's camera (the capture input). Measured at once and kept if it is the best so far,
    *  so the customer can shoot, see the score, and shoot again until one is good. */
   const onCameraShot = async (file: Blob) => {
+    // the 'photo' step of the counter: the first shot of a set (a retake is not a second photo step). Until 2026-11-26 only the gallery counted it,
+    // so a photo taken with the camera button never showed in the funnel, and the result's "took" time was missing for it
+    if (!shotsRef.current.length) { photoAt = Date.now(); count('photo', T.lang, currentMarket()); }
     sampleRef.current = false;
     setError(null); setShotNote(null);
     const t = targetsOf(analysis);
@@ -1127,13 +1130,15 @@ export const TryApp: React.FC = () => {
               <Camera className="w-5 h-5" /> {T.capture.takePhoto}
             </button>
 
-            <div className={`grid gap-3 ${offerSample ? 'grid-cols-2' : 'grid-cols-1'}`}>
+            {/* the sample eye is offered from 640 px up only (the owner, 2026-11-26: not needed on that page; a phone has one thing to do, take the photo;
+                a computer has no camera to hold to an eye, so there it stays as the way to see a result) */}
+            <div className={`grid gap-3 grid-cols-1 ${offerSample ? 'sm:grid-cols-2' : ''}`}>
               {/* a photo already on the phone, without the capture attribute (several at once: the gallery input is multiple) */}
               <button data-testid="pick-photo" onClick={() => galleryRef.current?.click()} className="py-3 rounded-xl bg-white/5 border border-white/10 text-sm font-semibold flex items-center justify-center gap-2 hover:bg-white/10">
                 <Upload className="w-4 h-4 text-gold" /> {T.capture.pickShots}
               </button>
               {offerSample && (
-                <button onClick={trySample} className="py-3 rounded-xl bg-white/5 border border-white/10 text-sm font-semibold flex items-center justify-center gap-2 hover:bg-white/10">
+                <button data-testid="sample-eye" onClick={trySample} className="hidden sm:flex py-3 rounded-xl bg-white/5 border border-white/10 text-sm font-semibold items-center justify-center gap-2 hover:bg-white/10">
                   <Sparkles className="w-4 h-4 text-gold" /> {T.capture.sampleButton}
                 </button>
               )}
