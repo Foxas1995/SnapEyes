@@ -318,6 +318,7 @@ export const lt: TryCopy = {
     recommended: 'Rekomenduojama',
     reasons: {
       'reason.solo_powder.own': 'Jūsų pačių spalvos, paverstos milteliais',
+      'reason.solo_halo.own': 'Jūsų pačių spalvos, virtusios šviesa',
       'reason.solo_gold.dark_brown': 'Su auksu tamsiai rudos akys švyti',
       'reason.solo_radiance.grey': 'Sidabrinė šviesa pilkoms akims',
       'reason.duo_collision_infinity.own': 'Dvi rainelės, viena begalybė',

@@ -334,6 +334,7 @@ export const hr: TryCopy = {
     recommended: 'Preporučeno',
     reasons: {
       'reason.solo_powder.own': 'Vaše vlastite boje, pretvorene u prah',
+      'reason.solo_halo.own': 'Vaše vlastite boje, pretvorene u svjetlo',
       'reason.solo_gold.dark_brown': 'Zlato daje sjaj tamnosmeđim očima',
       'reason.solo_radiance.grey': 'Srebrnasto svjetlo za sive oči',
       'reason.duo_collision_infinity.own': 'Dvije šarenice, jedna beskonačnost',

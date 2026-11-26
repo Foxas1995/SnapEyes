@@ -63,7 +63,7 @@ Fields of an entry (all are required):
 """
 STYLES_SCHEMA = 1
 PLATES_VERSION = 1
-DEFAULT_STYLE = "solo.powder"
+DEFAULT_STYLE = "solo.halo"
 EFFECTIVE_DEFAULT = "preview"
 STYLES = {
     "solo.clean": {
@@ -94,8 +94,8 @@ STYLES = {
         "stage_by_eyes": {},
         "price_class": "art",
         "gate": "advisory",
-        "pick": ["own"],
-        "reason": {"own": "reason.solo_powder.own"},
+        "pick": [],
+        "reason": {},
         "tile_order": 1,
         "work_side": {"1": 4096},
         "accent": []
@@ -247,8 +247,8 @@ STYLES = {
         "stage_by_eyes": {},
         "price_class": "art",
         "gate": "advisory",
-        "pick": [],
-        "reason": {},
+        "pick": ["own"],
+        "reason": {"own": "reason.solo_halo.own"},
         "tile_order": 10,
         "work_side": {"1": 4096},
         "accent": []

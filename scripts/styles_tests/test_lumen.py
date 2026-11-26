@@ -155,10 +155,10 @@ check("the registry names exactly the eight styles of the family, each with its 
       {i: CT.ENGINE[i]["engine"]["design"] for i in LUMEN_IDS} == LUMEN and [CT.STYLES[i]["tile_order"] for i in LUMEN_IDS if i in OWN] == [7, 8, 9, 10, 11, 12, 13]
       and CT.STYLES["solo.powder"]["tile_order"] == 1 and sorted(LU.DESIGNS) == sorted(LUMEN.values()), {i: CT.ENGINE[i]["engine"] for i in LUMEN_IDS})
 check("each is a style of one eye of the solo group: its name, its slug (Supernova shares the old legacy Supernova's, which the registry allows for one name), "
-      "one layout, the art price class, no accent, a 4096 px working copy; no pick for the six (the recommended tile stays the release 1 table, where Powder Burst is the pick for own colours, with its reason)",
+      "one layout, the art price class, no accent, a 4096 px working copy; one pick in the family: Halo for own colours, with its reason (the owner's word of 2026-11-26; Powder Burst was the pick until then)",
       all(CT.STYLES[i]["name"] == NAMES[i] and CT.STYLES[i]["slug"] == SLUGS[i] and CT.STYLES[i]["group"] == "solo" and CT.STYLES[i]["eyes"] == [1, 1]
           and CT.STYLES[i]["layouts"] == {"1": ["single"]} and CT.STYLES[i]["legacy"] == 0 and CT.STYLES[i]["price_class"] == "art"
-          and CT.STYLES[i]["pick"] == ([] if i in OWN else ["own"]) and CT.STYLES[i]["reason"] == ({} if i in OWN else {"own": "reason.solo_powder.own"})
+          and CT.STYLES[i]["pick"] == (["own"] if i == "solo.halo" else []) and CT.STYLES[i]["reason"] == ({"own": "reason.solo_halo.own"} if i == "solo.halo" else {})
           and CT.STYLES[i]["accent"] == [] and CT.STYLES[i]["work_side"] == {"1": 4096} for i in LUMEN_IDS)
       and CT.STYLES["supernova"]["slug"] == "supernova" and CT.STYLES["supernova"]["name"] == "Supernova", "")
 check("the stage is live (a ceiling, raised in the reviewed change of 2026-10-27: the admin page can lower it, never raise it; nothing is orderable before the owner's tick) and the gate policy is "

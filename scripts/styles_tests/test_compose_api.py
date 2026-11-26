@@ -299,10 +299,10 @@ def tile_list(n, recs, stages=None, admin=False):
 
 
 LIVE3 = {"solo.powder": "live", "solo.gold": "live", "solo.radiance": "live"}
-p_own, p_brown, p_grey = (tile_list(1, [dict(GOOD, cls=c)], LIVE3) for c in ("own", "dark_brown", "grey"))
+p_own, p_brown, p_grey = (tile_list(1, [dict(GOOD, cls=c)], dict(LIVE3, **{"solo.halo": "live"})) for c in ("own", "dark_brown", "grey"))
 p_grey_soon = tile_list(1, [dict(GOOD, cls="grey")], dict(LIVE3, **{"solo.radiance": "preview"}))
-check("the pick is the first buyable tile whose pick table lists the colour class, with the key of its reason line (own colours: Powder Burst, dark brown: Celestial Gold, grey: Radiance while it is live)",
-      (p_own["pick"], p_own["reason"]) == ("solo.powder", "reason.solo_powder.own") and (p_brown["pick"], p_brown["reason"]) == ("solo.gold", "reason.solo_gold.dark_brown")
+check("the pick is the first buyable tile whose pick table lists the colour class, with the key of its reason line (own colours: Halo since 2026-11-26, dark brown: Celestial Gold, grey: Radiance while it is live)",
+      (p_own["pick"], p_own["reason"]) == ("solo.halo", "reason.solo_halo.own") and (p_brown["pick"], p_brown["reason"]) == ("solo.gold", "reason.solo_gold.dark_brown")
       and (p_grey["pick"], p_grey["reason"]) == ("solo.radiance", "reason.solo_radiance.grey"))
 check("a tile that is only Soon (preview) is never the pick, and the reason line follows the FINAL pick: grey eyes with Radiance still Soon get another pick and no reason line",
       p_grey_soon["pick"] != "solo.radiance" and p_grey_soon["reason"] is None and any(t["id"] == "solo.radiance" and t["stage"] == "preview" and not t["pick"] for t in p_grey_soon["tiles"]),

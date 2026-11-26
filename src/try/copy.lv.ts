@@ -336,6 +336,7 @@ export const lv: TryCopy = {
     recommended: 'Ieteicams',
     reasons: {
       'reason.solo_powder.own': 'Jūsu pašu krāsas, pārvērstas pulverī',
+      'reason.solo_halo.own': 'Jūsu pašu krāsas, pārvērstas gaismā',
       'reason.solo_gold.dark_brown': 'Zelts liek tumši brūnām acīm mirdzēt',
       'reason.solo_radiance.grey': 'Sudrabaina gaisma pelēkām acīm',
       'reason.duo_collision_infinity.own': 'Divas varavīksnenes, viena bezgalība',

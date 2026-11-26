@@ -338,6 +338,7 @@ export const et: TryCopy = {
     recommended: 'Soovitatud',
     reasons: {
       'reason.solo_powder.own': 'Sinu enda värvid, pulbriks muudetud',
+      'reason.solo_halo.own': 'Sinu enda värvid, valguseks muudetud',
       'reason.solo_gold.dark_brown': 'Kuld paneb tumepruunid silmad särama',
       'reason.solo_radiance.grey': 'Hõbedane valgus hallidele silmadele',
       'reason.duo_collision_infinity.own': 'Kaks iirist, üks lõpmatus',

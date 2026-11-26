@@ -292,8 +292,8 @@ FILE_EFF = re.search(r'^EFFECTIVE_DEFAULT = "([a-z]*)"\s*$', read("api/_lib/styl
 FILE_DEF = re.search(r'^DEFAULT_STYLE = "([a-z][a-z0-9_.]*)"\s*$', read("api/_lib/styles_registry.py"), re.M)
 check("EFFECTIVE_DEFAULT is one line of the registry file, 'preview', and the catalogue reads it: a ceiling raised in the file makes nothing orderable by itself",
       bool(FILE_EFF) and FILE_EFF.group(1) == "preview" == R.EFFECTIVE_DEFAULT == CT.EFFECTIVE_DEFAULT, (FILE_EFF and FILE_EFF.group(1), CT.EFFECTIVE_DEFAULT))
-check("DEFAULT_STYLE is Powder Burst (a v3 style of one eye that customers can see: the registry names it for the grey-eye fallback), and the legacy engine keeps its own default",
-      bool(FILE_DEF) and FILE_DEF.group(1) == "solo.powder" == CT.DEFAULT_STYLE and CT.ceiling(CT.DEFAULT_STYLE, 1) == "live"
+check("DEFAULT_STYLE is Halo (the owner's word of 2026-11-26: Halo is the first style chosen, in place of Powder Burst; a v3 style of one eye that customers can see), and the legacy engine keeps its own default",
+      bool(FILE_DEF) and FILE_DEF.group(1) == "solo.halo" == CT.DEFAULT_STYLE and CT.ceiling(CT.DEFAULT_STYLE, 1) == "live"
       and L.LEGACY_DEFAULT == LEGACY[0] == "celestial_gold" and L.LEGACY_DEFAULT in L.STYLES and CT.DEFAULT_STYLE not in L.STYLES, (CT.DEFAULT_STYLE, L.LEGACY_DEFAULT))
 check("the legacy engine still draws with no style named (its own default: the one it always drew), and an id it does not know falls back to it, not to a v3 id",
       L.compose.__defaults__ is not None and L.LEGACY_DEFAULT in L.compose.__defaults__ and L.LEGACY_DEFAULT in L.compose_multi.__defaults__, (L.compose.__defaults__, ))

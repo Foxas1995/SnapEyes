@@ -245,6 +245,8 @@ def scenario(s):
     s["solo.elements"]["stage"] = "preview"
     s["solo.universe"].update(pick=["own"], reason={"own": "reason.solo_universe.own"}, tile_order=1)
     s["solo.powder"]["tile_order"] = 2
+    s["solo.powder"].update(pick=["own"], reason={"own": "reason.solo_powder.own"})   # the pick of release 1; since 2026-11-26 the registry's own-colour pick is Halo,
+    s["solo.halo"].update(pick=[], reason={})                                          # which this scenario does not build
 
 
 GATE_OK = {"lid": {"ok": True}, "fill": {"ok": True}}
@@ -266,7 +268,7 @@ with patched(public=scenario, built=("singles", "universe", "collision")):
     check("a hard style on an eye without a sealed gate value is held back with the reason reseal (a version 1 seal)",
           {x["id"]: x["why"] for x in C.tiles_for(1, [{"cls": "own"}])}["solo.universe"] == "reseal")
     check("the recommended tile is never one the customer cannot buy: a gate-failed pick moves on to the next, and to the default at the end",
-          C.pick_for(1, bad_fill) == "solo.powder" and C.pick_for(1, [{"cls": "own"}]) == "solo.powder")
+          C.pick_for(1, bad_fill) == "solo.powder" and C.pick_for(1, [{"cls": "own"}]) == "solo.powder", (C.pick_for(1, bad_fill), C.pick_for(1, [{"cls": "own"}])))
     pairs = [{"cls": "own", "gate": GATE_OK, "pupil": {"cls": "bar"}}, {"cls": "own", "gate": GATE_OK, "pupil": {"cls": "round"}}]
     d2 = {x["id"]: x for x in C.tiles_for(2, pairs, admin=True)}
     # WP10 review fix: the collision engine raises NotOffered for a bar pupil in EVERY design (Kiss too), so every pair tile of it says bar_pupil; this check used to
@@ -773,7 +775,7 @@ NEG_BATCH = [   # label, mutation(case, root), a sentence the check must say
     ("a work_side of 8192", pub(lambda s: s["solo.powder"].update(work_side={"1": 8192})), "must be a size from 512 to 4096"),
     ("a work_side for the legacy engine", pub(lambda s: s["celestial_gold"].update(work_side={"1": 2048})), "the legacy engine has its own limits"),
     ("two tiles with one tile_order", pub(lambda s: s["solo.splash"].update(tile_order=s["solo.powder"]["tile_order"])), "tile_order 1 is also"),
-    ("a reason without its class", pub(lambda s: s["solo.powder"].update(reason={})), "reason must have a key for exactly the classes of pick"),
+    ("a reason without its class", pub(lambda s: s["solo.halo"].update(reason={})), "reason must have a key for exactly the classes of pick"),
     ("an accent on a v3 style", pub(lambda s: s["solo.powder"].update(accent=[1, 2, 3])), "accent is for the legacy styles only"),
     ("legacy styles with different layouts",
      pub(lambda s: s["supernova"].update(layouts={"1": ["single"], "2": ["duo"], "3": ["row"], "4": ["row"], "5": ["galaxy"], "6": ["galaxy"], "7": ["galaxy"], "8": ["galaxy"]})),
@@ -783,7 +785,7 @@ NEG_BATCH = [   # label, mutation(case, root), a sentence the check must say
     ("a style without an engine entry", eng(lambda e: e.pop("duo.gold")), 'no entry for the style "duo.gold"'),
     ("a fill_side of 4096", eng(lambda e: e["solo.universe"].update(fill_side=4096)), "fill_side must be 0 or a size up to 1536"),
     ("an unknown rule set", eng(lambda e: e["solo.powder"].update(gate_rules="eyelid")), "gate_rules must be one of lid, fill"),
-    ("an unknown DEFAULT_STYLE", lambda c, r: sub(c, r, "api/_lib/styles_registry.py", 'DEFAULT_STYLE = "solo.powder"', 'DEFAULT_STYLE = "solo.ghost"'),
+    ("an unknown DEFAULT_STYLE", lambda c, r: sub(c, r, "api/_lib/styles_registry.py", 'DEFAULT_STYLE = "solo.halo"', 'DEFAULT_STYLE = "solo.ghost"'),
      'DEFAULT_STYLE "solo.ghost" is not a style of the registry'),
     ("a v3 id that is not group.name", lambda c, r: sub(c, r, "api/_lib/styles_registry.py", '"solo.powder": {', '"powder": {'), 'style "powder": a v3 id is "'),
     ("a literal that is not JSON any more", lambda c, r: sub(c, r, "api/_lib/styles_registry.py", '"slug": "powder-burst",', '"slug": "powder-burst"'), "cannot be read as JSON"),

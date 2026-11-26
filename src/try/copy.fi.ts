@@ -331,6 +331,7 @@ export const fi: TryCopy = {
     recommended: 'Suositeltu',
     reasons: {
       'reason.solo_powder.own': 'Omat värisi, jauheeksi muuttuneina',
+      'reason.solo_halo.own': 'Omat värisi, valoksi muuttuneina',
       'reason.solo_gold.dark_brown': 'Kulta saa tummanruskeat silmät hehkumaan',
       'reason.solo_radiance.grey': 'Hopeista valoa harmaille silmille',
       'reason.duo_collision_infinity.own': 'Kaksi iiristä, yksi äärettömyys',

@@ -389,6 +389,7 @@ const en = {
     // the line under the recommended tile, by the key the server sends (api/_lib/styles_registry.py reason): chosen by the colour of the eyes, never by price
     reasons: {
       'reason.solo_powder.own': 'Your own colours, turned to powder',
+      'reason.solo_halo.own': 'Your own colours, turned to light',
       'reason.solo_gold.dark_brown': 'Gold makes dark brown eyes glow',
       'reason.solo_radiance.grey': 'Silver light for grey eyes',
       'reason.duo_collision_infinity.own': 'Two irises, one infinity',
@@ -901,6 +902,7 @@ const de: TryCopy = {
     recommended: 'Empfohlen',
     reasons: {
       'reason.solo_powder.own': 'Ihre eigenen Farben, zu Pulver geworden',
+      'reason.solo_halo.own': 'Ihre eigenen Farben, zu Licht geworden',
       'reason.solo_gold.dark_brown': 'Gold lässt dunkelbraune Augen leuchten',
       'reason.solo_radiance.grey': 'Silbernes Licht für graue Augen',
       'reason.duo_collision_infinity.own': 'Zwei Iriden, eine Unendlichkeit',

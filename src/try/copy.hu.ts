@@ -344,6 +344,7 @@ export const hu: TryCopy = {
     recommended: 'Ajánlott',
     reasons: {
       'reason.solo_powder.own': 'A saját színeid, porrá változtatva',
+      'reason.solo_halo.own': 'A saját színeid, fénnyé változtatva',
       'reason.solo_gold.dark_brown': 'Az arany ragyogóvá teszi a sötétbarna szemeket',
       'reason.solo_radiance.grey': 'Ezüstös fény a szürke szemeknek',
       'reason.duo_collision_infinity.own': 'Két írisz, egy végtelen',
