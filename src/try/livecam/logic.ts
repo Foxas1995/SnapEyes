@@ -29,6 +29,36 @@ export const BURST_GAP_MS = 500;          // ...over about a second and a half
 export const FRAME_WAIT_MS = 5000;        // no picture this long after the camera was granted: give way
 export const GRANT_WAIT_MS = 30000;       // a permission question nobody answers (or a browser that never answers): give way
 export const IDEAL = { width: 3840, height: 2160 };
+/** What the page asks of the camera: the rear one at the highest resolution the device gives (asked inside the tap, src/try/TryApp.tsx startCamera). */
+export const VIDEO: MediaStreamConstraints = { audio: false, video: { facingMode: { ideal: 'environment' }, width: { ideal: IDEAL.width }, height: { ideal: IDEAL.height } } };
+export const STILL_LONG_MAX = 4096;       // a still asked of ImageCapture: at most this on its long side...
+export const STILL_PIXELS_MAX = 12e6;     // ...and about 12 MP (memory: one still is decoded, cropped and released at a time)
+export const SLOW_STILL_MS = 1200;        // a sized still slower than this: the burst takes 3, not 4
+// Facebook's, Messenger's and Instagram's Android web views report a height about 85 to 90 px larger than what is visible (the owner's phone, 2026-11-26) and
+// can pan: in them every control keeps out of the top and the bottom of the view (the video still fills it). The same browser test as the server's
+// (api/_lib/counter.py ua_classes).
+export const INAPP_TOP = 72;
+export const INAPP_BOTTOM = 100;
+export const inApp = (ua: string): boolean => /Instagram/.test(ua) || /FBAN|FBAV|FB_IAB|FBIOS|FB4A|FBMD|MESSENGER/.test(ua);
+
+type Range = { min?: number; max?: number } | undefined;
+/** The still to ask ImageCapture.takePhoto for: the largest the photo capabilities offer, at most STILL_LONG_MAX on its long side and STILL_PIXELS_MAX in
+ *  all, the camera's own shape kept; null when the capabilities say nothing usable (then a plain takePhoto()). */
+export function chooseStill(caps: { imageWidth?: Range; imageHeight?: Range } | null | undefined): { w: number; h: number } | null {
+  const W = caps?.imageWidth?.max, H = caps?.imageHeight?.max;
+  if (typeof W !== 'number' || typeof H !== 'number' || !(W > 0) || !(H > 0)) return null;
+  let f = Math.min(1, STILL_LONG_MAX / Math.max(W, H));
+  if (W * H * f * f > STILL_PIXELS_MAX) f = Math.sqrt(STILL_PIXELS_MAX / (W * H));
+  const wMin = caps?.imageWidth?.min ?? 0, hMin = caps?.imageHeight?.min ?? 0;
+  return { w: Math.max(wMin, Math.floor(W * f)), h: Math.max(hMin, Math.floor(H * f)) };
+}
+
+/** Where the controls may stand in a view of height h: the top and bottom margins (in-app browsers keep clear of the parts they hide) and the middle of the
+ *  part that is surely visible, where the circle goes. */
+export function viewInsets(inAppBrowser: boolean): { top: number; bottom: number } {
+  return inAppBrowser ? { top: INAPP_TOP, bottom: INAPP_BOTTOM } : { top: 0, bottom: 0 };
+}
+export const circleCentre = (h: number, top: number, bottom: number): number => Math.round(top + (h - top - bottom) / 2);
 
 interface KV { getItem(k: string): string | null; setItem(k: string, v: string): void; removeItem(k: string): void }
 
@@ -92,9 +122,25 @@ export function liveCap(method: LiveMethod, w: number, h: number, zoom: ZoomMode
   return { how: 'live', lm: method, lres: resClass(w, h), zoom, torch: torch ? 'yes' : 'no' };
 }
 
-/** The plain line the owner reads on the camera view (?cam=1 only): "still 4032x3024, zoom 2x, light yes". */
-export function debugLine(f: { method: LiveMethod | null; w: number; h: number; zoom: ZoomMode; zoomValue: number; torch: boolean }): string {
-  const what = f.method ? `${f.method} ${f.w}x${f.h}` : `video ${f.w}x${f.h}`;
-  const zoom = f.zoom === 'track' ? `zoom ${Math.round(f.zoomValue * 10) / 10}x` : 'zoom 2x by crop';
-  return `${what}, ${zoom}, light ${f.torch ? 'yes' : 'no'}`;
+/** The plain line the owner reads on the camera view (?cam=1 only): the geometry the browser reports, then what the camera gave:
+ *  "vv 780/0 in 866 sc 915 · still 4000x3000 > 2000x1500 · zoom 2x crop · light yes" (a still asked of that size, kept cropped to that size). */
+export interface Facts {
+  geo: { vvH: number; vvTop: number; inner: number; screen: number };
+  method: LiveMethod | null;      // null: nothing taken yet (the video's own size is shown)
+  video: { w: number; h: number };
+  asked: { w: number; h: number } | null;   // the still asked of ImageCapture (null: a plain takePhoto, or frames)
+  got: { w: number; h: number } | null;     // what one picture of the burst really was, after the crop
+  zoom: ZoomMode;
+  zoomValue: number;
+  torch: boolean;
+}
+export function debugLine(f: Facts): string {
+  const g = f.geo;
+  const geo = `vv ${Math.round(g.vvH)}/${Math.round(g.vvTop)} in ${Math.round(g.inner)} sc ${Math.round(g.screen)}`;
+  const sz = (x: { w: number; h: number }) => `${x.w}x${x.h}`;
+  const what = !f.method ? `video ${sz(f.video)}`
+    : f.method === 'still' ? `still ${f.asked ? sz(f.asked) : 'plain'}${f.got ? ` > ${sz(f.got)}` : ''}`
+    : `frame ${f.got ? sz(f.got) : sz(f.video)}`;
+  const zoom = f.zoom === 'track' ? `zoom ${Math.round(f.zoomValue * 10) / 10}x track` : `zoom ${Math.round(f.zoomValue * 10) / 10}x crop`;
+  return [geo, what, zoom, `light ${f.torch ? 'yes' : 'no'}`].join(' · ');
 }

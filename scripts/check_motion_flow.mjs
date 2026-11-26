@@ -710,7 +710,10 @@ async function checkGuide() {
 // pictures themselves load only while the page waits), the words on the artwork behind one button and less text around the price, moved the base of /try by
 // +1,077 B JS (203,363 to 204,440 B) and of both pages by +66 B CSS (14,479 to 14,545 B: with the result screen's gap-6, missing from the stylesheet till now), measured on 5d918ac against the tree with it (/order -1 B JS, left in the
 // budget). The slideshow's fade and slow zoom are motion, but its JS is a product's (which pictures, when to load them); the budget is kept for the motion work.
-const BEFORE = { try: { js: 152765 + 1961 + 4483 + 1144 + 1108 - 1373 - 3730 + 8838 + 5366 + 3068 + 29190 - 5390 + 632 + 1970 + 1077, css: 10975 + 245 + 494 + 261 + 74 + 135 + 94 + 36 + 197 + 66 }, order: { js: 108723 + 414 + 110 + 3953 + 4052 + 794 + 13127 + 7903 + 483 + 2024 + 709 + 117 + 1707, css: 10975 + 245 + 494 + 261 + 74 + 135 + 94 + 36 + 197 + 66 } };
+// The live camera's second round (2026-11-26, behind ?cam=1: the camera asked inside the tap, the camera chunk fetched early for ?cam=1 only, the owner's grey
+// line with the reason it gave way) moved the base of /try by +637 B JS (204,440 to 205,077 B) and of both pages by +4 B CSS (14,545 to 14,549 B), measured on
+// 61fbfd5 against the tree with it (/order -7 B JS, left in the budget). A product, not motion.
+const BEFORE = { try: { js: 152765 + 1961 + 4483 + 1144 + 1108 - 1373 - 3730 + 8838 + 5366 + 3068 + 29190 - 5390 + 632 + 1970 + 1077 + 637, css: 10975 + 245 + 494 + 261 + 74 + 135 + 94 + 36 + 197 + 66 + 4 }, order: { js: 108723 + 414 + 110 + 3953 + 4052 + 794 + 13127 + 7903 + 483 + 2024 + 709 + 117 + 1707, css: 10975 + 245 + 494 + 261 + 74 + 135 + 94 + 36 + 197 + 66 + 4 } };
 function firstLoad(page) {
   const html = readFileSync(join(dist, page), 'utf8');
   const seen = new Map();

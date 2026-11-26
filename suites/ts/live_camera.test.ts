@@ -4,7 +4,7 @@
 // page wiring (lazy chunk, fallback to the capture input, the codes on the beacon and the analysis); the server's side of the codes (api/_lib/events.py
 // CAPTURE). Loaded through Vite's module runner by scripts/run_ts_tests.mjs; returns its results.
 import { readFileSync } from 'node:fs';
-import { CAM_KEY, camOn, centreCrop, chooseZoom, debugLine, failClass, liveCap, liveSupported, resClass } from '../../src/try/livecam/logic';
+import { CAM_KEY, INAPP_BOTTOM, INAPP_TOP, camOn, centreCrop, chooseStill, chooseZoom, circleCentre, debugLine, failClass, inApp, liveCap, liveSupported, resClass, viewInsets } from '../../src/try/livecam/logic';
 import { capText } from '../../src/admin/Previews';
 import { T, setCopyLang } from '../../src/try/copy';
 
@@ -45,9 +45,24 @@ export async function run(): Promise<Row[]> {
   const cap = liveCap('still', 4032, 3024, 'track', true);
   check('the codes of a burst: live, the method, the class, the zoom and the torch; nothing exact, nothing that names the device',
     JSON.stringify(cap) === JSON.stringify({ how: 'live', lm: 'still', lres: 'mp12', zoom: 'track', torch: 'yes' }), JSON.stringify(cap));
-  const line = debugLine({ method: 'still', w: 4032, h: 3024, zoom: 'track', zoomValue: 2, torch: true });
-  const line2 = debugLine({ method: null, w: 1920, h: 1080, zoom: 'css', zoomValue: 2, torch: false });
-  check('the owner\'s line on the camera view says what his phone gave', line === 'still 4032x3024, zoom 2x, light yes' && line2 === 'video 1920x1080, zoom 2x by crop, light no', `${line} | ${line2}`);
+  const geo = { vvH: 780, vvTop: 0, inner: 866, screen: 915 };
+  const line = debugLine({ geo, method: 'still', video: { w: 3840, h: 2160 }, asked: { w: 4000, h: 3000 }, got: { w: 2000, h: 1500 }, zoom: 'css', zoomValue: 2, torch: true });
+  const line2 = debugLine({ geo, method: null, video: { w: 2160, h: 3840 }, asked: null, got: null, zoom: 'track', zoomValue: 2, torch: false });
+  const line3 = debugLine({ geo, method: 'frame', video: { w: 1920, h: 1080 }, asked: null, got: { w: 960, h: 540 }, zoom: 'css', zoomValue: 2, torch: false });
+  const DOT = ` ${String.fromCharCode(0xb7)} `;
+  check('the owner\'s line on the camera view: the geometry the browser reports, the still asked and got (or the video, or a frame), the zoom and the light',
+    line === ['vv 780/0 in 866 sc 915', 'still 4000x3000 > 2000x1500', 'zoom 2x crop', 'light yes'].join(DOT)
+      && line2 === ['vv 780/0 in 866 sc 915', 'video 2160x3840', 'zoom 2x track', 'light no'].join(DOT) && line3.includes(`frame 960x540${DOT}zoom 2x crop`), `${line} | ${line2} | ${line3}`);
+  const st = [chooseStill({ imageWidth: { min: 160, max: 4000 }, imageHeight: { min: 120, max: 3000 } }), chooseStill({ imageWidth: { max: 8000 }, imageHeight: { max: 6000 } }),
+    chooseStill({ imageWidth: { max: 1920 }, imageHeight: { max: 1080 } }), chooseStill({}), chooseStill(null)];
+  check('the still asked of ImageCapture: the largest offered, at most 4096 px long and about 12 MP, the camera\'s shape kept; none when nothing is offered',
+    st[0]?.w === 4000 && st[0]?.h === 3000 && !!st[1] && st[1].w <= 4096 && st[1].w * st[1].h <= 12e6 && Math.abs(st[1].w / st[1].h - 4 / 3) < 0.01 && st[2]?.w === 1920 && st[3] === null && st[4] === null,
+    JSON.stringify(st));
+  const fbUa = 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 Chrome/131 Mobile Safari/537.36 [FB_IAB/MESSENGER;FBAV/480.0]';
+  check('the Facebook, Messenger and Instagram browsers keep the controls out of the top 72 and the bottom 100 px; Chrome and Safari do not; the circle sits in the middle of what is surely visible',
+    inApp(fbUa) && inApp('Instagram 350.0 Android') && inApp('[FBAN/FBIOS;FBAV/450]') && !inApp('Mozilla/5.0 (Linux; Android 14) Chrome/131 Mobile Safari/537.36') && !inApp('iPhone Safari/604.1')
+      && viewInsets(true).top === INAPP_TOP && viewInsets(true).bottom === INAPP_BOTTOM && INAPP_TOP === 72 && INAPP_BOTTOM === 100 && viewInsets(false).top === 0
+      && circleCentre(866, 72, 100) === 419 && circleCentre(800, 0, 0) === 400, String(circleCentre(866, 72, 100)));
   check('the admin reads the codes in words', capText(cap) === 'puslapio kamera, tikra nuotrauka, mp12, kameros priartinimas, šviesa yra' && capText({ how: 'native', lfail: 'denied' }) === 'telefono kamera (įvestis), gyva kamera: neleista' && capText(null) === '',
     `${capText(cap)} | ${capText({ how: 'native', lfail: 'denied' })}`);
 
@@ -61,10 +76,17 @@ export async function run(): Promise<Row[]> {
   // the page's wiring
   const app = readFileSync('src/try/TryApp.tsx', 'utf8');
   check('/try loads the camera lazily (a chunk of its own), only with ?cam=1, and the gold button keeps the capture input for everybody else',
-    /lazy\(\(\) => import\('\.\/livecam\/LiveCamera'\)\)/.test(app) && !/from '\.\/livecam\/LiveCamera'/.test(app) && app.includes('if (CAM && !liveFailRef.current && liveSupported(navigator, window.isSecureContext))')
+    app.includes("const loadCamera = () => import('./livecam/LiveCamera');") && app.includes('const LiveCamera = lazy(loadCamera);') && !/from '\.\/livecam\/LiveCamera'/.test(app)
+      && app.includes('useEffect(() => { if (CAM) void loadCamera().catch(() => undefined); }, []);') && app.includes('if (CAM && !liveFailRef.current && liveSupported(navigator, window.isSecureContext))')
       && app.includes("nativeCamera(CAM ? { how: 'native', lfail: liveFailRef.current ?? 'unsupported' } : { how: 'native' })"));
   check('a failure of the live camera opens the capture input by itself, with the failure\'s class in the codes and no error text',
-    app.includes("const onLiveFail = (why: LiveFail) => { liveFailRef.current = why; setLive(false); nativeCamera({ how: 'native', lfail: why }); };") && !/onLiveFail[^\n]*setError/.test(app));
+    app.includes("const onLiveFail = (why: LiveFail) => { liveFailRef.current = why; setLiveFail(why); setLive(false); nativeCamera({ how: 'native', lfail: why }); };") && !/onLiveFail[^\n]*setError/.test(app));
+  const start = app.slice(app.indexOf('const startCamera = () => {'), app.indexOf('const onLiveFail'));
+  check('the camera is asked inside the tap (getUserMedia before anything is awaited), and the view is handed the promise',
+    start.includes('try { asked = navigator.mediaDevices.getUserMedia(VIDEO); }') && !/\bawait\b/.test(start) && start.indexOf('getUserMedia') < start.indexOf('setLive(true)')
+      && app.includes('<LiveCamera stream={liveStreamRef.current'));
+  check('?cam=1 only: the capture screen says in one small grey line why the live camera gave way on this page',
+    app.includes('{CAM && liveFail && <p data-testid="cam-fail" className="text-[10px] text-zinc-400 text-center">cam: {liveFail}</p>}'));
   check('after one failure every later tap on this page goes straight to the capture input (a late programmatic open may be refused by the browser)',
     app.includes('const liveFailRef = useRef<LiveFail | null>(null);'));
   check('the burst goes into the multi-photo path of a gallery pick, as live, and the codes ride on the photo beacon and on every analysis',
@@ -74,8 +96,13 @@ export async function run(): Promise<Row[]> {
       && (app.match(/count\('photo'/g) ?? []).length === 2);
   const cam = readFileSync('src/try/livecam/LiveCamera.tsx', 'utf8');
   check('the camera view: rear camera at up to 3840 x 2160, playsInline and muted, stopped on close, on unmount and when the page is hidden; torch only when the track has one',
-    cam.includes("facingMode: { ideal: 'environment' }") && cam.includes('playsInline muted') && cam.includes("document.addEventListener('visibilitychange', hidden)")
+    readFileSync('src/try/livecam/logic.ts', 'utf8').includes("facingMode: { ideal: 'environment' }") && cam.includes('playsInline muted') && cam.includes("document.addEventListener('visibilitychange', hidden)")
       && /return \(\) => \{[^}]*stop\(\)/.test(cam) && cam.includes('{torch.has && (') && cam.includes('window.ImageCapture'));
+  check('the view: the page behind locked and given back, sized from visualViewport, no pan; the largest still asked, a plain one when that fails, no crop on a real zoom',
+    cam.includes("html.style.overflow = 'hidden'; body.style.overflow = 'hidden';") && cam.includes('window.scrollTo(was.x, was.y);') && cam.includes("vv?.addEventListener('scroll', fit)")
+      && cam.includes("touchAction: 'none', overscrollBehavior: 'contain'") && cam.includes('chooseStill(await ic.getPhotoCapabilities())')
+      && cam.includes('still = await ic.takePhoto({ imageWidth: size.w, imageHeight: size.h }); } catch { size = null; still = await ic.takePhoto(); }')
+      && cam.includes("const crop = zoom.mode === 'css' ? zoom.value : 1;") && cam.includes('burst = Math.min(burst, 3)') && cam.includes('bmp.close();'));
 
   // the server side
   const ev = readFileSync('api/_lib/events.py', 'utf8');

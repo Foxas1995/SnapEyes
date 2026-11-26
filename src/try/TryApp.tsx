@@ -47,7 +47,7 @@ import { BrandPicture } from '../shared/BrandLogo';
 import { LegalParts } from '../shared/LegalLinks';
 import { NO_SAVE } from './noSave';
 import { parseReveal } from '../reveal/revealMath';
-import { type Cap, type LiveFail, camOn, liveSupported } from './livecam/logic';
+import { type Cap, type LiveFail, VIDEO, camOn, liveSupported } from './livecam/logic';
 import { wideFrame, type WideFrame } from '../reveal/wideFrame';
 
 type Step = 'capture' | 'analyzing' | 'quality' | 'processing' | 'result';
@@ -66,7 +66,8 @@ const STUDY = typeof window !== 'undefined' && studyOn(window.location.search);
 // the live camera inside the page (2026-11-26): only with ?cam=1 in the address (kept for the tab), until the owner has tried it on his phones;
 // a chunk of its own, loaded at the first tap, so the page of everybody else does not grow (src/try/livecam)
 const CAM = typeof window !== 'undefined' && camOn(window.location.search, (() => { try { return window.sessionStorage; } catch { return null; } })());
-const LiveCamera = lazy(() => import('./livecam/LiveCamera'));
+const loadCamera = () => import('./livecam/LiveCamera');
+const LiveCamera = lazy(loadCamera);
 
 // The page's language, by the landing page's rule (./lang). Set before the first render, so no screen ever shows in
 // the wrong language; after that only the language switch in the header changes it.
@@ -304,6 +305,11 @@ export const TryApp: React.FC = () => {
   // the live camera failed once on this page: every later tap goes straight to the capture input (a browser may not let the page open the input
   // by itself once the tap is a few seconds old, so the next tap must not try the camera again)
   const liveFailRef = useRef<LiveFail | null>(null);
+  // ?cam=1 only: why the live camera gave way on this page (one small grey line on the capture screen, for the owner's tests), and the camera asked in the tap
+  const [liveFail, setLiveFail] = useState<LiveFail | null>(null);
+  const liveStreamRef = useRef<Promise<MediaStream> | null>(null);
+  // ?cam=1 only: the camera's chunk is fetched while the capture screen shows, so the view opens at once after the tap (nobody else loads it)
+  useEffect(() => { if (CAM) void loadCamera().catch(() => undefined); }, []);
   const imgRef = useRef<HTMLImageElement | null>(null);
   const photoUrlRef = useRef<string | null>(null);
   // the photo being captured is the site's own AI-generated demo eye (its studio is the prepared restoration, or the live one when that cannot be read)
@@ -713,10 +719,19 @@ export const TryApp: React.FC = () => {
    *  itself (no error text) when the browser has no camera API (here, still inside the tap) or when it fails (onLiveFail). */
   const nativeCamera = (cap: Cap) => { capRef.current = cap; clearShots(); fileRef.current?.click(); };
   const startCamera = () => {
-    if (CAM && !liveFailRef.current && liveSupported(navigator, window.isSecureContext)) { setError(null); setLive(true); return; }
+    if (CAM && !liveFailRef.current && liveSupported(navigator, window.isSecureContext)) {
+      // the camera is asked here, inside the tap, before anything is awaited (the view's chunk may still be loading): the permission question keeps the
+      // user's gesture, and a refusal comes back while the capture input may still be opened by the page
+      let asked: Promise<MediaStream>;
+      try { asked = navigator.mediaDevices.getUserMedia(VIDEO); } catch (e) { asked = Promise.reject(e); }
+      asked.catch(() => undefined);
+      liveStreamRef.current = asked;
+      setError(null); setLive(true); return;
+    }
+    if (CAM && !liveFailRef.current) { liveFailRef.current = 'unsupported'; setLiveFail('unsupported'); }
     nativeCamera(CAM ? { how: 'native', lfail: liveFailRef.current ?? 'unsupported' } : { how: 'native' });
   };
-  const onLiveFail = (why: LiveFail) => { liveFailRef.current = why; setLive(false); nativeCamera({ how: 'native', lfail: why }); };
+  const onLiveFail = (why: LiveFail) => { liveFailRef.current = why; setLiveFail(why); setLive(false); nativeCamera({ how: 'native', lfail: why }); };
   const onLiveFrames = (files: File[], cap: Cap) => { setLive(false); capRef.current = cap; void onFiles(files, 'live'); };
 
   /** /api/analyze for one photo. Always says what kind of device and source it came from. In study mode every
@@ -1096,7 +1111,7 @@ export const TryApp: React.FC = () => {
           onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) onCameraShot(f); }} />
         {live && (
           <Suspense fallback={<div className="fixed inset-0 z-50 bg-black" />}>
-            <LiveCamera hint={T.capture.liveHint} light={T.capture.liveLight} shutter={T.capture.liveShutter} close={T.buy.close} debug={CAM}
+            <LiveCamera stream={liveStreamRef.current ?? Promise.reject(new Error('no camera asked'))} hint={T.capture.liveHint} light={T.capture.liveLight} shutter={T.capture.liveShutter} close={T.buy.close} debug={CAM}
               onFrames={onLiveFrames} onFail={onLiveFail} onClose={() => setLive(false)} />
           </Suspense>
         )}
@@ -1178,6 +1193,8 @@ export const TryApp: React.FC = () => {
             </div>
 
             {/* whose eye may be photographed (the terms of sale), and where the photo goes */}
+            {/* ?cam=1 only: why the live camera gave way on this page (the owner reads it out from his phone's test) */}
+            {CAM && liveFail && <p data-testid="cam-fail" className="text-[10px] text-zinc-400 text-center">cam: {liveFail}</p>}
             <p data-testid="photo-notice" className="text-[10px] leading-relaxed text-zinc-400 text-center">
               <LegalParts parts={checkoutLegal(lang).photoNotice} lang={lang} />
             </p>
