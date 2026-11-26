@@ -203,7 +203,7 @@ check("cancel_url goes back to /try, without the access key", p["cancel_url"] ==
 check("metadata: order, key fingerprint (not the key), spec, consent - 2026-11-25 (the owner's second decision of that day): placed under the terms of that date, no box",
       p["metadata[order]"] == O1 and
       p["metadata[key_sha]"] == pay.key_sha(K1) and K1 not in json.dumps({k: v for k, v in p.items() if k.startswith("metadata")})
-      and p["metadata[eyes]"] == "2" and p["metadata[consent_kind]"] == "by_terms" and p["metadata[consent_version]"] == pay.legal_day() == "2026-11-25"
+      and p["metadata[eyes]"] == "2" and p["metadata[consent_kind]"] == "by_terms" and p["metadata[consent_version]"] == pay.legal_day() == "2026-11-26"
       # WP12 (C16, spec 2.4): the names travel as ONE compact JSON string (ensure_ascii False), not as the old text; the plan's identity rides along (pv, ev, plan8)
       and p["metadata[names]"] == json.dumps(["Jūratė & Tomas"], ensure_ascii=False, separators=(",", ":"))
       and p["metadata[pv]"] == "1" and p["metadata[ev]"] == "0" and re.fullmatch(r"[0-9a-f]{8}", p["metadata[plan8]"]) and "metadata[date]" not in p and "metadata[opts]" not in p
@@ -216,7 +216,7 @@ check("expires_at sent to Stripe = order created + 24 h, kept under Stripe's 24 
       <= int(p["expires_at"]) <= rec["created_at"] + 86400 and int(p["expires_at"]) < time.time() + 86400, (p["expires_at"], rec))
 check("order.json records the checkout and consent - 2026-11-25 (the owner's second decision of that day): the plain facts, placed under the terms of that date, no box",
       rec["checkout"]["session_id"] == j["url"].rsplit("/", 1)[1]
-      and rec["checkout"]["consent"] == {"kind": "by_terms", "version": "2026-11-25", "at": rec["checkout"]["created"], "lang": "de", "box": False}
+      and rec["checkout"]["consent"] == {"kind": "by_terms", "version": "2026-11-26", "at": rec["checkout"]["created"], "lang": "de", "box": False}
       and rec["checkout"]["amount"] == 3997, rec)
 SID1 = rec["checkout"]["session_id"]
 

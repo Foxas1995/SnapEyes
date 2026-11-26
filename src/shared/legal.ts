@@ -43,7 +43,7 @@ export type LegalLang = Lang;
  *  2026-11-25 (the owner's decision): the privacy policy says that the site uses the Meta pixel and reports payments to Meta from the server (a section
  *  "meta", and the sentences that said there were no cookies and no tools of other companies: website, orders, services, retention, storage, and the US
  *  edition's own section), in every language of every edition. The terms, the withdrawal page, the legal notice and the consent version are as they were. */
-export const LEGAL_UPDATED = '2026-11-25';
+export const LEGAL_UPDATED = '2026-11-26';
 
 /** Which edition of the legal texts a market's customers read. "au" (the Australian market, api/_lib/markets.py): the
  *  terms with the Australian Consumer Law ("Your rights in Australia"), prices in A$ without GST, the withdrawal right

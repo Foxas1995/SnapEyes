@@ -312,7 +312,7 @@ EU_KEEP = json.load(open(os.path.join(HERE, "eu_keep.json"), encoding="utf-8")) 
 EU_KEEP_RAW = json.load(open(os.path.join(HERE, "eu_keep_raw.json"), encoding="utf-8"))   # 1126 refresh: the raw docs the same way (snap_eu.mjs), held to eu_value_raw.json
 EU_PIXEL_RAW = json.load(open(os.path.join(HERE, "eu_pixel_raw.json"), encoding="utf-8"))   # 1125 refresh: the raw docs with the Meta pixel's privacy passages (snap_eu.mjs), the base of the AU and US editions' privacy policy
 EU_CAP_RAW = json.load(open(os.path.join(HERE, "eu_cap_raw.json"), encoding="utf-8"))   # 1111 refresh: the raw docs (snap_eu.mjs), the base of the Australian and US editions' privacy policy
-LEGAL_NOW = "2026-11-25"        # 1125 refresh: the Meta pixel in the privacy policy. 1124 refresh: the terms' list of prints and prices (the acrylic block, the canvas' price). 1121 refresh (2026-11-21): the print paragraphs (a print is ordered after the artwork). 1113 refresh (2026-11-13): the Finnish, Estonian and Latvian texts of the EU edition. 1111 refresh (2026-11-11): the ceiling of free previews in the privacy policy. 1028 refresh: LEGAL_UPDATED, one date for every legal page and the pack (2026-10-20 for the counter, 2026-10-06 since WP18, 2026-10-05 at WP12, 2026-09-30 before)
+LEGAL_NOW = "2026-11-26"        # 1126 refresh: the kept free previews in the privacy policy. 1125 refresh: the Meta pixel in the privacy policy. 1124 refresh: the terms' list of prints and prices (the acrylic block, the canvas' price). 1121 refresh (2026-11-21): the print paragraphs (a print is ordered after the artwork). 1113 refresh (2026-11-13): the Finnish, Estonian and Latvian texts of the EU edition. 1111 refresh (2026-11-11): the ceiling of free previews in the privacy policy. 1028 refresh: LEGAL_UPDATED, one date for every legal page and the pack (2026-10-20 for the counter, 2026-10-06 since WP18, 2026-10-05 at WP12, 2026-09-30 before)
 CONSENT_NOW = "2026-11-13.1"    # 1113 refresh: the Finnish, Estonian and Latvian texts and print boxes added, every older text as it was
 CONSENT_1028C = "2026-10-28.3"  # 1028c refresh: the print box added (2026-10-28.2 since the US text, every waiver as it was). 1028b refresh: the consent version since the US text (2026-10-28.1 since the Croatian text; 2026-09-30.2 since 30efee7: the lt and hu texts added; en, de, AU as of .1)
 CONSENT_1028B = "2026-10-28.2"  # 1028c refresh: the version of the US text, which still quotes every waiver
@@ -364,7 +364,8 @@ check("A1 consent version: server = client, bumped (2026-09-30.1); LEGAL_UPDATED
       " - 1113: LEGAL_UPDATED is 2026-11-13 and the consent version 2026-11-13.1 (the Finnish, Estonian and Latvian texts, checkboxes and print boxes)"
       " - 1121: LEGAL_UPDATED is 2026-11-21 (the print paragraphs: a print is ordered after the artwork), the consent version is not bumped (the print box is as it was)"
       " - 1124: LEGAL_UPDATED is 2026-11-24 (the terms' list of prints and prices: the acrylic block, the canvas' price), the consent version is not bumped"
-      " - 1125: LEGAL_UPDATED is 2026-11-25 (the Meta pixel in the privacy policy), the consent version is not bumped",
+      " - 1125: LEGAL_UPDATED is 2026-11-25 (the Meta pixel in the privacy policy), the consent version is not bumped"
+      " - 1126: LEGAL_UPDATED is 2026-11-26 (the kept free previews in the privacy policy), the consent version is not bumped",
       pay.CONSENT_VERSION == CL["consentVersion"] == CONSENT_NOW and CONSENT_NOW != PAY0.CONSENT_VERSION
       and CL["legalUpdated"] == LEGAL_NOW == PACK["updated"],
       (pay.CONSENT_VERSION, CL["consentVersion"], CL["legalUpdated"], PACK["updated"]))
@@ -801,7 +802,7 @@ keep1126 = {l: _step1126(EU_KEEP["privacy"][l], EU_VALUE["privacy"][l], "Art. 6(
 keep1126_raw = {l: _step1126(EU_KEEP_RAW["privacy"][l], EU_VALUE_RAW["privacy"][l]) for l in LANG2}
 keep1126_ok = (all(keep1126.values()) and all(keep1126_raw.values())
                and all(EDI["eu"][d][l] == EU_VALUE[d][l] for d in ("terms", "withdrawal", "imprint") for l in LANG8)
-               and all(EU_KEEP_RAW[d] == EU_VALUE_RAW[d] for d in ("terms", "withdrawal", "imprint")) and EU_KEEP["pack"] == EU_VALUE["pack"])
+               and all(EU_KEEP_RAW[d] == EU_VALUE_RAW[d] for d in ("terms", "withdrawal", "imprint")) and EU_KEEP["pack"]["updated"] == LEGAL_NOW != EU_VALUE["pack"]["updated"])      # 1126: the pack's date; its texts are held to the pin of the vouchers by B3 (_pack_1125v)
 pinned = {d: all(EDI["eu"][d][l] == EU_KEEP[d][l] for l in LANG2) for d in DOCS4}
 editions4 = {d: sorted(EDI["eu"][d]) for d in DOCS4}
 check("B1 EU terms, withdrawal page and legal notice exactly as before (en, de)"
@@ -909,9 +910,9 @@ def _norm(t):
              .replace("2026-11-11", "X").replace("11.11.2026", "X")
              .replace("2026-11-13", "X").replace("13.11.2026", "X")
              .replace("2026-11-21", "X").replace("21.11.2026", "X")
-             .replace("2026-11-24", "X").replace("24.11.2026", "X").replace("2026-11-25", "X").replace("25.11.2026", "X")                                                               # 1124: and the date of the list of prints
+             .replace("2026-11-24", "X").replace("24.11.2026", "X").replace("2026-11-25", "X").replace("25.11.2026", "X").replace("2026-11-26", "X").replace("26.11.2026", "X")                                                               # 1124: and the date of the list of prints
              # 1124: the pack of that step is compared in all eight languages, so the date line's Hungarian and Croatian forms are read too (those of the two pins compared)
-             .replace("2026. 11. 21.", "X").replace("21. 11. 2026.", "X").replace("2026. 11. 24.", "X").replace("24. 11. 2026.", "X").replace("2026. 11. 25.", "X").replace("25. 11. 2026.", "X"))                                                              # 1113: and the date of the three languages                                                              # 1111: and the date of the ceiling of free previews
+             .replace("2026. 11. 21.", "X").replace("21. 11. 2026.", "X").replace("2026. 11. 24.", "X").replace("24. 11. 2026.", "X").replace("2026. 11. 25.", "X").replace("25. 11. 2026.", "X").replace("2026. 11. 26.", "X").replace("26. 11. 2026.", "X"))                                                              # 1113: and the date of the three languages                                                              # 1111: and the date of the ceiling of free previews
 
 
 def _terms_pack_ok(l, pack=None):
@@ -1079,7 +1080,7 @@ check("B3 the built pack's EU texts are the same as before (the date line aside)
       " by exactly one paragraph replaced by two, the withdrawal page by five paragraphs for six, the checkbox text gone (_pack_1125c)"
       " - 1125v: pinned to eu_value.json; the 1125c step is checked between the pins of the pixel and of the refund conditions; the value vouchers: the terms by"
       " exactly three paragraphs of the voucher section replaced (the intro, the five amounts, the rules), the withdrawal page word for word (_pack_1125v)",
-      eu_pack_same and "m=" not in json.dumps(PACK["docs"]) and seller_same and PACK["updated"] == EU_NOW["pack"]["updated"],
+      eu_pack_same and "m=" not in json.dumps(PACK["docs"]) and seller_same and PACK["updated"] == EU_KEEP["pack"]["updated"] == LEGAL_NOW,      # 1126: the date of the kept free previews
       (eu_pack_same, seller_same, [_terms_pack_ok(l) for l in LANG2], [_terms_pack_12(l) for l in LANG2], [_terms_pack_18(l) for l in LANG2], [_terms_pack_28(l) for l in LANG2]))
 check("B4 landing copy: eu and lt read the language's own copy object (unchanged)",
       CL["copySame"] == {"euEn": True, "euDe": True, "ltEn": True}, CL["copySame"])

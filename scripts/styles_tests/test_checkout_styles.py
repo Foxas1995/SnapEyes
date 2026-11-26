@@ -734,7 +734,7 @@ check("one LEGAL_UPDATED versions every legal page and the pack the confirmation
       "2026-11-11 for the privacy paragraph of the daily ceiling of free previews, "
       "2026-10-28 for the Croatian texts, 2026-10-20 for the anonymous counter's "
       "privacy paragraphs, 2026-10-06 at WP18, the AI-made material sentence, and 2026-10-05 at WP12)",
-      PACK["updated"] == upd == "2026-11-25" and upd <= time.strftime("%Y-%m-%d", time.gmtime(time.time() + 14 * 3600)), (PACK["updated"], upd))
+      PACK["updated"] == upd == "2026-11-26" and upd <= time.strftime("%Y-%m-%d", time.gmtime(time.time() + 14 * 3600)), (PACK["updated"], upd))
 terms_en = PACK["docs"]["en"]["terms"]["text"]
 check("the pack's English terms (what the e-mail quotes) print the new rows and the arrangement clause, say that a preview of five to eight eyes is coarser, and no longer promise half a minute "
       "per eye", "One eye, Clean Iris" in terms_en and "One eye, any other style" in terms_en and "arrangement of the eyes" in terms_en and "five to eight eyes is made from smaller copies" in terms_en

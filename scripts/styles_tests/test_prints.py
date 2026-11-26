@@ -478,7 +478,7 @@ check("the reply names the print and the total Stripe charges (the artwork, the 
 # 2026-11-25 (the owner's decision, the second one of that day): no box for the file but on the US market; the order is placed under the terms of that date
 check("the withdrawal waiver of the file is unchanged and recorded as before (its text is the version's) - 2026-11-25 (the owner's second decision of that day): "
       "no box for the file, the order records that it was placed under the terms of that date; the texts of the versions before are still read",
-      rec["checkout"]["consent"].get("kind") == "by_terms" and rec["checkout"]["consent"]["version"] == "2026-11-25" and rec["checkout"]["consent"]["box"] is False
+      rec["checkout"]["consent"].get("kind") == "by_terms" and rec["checkout"]["consent"]["version"] == "2026-11-26" and rec["checkout"]["consent"]["box"] is False
       and pay.consent_text("2026-10-28.2", "en") == pay.CONSENT_TEXT["en"]
       and pay.consent_text("2026-10-28.3", "en", "us") == pay.CONSENT_TEXT_US["en"], rec["checkout"]["consent"])
 # 2026-11-13: the same checkout in Finnish, Estonian and Latvian (a poster to the language's own country): Stripe's line, shipping and notes and the recorded print box
@@ -503,7 +503,7 @@ for l_, cc_ in (("fi", "FI"), ("et", "EE"), ("lv", "LV")):
           and PR.SUBMIT_NOTE_PRINT[l_] not in [PR.SUBMIT_NOTE_PRINT[x] for x in PR.LANGS if x != l_] and PR.ITEM_DESC_PRINT[l_] not in [PR.ITEM_DESC_PRINT[x] for x in PR.LANGS if x != l_]
           and cp_l.get("product") == "poster50" and cp_l.get("country") == cc_ and cp_l.get("consent", {}).get("version") == "2026-11-13.1" and cp_l["consent"]["lang"] == l_
           and cp_l["consent"]["text"] == PR.PRINT_CONSENT_TEXT[l_] and cp_l["consent"]["text_sha256"] == hashlib.sha256(PR.PRINT_CONSENT_TEXT[l_].encode("utf-8")).hexdigest()[:16]
-          and rec_l.get("consent", {}).get("kind") == "by_terms" and rec_l["consent"]["version"] == "2026-11-25"
+          and rec_l.get("consent", {}).get("kind") == "by_terms" and rec_l["consent"]["version"] == "2026-11-26"
           and j_l.get("print") == {"product": "poster50", "country": cc_, "price": 3500, "ship": ship_l},
           (c_l, j_l, {k_: v for k_, v in p_l.items() if "line_items[1]" in k_ or k_.startswith(("custom_text", "shipping_options[0][shipping_rate_data][display"))}, cp_l))
 
