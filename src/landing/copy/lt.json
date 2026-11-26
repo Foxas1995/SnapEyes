@@ -526,8 +526,8 @@
         "b": "Ji niekada nenaudojama kieno nors tapatybei nustatyti, niekada neparduodama ir nenaudojama DI mokyti."
       },
       {
-        "t": "Peržiūros saugomos 30 dienų",
-        "b": "Nemokamos peržiūros nuotrauką ir rezultatą saugome 30 dienų, kad galėtume tikrinti ir gerinti kokybę, tada ištriname. Jie nesiejami su Jūsų vardu ar el. paštu. Jei užsisakote, užsakymo failus saugome 12 mėnesių, kad galėtumėte juos atsisiųsti."
+        "t": "Peržiūros saugomos iki 30 dienų",
+        "b": "Nemokamos peržiūros nuotrauką ir rezultatą saugome iki 30 dienų, kad galėtume tikrinti ir gerinti kokybę, tada ištriname. Jie nesiejami su Jūsų vardu ar el. paštu. Jei užsisakote, užsakymo failus saugome 12 mėnesių, kad galėtumėte juos atsisiųsti."
       },
       {
         "t": "Keletas išorinių paslaugų",
@@ -609,7 +609,7 @@
       {
         "id": "photo",
         "q": "Kas nutinka mano nuotraukai?",
-        "a": "Nemokamos peržiūros nuotrauką ir rezultatą saugome 30 dienų, kad galėtume tikrinti ir gerinti kokybę, tada ištriname. Jie nesiejami su Jūsų vardu ar el. paštu. Jei užsisakote, Jūsų užsakymo failus saugome 12 mėnesių, kad galėtumėte juos vėl atsisiųsti, o tada ištriname. Jūsų rainelė niekada nenaudojama tapatybei nustatyti ar DI mokyti. Išsamiau apie tai rašoma mūsų privatumo politikoje, kurios nuoroda yra šio puslapio apačioje."
+        "a": "Nemokamos peržiūros nuotrauką ir rezultatą saugome iki 30 dienų, kad galėtume tikrinti ir gerinti kokybę, tada ištriname. Jie nesiejami su Jūsų vardu ar el. paštu. Jei užsisakote, Jūsų užsakymo failus saugome 12 mėnesių, kad galėtumėte juos vėl atsisiųsti, o tada ištriname. Jūsų rainelė niekada nenaudojama tapatybei nustatyti ar DI mokyti. Išsamiau apie tai rašoma mūsų privatumo politikoje, kurios nuoroda yra šio puslapio apačioje."
       },
       {
         "id": "order",

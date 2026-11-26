@@ -526,8 +526,8 @@
         "b": "Sitä ei koskaan käytetä kenenkään tunnistamiseen, sitä ei koskaan myydä eikä sillä kouluteta tekoälyä."
       },
       {
-        "t": "Esikatselut säilytetään 30 päivää",
-        "b": "Säilytämme ilmaisen esikatselusi kuvan ja tuloksen 30 päivää, jotta voimme tarkistaa ja parantaa laatua, ja poistamme ne sitten. Niitä ei yhdistetä nimeesi eikä sähköpostiisi. Jos tilaat, säilytämme tilauksesi tiedostot 12 kuukautta latauksia varten."
+        "t": "Esikatselut säilytetään enintään 30 päivää",
+        "b": "Säilytämme ilmaisen esikatselusi kuvan ja tuloksen enintään 30 päivää, jotta voimme tarkistaa ja parantaa laatua, ja poistamme ne sitten. Niitä ei yhdistetä nimeesi eikä sähköpostiisi. Jos tilaat, säilytämme tilauksesi tiedostot 12 kuukautta latauksia varten."
       },
       {
         "t": "Muutama ulkopuolinen palvelu",
@@ -609,7 +609,7 @@
       {
         "id": "photo",
         "q": "Mitä kuvalleni tapahtuu?",
-        "a": "Säilytämme ilmaisen esikatselusi kuvan ja tuloksen 30 päivää, jotta voimme tarkistaa ja parantaa laatua, ja poistamme ne sitten. Niitä ei yhdistetä nimeesi eikä sähköpostiisi. Kun tilaat, säilytämme tilauksesi tiedostot 12 kuukautta, jotta voit ladata ne uudelleen, ja poistamme ne sen jälkeen. Iiristäsi ei koskaan käytetä kenenkään tunnistamiseen eikä tekoälyn kouluttamiseen. Tarkemmat tiedot ovat tietosuojaselosteessamme, jonka linkki on tämän sivun alaosassa."
+        "a": "Säilytämme ilmaisen esikatselusi kuvan ja tuloksen enintään 30 päivää, jotta voimme tarkistaa ja parantaa laatua, ja poistamme ne sitten. Niitä ei yhdistetä nimeesi eikä sähköpostiisi. Kun tilaat, säilytämme tilauksesi tiedostot 12 kuukautta, jotta voit ladata ne uudelleen, ja poistamme ne sen jälkeen. Iiristäsi ei koskaan käytetä kenenkään tunnistamiseen eikä tekoälyn kouluttamiseen. Tarkemmat tiedot ovat tietosuojaselosteessamme, jonka linkki on tämän sivun alaosassa."
       },
       {
         "id": "order",
