@@ -8,7 +8,10 @@
 //   lock      the page behind is at its top and does not scroll while the view is open, and is given back on close
 //   inapp     in Messenger's browser the hint and the close button keep 72 px below the view's top, the shutter 100 px above its bottom
 //   still     where the camera offers photo sizes the page asks the largest up to 4096 px and 12 MP
+//   dark      a fake camera filming black: the second line says it is too dark, the shutter stays usable
 //   off       without ?cam=1 the gold button opens the capture input as before and the camera's chunk is never loaded
+import { mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { launch, sleep } from './lib/cdp.mjs';
@@ -50,8 +53,8 @@ const origin = `http://127.0.0.1:${site.port}`;
 const chrome = await launch({ args: ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'] });
 const waitFor = async (page, expr, ms = 15000) => { const t0 = Date.now(); for (;;) { let v = false; try { v = await page.eval(expr); } catch { /* busy */ } if (v) return true; if (Date.now() - t0 > ms) return false; await sleep(80); } };
 const FB_UA = 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/131.0.0.0 Mobile Safari/537.36 [FB_IAB/MESSENGER;FBAV/480.0.0.0;]';
-async function open(url, gum = 'fake', ua = null) {
-  const page = await chrome.page({ width: 390, height: 844, mobile: true });
+async function open(url, gum = 'fake', ua = null, size = [390, 844]) {
+  const page = await chrome.page({ width: size[0], height: size[1], mobile: true });
   if (ua) await page.send('Network.setUserAgentOverride', { userAgent: ua });
   await page.send('Page.addScriptToEvaluateOnNewDocument', { source: SPY(gum) });
   await page.goto(origin + url);
@@ -88,9 +91,23 @@ try {
     const facts = await page.eval("(document.querySelector('[data-testid=live-facts]') || {}).textContent || ''");
     const hint = await page.eval("document.querySelector('[data-testid=live-camera]').textContent");
     ok('burst', ready && /^vv \d+\/\d+ in \d+ sc \d+ . video \d+x\d+ . zoom/.test(facts) && hint.includes('Laikykite akį apskritime'), `the view is ready, shows the hint and the camera's facts: "${facts}"`);
+    const before = await page.eval("(document.querySelector('[data-testid=live-burst]') || {}).textContent || ''");
+    ok('burst', before === 'Padarysime 4 kadrus. Nejudėkite.', `before the tap the second line says how many pictures one tap takes: "${before}"`);
     const clicksBefore = (await j(page, 'window.__clicks')).length;
     await tap(page, 'live-shutter');
-    const sent = await waitFor(page, "window.__sent.filter((b) => b.device && b.device.source === 'live').length >= 3 && !document.querySelector('[data-testid=live-camera]')", 30000);
+    // what the person sees during the burst, sampled until the view closes: the count, the shutter, the "Done"
+    const seen = { counts: [], disabled: true, done: false, ring: false };
+    for (let t0 = Date.now(); Date.now() - t0 < 30000;) {
+      const s = await j(page, "(() => { const v = document.querySelector('[data-testid=live-camera]'); if (!v) return null; const c = v.querySelector('[data-testid=live-count]'); const b = v.querySelector('[data-testid=live-shutter]'); return { c: c ? c.textContent : null, d: !!(b && b.disabled), done: !!v.querySelector('[data-testid=live-done]'), ring: !!v.querySelector('[data-testid=live-ring]') }; })()");
+      if (!s) break;
+      if (s.c && seen.counts[seen.counts.length - 1] !== s.c) seen.counts.push(s.c);
+      if ((s.c || s.done) && !s.d) seen.disabled = false;
+      seen.done = seen.done || s.done; seen.ring = seen.ring || s.ring;
+      await sleep(60);
+    }
+    ok('burst', seen.counts.join() === '1 / 4,2 / 4,3 / 4,4 / 4' && seen.disabled && seen.done && seen.ring,
+      `during the burst the count goes 1 / 4 to 4 / 4 with the ring, the shutter stays disabled, then "Done" shows and the view closes (${JSON.stringify(seen)})`);
+    const sent = await waitFor(page, "window.__sent.filter((b) => b.device && b.device.source === 'live').length >= 4 && !document.querySelector('[data-testid=live-camera]')", 30000);
     await sleep(1500);
     const bodies = await j(page, "window.__sent.map((b) => ({ source: b.device && b.device.source, cap: b.device && b.device.cap, w: b.origWidth, h: b.origHeight }))");
     const cap = bodies[0]?.cap ?? {};
@@ -98,8 +115,8 @@ try {
     const offered = !!(stills.caps && stills.caps.w && stills.caps.w.max > 0);
     ok('still', !offered || (stills.takes.length >= 3 && !!stills.takes[0] && stills.takes[0].w > 0 && stills.takes[0].w <= 4096 && stills.takes[0].w * stills.takes[0].h <= 12e6),
       `the camera offers stills ${JSON.stringify(stills.caps)}: the page asks the largest up to 4096 px and 12 MP (${JSON.stringify(stills.takes)})`);
-    ok('burst', sent && (bodies.length === 4 || bodies.length === 3) && bodies.every((b) => b.source === 'live' && b.cap && b.cap.how === 'live' && ['still', 'frame'].includes(b.cap.lm) && /^mp\d+$/.test(b.cap.lres) && ['track', 'css'].includes(b.cap.zoom) && ['yes', 'no'].includes(b.cap.torch) && b.w > 0),
-      `one tap sent 3 or 4 pictures to /api/analyze as live photos with their codes: ${JSON.stringify(bodies.map((b) => [b.w, b.h]))} ${JSON.stringify(cap)}`);
+    ok('burst', sent && bodies.length === 4 && bodies.every((b) => b.source === 'live' && b.cap && b.cap.how === 'live' && ['still', 'frame'].includes(b.cap.lm) && /^mp\d+$/.test(b.cap.lres) && ['track', 'css'].includes(b.cap.zoom) && ['yes', 'no'].includes(b.cap.torch) && b.w > 0),
+      `one tap sent 4 pictures to /api/analyze as live photos with their codes: ${JSON.stringify(bodies.map((b) => [b.w, b.h]))} ${JSON.stringify(cap)}`);
     const after = await j(page, "({ view: !!document.querySelector('[data-testid=live-camera]'), live: window.__streams.flatMap((s) => s.getTracks()).filter((t) => t.readyState !== 'ended').length, streams: window.__streams.length })");
     ok('burst', !after.view && after.live === 0 && after.streams === 1, `the view closed and the camera is stopped: ${JSON.stringify(after)}`);
     const clicks = (await j(page, 'window.__clicks')).length;
@@ -120,19 +137,58 @@ try {
 
   // ---- an in-app browser (Messenger's Android web view reports more height than it shows): the controls keep out of the top 72 and the bottom 100 px
   {
-    const page = await open('/try?lang=lt&cam=1', 'fake', FB_UA);
+    const page = await open('/try?lang=lt&cam=1', 'fake', FB_UA, [360, 740]);
     await tap(page, 'camera-direct');
     await waitFor(page, "!!document.querySelector('[data-testid=live-shutter]') && !document.querySelector('[data-testid=live-shutter]').disabled", 10000);
-    const g = await j(page, "(() => { const r = (s) => document.querySelector(s).getBoundingClientRect(); const v = r('[data-testid=live-camera]'), h = r('[data-testid=live-hint]'), x = r('[data-testid=live-close]'), s = r('[data-testid=live-shutter]'); return { vTop: Math.round(v.top), vBottom: Math.round(v.bottom), hint: Math.round(h.top - v.top), close: Math.round(x.top - v.top), shutter: Math.round(v.bottom - s.bottom), vv: Math.round(visualViewport.height) }; })()");
+    // the words at the top (before the tap, and the count during the burst) keep clear of the close button and inside the band the web view surely shows:
+    // every line's text (its own rectangle, not its box) ends before the button's left edge or below its bottom, and starts 72 px or more below the view's top
+    const words = `(() => { const v = document.querySelector('[data-testid=live-camera]').getBoundingClientRect(); const x = document.querySelector('[data-testid=live-close]').getBoundingClientRect(); const out = []; for (const p of document.querySelectorAll('[data-testid=live-hint] p')) { const rg = document.createRange(); rg.selectNodeContents(p); for (const r of rg.getClientRects()) out.push({ t: Math.round(r.top - v.top), b: Math.round(r.bottom - v.top), l: Math.round(r.left), r: Math.round(r.right) }); } return { lines: out, x: { l: Math.round(x.left), b: Math.round(x.bottom - v.top) }, circle: Math.round(document.querySelector('[data-testid=live-camera] > div[aria-hidden]').getBoundingClientRect().top - v.top) }; })()`;
+    const clear = (w) => w.lines.length > 0 && w.lines.every((r) => r.t >= 72 && (r.r <= w.x.l || r.t >= w.x.b));
+    const w1 = await j(page, words);
+    await tap(page, 'live-shutter');
+    await waitFor(page, "!!document.querySelector('[data-testid=live-count]')", 5000);
+    const w2 = await j(page, words);
+    ok('inapp', clear(w1) && clear(w2) && w1.lines.length >= 2 && w2.lines.length >= 2,
+      `at 360 x 740 in Messenger's browser the hint, the second line and the count keep 72 px below the top and clear of the close button (before ${JSON.stringify(w1)}, during ${JSON.stringify(w2)})`);
+    await waitFor(page, "!document.querySelector('[data-testid=live-camera]')", 20000);
+    await page.close();
+    const page2 = await open('/try?lang=lt&cam=1', 'fake', FB_UA);
+    await tap(page2, 'camera-direct');
+    await waitFor(page2, "!!document.querySelector('[data-testid=live-shutter]') && !document.querySelector('[data-testid=live-shutter]').disabled", 10000);
+    const g = await j(page2, "(() => { const r = (s) => document.querySelector(s).getBoundingClientRect(); const v = r('[data-testid=live-camera]'), h = r('[data-testid=live-hint]'), x = r('[data-testid=live-close]'), s = r('[data-testid=live-shutter]'); return { vTop: Math.round(v.top), vBottom: Math.round(v.bottom), hint: Math.round(h.top - v.top), close: Math.round(x.top - v.top), shutter: Math.round(v.bottom - s.bottom), vv: Math.round(visualViewport.height) }; })()");
     ok('inapp', g.hint >= 72 && g.close >= 72 && g.shutter >= 100 && g.vBottom - g.vTop === g.vv,
       `in Messenger's browser the hint and the close button stand 72 px or more below the view's top and the shutter 100 px or more above its bottom; the view is the visual viewport (${JSON.stringify(g)})`);
-    await page.close();
+    await page2.close();
     const plain = await open('/try?lang=lt&cam=1');
     await tap(plain, 'camera-direct');
     await waitFor(plain, "!!document.querySelector('[data-testid=live-shutter]') && !document.querySelector('[data-testid=live-shutter]').disabled", 10000);
     const p2 = await j(plain, "(() => { const r = (s) => document.querySelector(s).getBoundingClientRect(); const v = r('[data-testid=live-camera]'), s = r('[data-testid=live-shutter]'); return { shutter: Math.round(v.bottom - s.bottom) }; })()");
     ok('inapp', p2.shutter < 100, `in Chrome the bar is not raised (${JSON.stringify(p2)})`);
     await plain.close();
+  }
+
+  // ---- darkness: a fake camera that films black (a one-frame Y4M file, looped by Chrome): the second line warns, the shutter stays usable
+  {
+    const dir = mkdtempSync(join(tmpdir(), 'livecam-'));
+    const y4m = join(dir, 'black.y4m');
+    writeFileSync(y4m, Buffer.concat([Buffer.from('YUV4MPEG2 W320 H240 F30:1 Ip A1:1 C420jpeg\nFRAME\n'), Buffer.alloc(320 * 240, 16), Buffer.alloc(160 * 120 * 2, 128)]));
+    const dark = await launch({ args: ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream', `--use-file-for-fake-video-capture=${y4m}`] });
+    try {
+      const page = await dark.page({ width: 390, height: 844, mobile: true });
+      await page.send('Page.addScriptToEvaluateOnNewDocument', { source: SPY('fake') });
+      await page.goto(`${origin}/try?lang=lt&cam=1`);
+      await page.loaded();
+      await waitFor(page, "!!document.querySelector('[data-testid=camera-direct]')", 20000);
+      await sleep(600);
+      await tap(page, 'camera-direct');
+      const warned = await waitFor(page, "!!document.querySelector('[data-testid=live-dark]')", 10000);
+      const st = await j(page, "({ line: (document.querySelector('[data-testid=live-dark]') || {}).textContent || '', shutter: !!document.querySelector('[data-testid=live-shutter]') && !document.querySelector('[data-testid=live-shutter]').disabled, burst: !!document.querySelector('[data-testid=live-burst]') })");
+      ok('dark', warned && st.line === 'Per tamsu. Prieikite prie lango arba įjunkite šviesą.' && st.shutter && !st.burst,
+        `a black picture: the second line says it is too dark, the shutter stays usable (${JSON.stringify(st)})`);
+      await page.close();
+    } finally {
+      await dark.close();
+    }
   }
 
   // ---- fallback

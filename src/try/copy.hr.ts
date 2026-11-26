@@ -75,7 +75,7 @@ export const hr: TryCopy = {
     // the guide video's button and the four steps under it, one line each (copy.ts says why)
     videoPlay: 'Pokrenite video s uputama',
     videoPause: 'Pauzirajte video s uputama',
-    steps: ['Stražnja kamera, zum 2x', 'Otprilike 10 cm od oka', 'Svjetlo s prozora ili svjetiljka, sa strane', 'Dodirnite šarenicu i ne mičite se'],
+    steps: ['Sami? U ogledalu vidite zaslon', 'Kamera straga, 2x, 10 cm od oka', 'Svjetlo s prozora ili svjetiljka, sa strane', 'Dodirnite šarenicu i ne mičite se'],
     moreTips: 'Više savjeta',
     stepsOpen: 'Širom otvoreno oko. ',
     stepsOpenMore: 'Gledajte ravno naprijed i vrhom prsta nježno podignite gornji kapak, tako da ni kapak ni trepavice ne prelaze preko šarenice.',
@@ -86,6 +86,14 @@ export const hr: TryCopy = {
     liveHint: 'Držite oko u krugu',
     liveLight: 'Svjetlo',
     liveShutter: 'Snimite fotografiju',
+    // the live camera's burst (2026-11-26): under the hint before the tap (n is the number of pictures one tap takes), during it, and at its end
+    liveBurst: (n: number) => `Snimit ćemo ${n} fotografije. Ne mičite se.`,
+    liveStill: 'Ne mičite se',
+    liveDone: 'Gotovo',
+    // the tips' second line in a tab with the live camera (?cam=1): it zooms by itself, so only the distance (closer than about 10 cm no phone focuses)
+    liveStep: 'Stražnja kamera, oko 15 cm od oka',
+    // the live camera's second line while the middle of the picture is too dark (it never blocks the shutter)
+    liveDark: 'Premračno. Priđite prozoru ili upalite svjetlo.',
     takePhoto: 'Fotografirajte oko',
     pickShots: 'Učitajte fotografiju',
     consent: 'Spremiti fotografiju mojeg oka i rezultat u SnapEyes memoriju za učenje kako bi obnove s vremenom bile sve bolje. Anonimno, bez imena i lica. Brisanje možete zatražiti u bilo kojem trenutku.',

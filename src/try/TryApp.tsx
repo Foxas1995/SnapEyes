@@ -47,7 +47,7 @@ import { BrandPicture } from '../shared/BrandLogo';
 import { LegalParts } from '../shared/LegalLinks';
 import { NO_SAVE } from './noSave';
 import { parseReveal } from '../reveal/revealMath';
-import { type Cap, type LiveFail, VIDEO, camOn, liveSupported } from './livecam/logic';
+import { type Cap, type LiveFail, BURST, LIVE_DONE_MS, VIDEO, camOn, liveSupported } from './livecam/logic';
 import { wideFrame, type WideFrame } from '../reveal/wideFrame';
 
 type Step = 'capture' | 'analyzing' | 'quality' | 'processing' | 'result';
@@ -732,7 +732,8 @@ export const TryApp: React.FC = () => {
     nativeCamera(CAM ? { how: 'native', lfail: liveFailRef.current ?? 'unsupported' } : { how: 'native' });
   };
   const onLiveFail = (why: LiveFail) => { liveFailRef.current = why; setLiveFail(why); setLive(false); nativeCamera({ how: 'native', lfail: why }); };
-  const onLiveFrames = (files: File[], cap: Cap) => { setLive(false); capRef.current = cap; void onFiles(files, 'live'); };
+  // the pictures go on at once; the view stays a moment longer with its "Done" (2026-11-26), then closes
+  const onLiveFrames = (files: File[], cap: Cap) => { capRef.current = cap; void onFiles(files, 'live'); window.setTimeout(() => setLive(false), LIVE_DONE_MS); };
 
   /** /api/analyze for one photo. Always says what kind of device and source it came from. In study mode every
    *  answer that no logged analyze has carried yet rides along; the engine logs only a reply that found an
@@ -1111,7 +1112,8 @@ export const TryApp: React.FC = () => {
           onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) onCameraShot(f); }} />
         {live && (
           <Suspense fallback={<div className="fixed inset-0 z-50 bg-black" />}>
-            <LiveCamera stream={liveStreamRef.current ?? Promise.reject(new Error('no camera asked'))} hint={T.capture.liveHint} light={T.capture.liveLight} shutter={T.capture.liveShutter} close={T.buy.close} debug={CAM}
+            <LiveCamera stream={liveStreamRef.current ?? Promise.reject(new Error('no camera asked'))} hint={T.capture.liveHint}
+              darkLine={T.capture.liveDark} burstLine={T.capture.liveBurst(BURST)} holdStill={T.capture.liveStill} done={T.capture.liveDone} light={T.capture.liveLight} shutter={T.capture.liveShutter} close={T.buy.close} debug={CAM}
               onFrames={onLiveFrames} onFail={onLiveFail} onClose={() => setLive(false)} />
           </Suspense>
         )}
@@ -1154,7 +1156,7 @@ export const TryApp: React.FC = () => {
             {/* the four steps, one line each (the video shows them); the open eye, the 3-5 shots and the pair are one tap away in a closed disclosure (the owner, 2026-10-20: "a lot of text before the photo") */}
             <div data-testid="capture-guide" className="max-md:order-last [@media(max-height:820px)]:order-last bg-[#0b0e17] border border-white/10 rounded-2xl p-4 text-sm text-zinc-300 flex flex-col gap-2">
               <ol className="flex flex-col gap-2">
-                {T.capture.steps.map((s, i) => (
+                {(CAM ? T.capture.steps.map((s, i) => (i === 1 ? T.capture.liveStep : s)) : T.capture.steps).map((s, i) => (
                   <li key={i}><span className="text-gold font-bold">{i + 1}.</span> {s}</li>
                 ))}
               </ol>

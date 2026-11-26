@@ -73,7 +73,7 @@ export const fi: TryCopy = {
     // the guide video's button and the four steps under it, one line each (copy.ts says why)
     videoPlay: 'Toista ohjevideo',
     videoPause: 'Keskeytä ohjevideo',
-    steps: ['Takakamera, 2x-zoomi', 'Noin 10 cm silmästä', 'Ikkunan tai taskulampun valo, sivulta', 'Tarkenna napauttamalla iiristä, pysy paikallasi'],
+    steps: ['Yksin? Peilistä näet näytön', 'Takakamera, 2x-zoomi, noin 10 cm silmästä', 'Ikkunan tai taskulampun valo, sivulta', 'Tarkenna napauttamalla iiristä, pysy paikallasi'],
     moreTips: 'Lisää vinkkejä',
     stepsOpen: 'Silmä aivan auki. ',
     stepsOpenMore: 'Katso suoraan eteenpäin ja nosta yläluomea varovasti sormenpäällä, jotta luomi tai ripset eivät peitä iiristä.',
@@ -84,6 +84,14 @@ export const fi: TryCopy = {
     liveHint: 'Pidä silmä ympyrässä',
     liveLight: 'Valo',
     liveShutter: 'Ota kuva',
+    // the live camera's burst (2026-11-26): under the hint before the tap (n is the number of pictures one tap takes), during it, and at its end
+    liveBurst: (n: number) => `Otamme ${n} kuvaa. Pysy paikallaan.`,
+    liveStill: 'Pysy paikallaan',
+    liveDone: 'Valmis',
+    // the tips' second line in a tab with the live camera (?cam=1): it zooms by itself, so only the distance (closer than about 10 cm no phone focuses)
+    liveStep: 'Takakamera, noin 15 cm silmästä',
+    // the live camera's second line while the middle of the picture is too dark (it never blocks the shutter)
+    liveDark: 'Liian pimeää. Mene ikkunan luo tai sytytä valo.',
     takePhoto: 'Kuvaa silmä',
     pickShots: 'Lataa kuva',
     consent: 'Tallenna silmäni kuva ja tulos SnapEyesin koulutusmuistiin, jotta entisöinnit paranevat ajan myötä. Nimetön, ei nimeä eikä kasvoja. Voit pyytää meitä poistamaan sen milloin tahansa.',

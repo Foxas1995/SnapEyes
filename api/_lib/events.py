@@ -151,7 +151,8 @@ SOURCES = ("camera", "gallery", "live", "sample", "lab")
 # still) or frame (a frame of the video); lres: the frame's megapixel class; zoom: on the track or by our crop; torch: the track had one; lfail: why
 # the live camera gave way. Nothing else: no device identifier, no camera label, no exact size.
 CAPTURE = {"how": ("live", "native", "gallery"), "lm": ("still", "frame"), "lres": ("mp0", "mp1", "mp2", "mp5", "mp8", "mp12"),
-           "zoom": ("track", "css"), "torch": ("yes", "no"), "lfail": ("unsupported", "denied", "nocamera", "timeout", "error")}
+           "zoom": ("track", "css"), "torch": ("yes", "no"), "lfail": ("unsupported", "denied", "nocamera", "timeout", "error"),
+           "dark": ("yes", "no"), "zv": ("z2", "z3")}       # zv: the live zoom's value, 2x or 3x (2026-11-26)      # dark: the live view's middle was too dark at the tap (2026-11-26)
 for _kind in ("analyze", "hit"):
     for _field in CAPTURE:
         FIELDS[_kind][_field] = "c"
@@ -530,7 +531,7 @@ def _server_counts(agg, ev):
         if ev.get("blocked"):
             _fx(agg, ev, "an_block", ev.get("block_reason") or "unknown")
         for metric, field in (("an_res", "res"), ("an_ori", "ori"), ("an_iris", "irs"), ("an_source", "source"),
-                              ("an_how", "how"), ("an_lm", "lm"), ("an_lres", "lres"), ("an_zoom", "zoom"), ("an_torch", "torch"), ("an_lfail", "lfail")):
+                              ("an_how", "how"), ("an_lm", "lm"), ("an_lres", "lres"), ("an_zoom", "zoom"), ("an_torch", "torch"), ("an_lfail", "lfail"), ("an_dark", "dark"), ("an_zv", "zv")):
             _fx(agg, ev, metric, ev.get(field))
         if ev.get("locked") is not None:
             _fx(agg, ev, "an_lock", "locked" if ev["locked"] else "unlocked")

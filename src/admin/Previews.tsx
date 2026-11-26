@@ -61,7 +61,7 @@ export function capText(c: unknown): string {
   if (!c || typeof c !== 'object') return '';
   const m = c as Record<string, unknown>;
   const w = (k: string) => (typeof m[k] === 'string' ? (CAP_LT[m[k] as string] ?? String(m[k])).toLowerCase() : '');
-  return [w('how'), w('lm'), typeof m.lres === 'string' ? String(m.lres) : '', w('zoom'), m.torch ? `šviesa ${w('torch')}` : '', m.lfail ? `gyva kamera: ${w('lfail')}` : '']
+  return [w('how'), w('lm'), typeof m.lres === 'string' ? String(m.lres) : '', w('zoom'), typeof m.zv === 'string' ? String(m.zv).replace(/^z/, '') + 'x' : '', m.torch ? `šviesa ${w('torch')}` : '', m.dark ? `tamsu ${w('dark')}` : '', m.lfail ? `gyva kamera: ${w('lfail')}` : '']
     .filter(Boolean).join(', ');
 }
 

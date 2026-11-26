@@ -77,7 +77,7 @@ export const et: TryCopy = {
     // the guide video's button and the four steps under it, one line each (copy.ts says why)
     videoPlay: 'Esita juhendvideo',
     videoPause: 'Peata juhendvideo',
-    steps: ['Tagakaamera, 2x suurendus', 'Umbes 10 cm kaugusel silmast', 'Akna- või taskulambivalgus, küljelt', 'Puuduta teravustamiseks iirist, hoia paigal'],
+    steps: ['Üksi? Peeglist näed ekraani', 'Tagakaamera, 2x suurendus, 10 cm silmast', 'Akna- või taskulambivalgus, küljelt', 'Puuduta teravustamiseks iirist, hoia paigal'],
     moreTips: 'Veel nõuandeid',
     stepsOpen: 'Silm pärani lahti. ',
     stepsOpenMore: 'Vaata otse ette ja tõsta ülemist laugu õrnalt sõrmeotsaga, et laug ega ripsmed ei ulatuks iirise peale.',
@@ -88,6 +88,14 @@ export const et: TryCopy = {
     liveHint: 'Hoia silm ringi sees',
     liveLight: 'Valgus',
     liveShutter: 'Tee foto',
+    // the live camera's burst (2026-11-26): under the hint before the tap (n is the number of pictures one tap takes), during it, and at its end
+    liveBurst: (n: number) => `Teeme ${n} fotot. Ära liiguta.`,
+    liveStill: 'Ära liiguta',
+    liveDone: 'Valmis',
+    // the tips' second line in a tab with the live camera (?cam=1): it zooms by itself, so only the distance (closer than about 10 cm no phone focuses)
+    liveStep: 'Tagakaamera, umbes 15 cm silmast',
+    // the live camera's second line while the middle of the picture is too dark (it never blocks the shutter)
+    liveDark: 'Liiga pime. Mine akna juurde või lülita valgus sisse.',
     takePhoto: 'Pildista silma',
     pickShots: 'Laadi foto üles',
     consent: 'Salvesta minu silmafoto ja tulemus SnapEyesi õppemällu, et taastamine muutuks ajaga paremaks. Anonüümselt, ilma nime ja näota. Võid igal ajal paluda meil selle kustutada.',

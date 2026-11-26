@@ -4,7 +4,10 @@
 // page wiring (lazy chunk, fallback to the capture input, the codes on the beacon and the analysis); the server's side of the codes (api/_lib/events.py
 // CAPTURE). Loaded through Vite's module runner by scripts/run_ts_tests.mjs; returns its results.
 import { readFileSync } from 'node:fs';
-import { CAM_KEY, INAPP_BOTTOM, INAPP_TOP, camOn, centreCrop, chooseStill, chooseZoom, circleCentre, debugLine, failClass, inApp, liveCap, liveSupported, resClass, viewInsets } from '../../src/try/livecam/logic';
+import {
+  BURST, CAM_KEY, DARK_LUMA, INAPP_BOTTOM, INAPP_TOP, MAX_TAKES, camOn, centreCrop, chooseStill, chooseZoom, circleCentre, debugLine, failClass, inApp, liveCap, liveSupported,
+  meanLuma, photoSettings, resClass, stillVerdict, takeBurst, tooDark, viewInsets, zoomCode,
+} from '../../src/try/livecam/logic';
 import { capText } from '../../src/admin/Previews';
 import { T, setCopyLang } from '../../src/try/copy';
 
@@ -27,10 +30,12 @@ export async function run(): Promise<Row[]> {
     liveSupported({ mediaDevices: { getUserMedia: () => 0 } }, true) && !liveSupported({ mediaDevices: { getUserMedia: () => 0 } }, false)
       && !liveSupported({}, true) && !liveSupported(undefined, true) && !liveSupported({ mediaDevices: {} }, true));
 
-  const z = [chooseZoom({ zoom: { min: 1, max: 10 } }), chooseZoom({ zoom: { min: 1, max: 2 } }), chooseZoom({ zoom: { min: 1, max: 1.5 } }), chooseZoom({}), chooseZoom(null), chooseZoom({ zoom: { min: 2.5, max: 8 } })];
-  check('the zoom: 2x on the track when its zoom reaches 2 (never above its max, never under its min), our 2x crop otherwise',
-    z[0].mode === 'track' && z[0].value === 2 && z[1].mode === 'track' && z[1].value === 2 && z[2].mode === 'css' && z[3].mode === 'css' && z[4].mode === 'css'
-      && z.slice(2, 5).every((x) => x.value === 2) && z[5].mode === 'track' && z[5].value === 2.5, JSON.stringify(z));
+  const z = [chooseZoom({ zoom: { min: 1, max: 10 } }), chooseZoom({ zoom: { min: 1, max: 2 } }), chooseZoom({ zoom: { min: 1, max: 1.5 } }), chooseZoom({}), chooseZoom(null), chooseZoom({ zoom: { min: 2.5, max: 8 } }),
+    chooseZoom({ zoom: { min: 1, max: 2.6 } }), chooseZoom({}, 12e6), chooseZoom({}, 8e6), chooseZoom({ zoom: { max: 1.5 } }, 12e6)];
+  check('the zoom (2026-11-26, 3x where it is real): the track own up to 3x from a max of 2 (never above its max, never under its min); our crop 3x only on a still of about 12 MP, 2x otherwise',
+    z[0].mode === 'track' && z[0].value === 3 && z[1].mode === 'track' && z[1].value === 2 && z[2].mode === 'css' && z[3].mode === 'css' && z[4].mode === 'css'
+      && z.slice(2, 5).every((x) => x.value === 2) && z[5].mode === 'track' && z[5].value === 3 && z[6].value === 2.6 && z[7].mode === 'css' && z[7].value === 3
+      && z[8].value === 2 && z[9].mode === 'css' && z[9].value === 3 && zoomCode(2) === 'z2' && zoomCode(2.6) === 'z3' && zoomCode(3) === 'z3', JSON.stringify(z));
   const c = centreCrop(4000, 3000, 2), c1 = centreCrop(1920, 1080, 1);
   check('the crop of our 2x zoom is the middle half each way (and no crop at 1x)',
     c.sx === 1000 && c.sy === 750 && c.sw === 2000 && c.sh === 1500 && c1.sx === 0 && c1.sw === 1920 && c1.sh === 1080, JSON.stringify([c, c1]));
@@ -100,9 +105,50 @@ export async function run(): Promise<Row[]> {
       && /return \(\) => \{[^}]*stop\(\)/.test(cam) && cam.includes('{torch.has && (') && cam.includes('window.ImageCapture'));
   check('the view: the page behind locked and given back, sized from visualViewport, no pan; the largest still asked, a plain one when that fails, no crop on a real zoom',
     cam.includes("html.style.overflow = 'hidden'; body.style.overflow = 'hidden';") && cam.includes('window.scrollTo(was.x, was.y);') && cam.includes("vv?.addEventListener('scroll', fit)")
-      && cam.includes("touchAction: 'none', overscrollBehavior: 'contain'") && cam.includes('chooseStill(await ic.getPhotoCapabilities())')
-      && cam.includes('still = await ic.takePhoto({ imageWidth: size.w, imageHeight: size.h }); } catch { size = null; still = await ic.takePhoto(); }')
-      && cam.includes("const crop = zoom.mode === 'css' ? zoom.value : 1;") && cam.includes('burst = Math.min(burst, 3)') && cam.includes('bmp.close();'));
+      && cam.includes("touchAction: 'none', overscrollBehavior: 'contain'") && cam.includes('size = chooseStill(pc); settings = photoSettings(size, (pc as { fillLightMode?: unknown }).fillLightMode);')
+      && cam.includes('if (settings) { try { still = await ic.takePhoto(settings); } catch { settings = null; size = null; still = await ic.takePhoto(); } }')
+      && cam.includes("const crop = zoom.mode === 'css' ? zoom.value : 1;") && !cam.includes('burst = Math.min(burst, 3)') && cam.includes('bmp.close();'));
+
+  // ---- the burst keeps usable pictures only (2026-11-26: with the torch on, two burnt white and two dark stills), the darkness warning, no flash
+  const px = (v: number, n = 16) => { const a = new Uint8ClampedArray(n * 4); for (let i = 0; i < n; i++) { a[i * 4] = v; a[i * 4 + 1] = v; a[i * 4 + 2] = v; a[i * 4 + 3] = 255; } return a; };
+  check('the mean luma of RGBA pixels; too dark under 70; a picture over 235 is burnt, under 25 black, else usable',
+    Math.round(meanLuma(px(0))) === 0 && Math.round(meanLuma(px(255))) === 255 && Math.round(meanLuma(px(100))) === 100 && DARK_LUMA === 70 && tooDark(69) && !tooDark(70)
+      && stillVerdict(252) === 'burnt' && stillVerdict(10) === 'black' && stillVerdict(43) === 'ok' && stillVerdict(120) === 'ok');
+  const run = async (lumas: number[]) => {
+    const seen: number[] = [];
+    const r = await takeBurst((i) => Promise.resolve(i < lumas.length ? { luma: lumas[i], i } : null), (k) => seen.push(k));
+    return { r, seen };
+  };
+  const ra = await run([252, 250, 120, 10, 130, 125]);
+  check('a stubbed camera giving white, white, good, black, good, good: 6 takes, the 3 good ones kept, 2 burnt and 1 black thrown away, the count never goes back',
+    ra.r.takes === 6 && ra.r.kept.map((p) => p.i).join() === '2,4,5' && ra.r.burnt === 2 && ra.r.black === 1 && !ra.r.fallback && ra.seen.every((k, i) => i === 0 || k >= ra.seen[i - 1]) && Math.max(...ra.seen) <= BURST,
+    JSON.stringify({ kept: ra.r.kept.map((p) => p.i), takes: ra.r.takes, seen: ra.seen }));
+  const rb = await run([120, 121, 122, 123, 124, 125]);
+  const rc = await run([252, 250, 249, 10, 5, 240]);
+  check('four good ones: 4 takes and done; none good in 6 takes: the two closest to grey are sent anyway (the server answers something)',
+    rb.r.takes === BURST && rb.r.kept.length === 4 && rb.seen.join() === '1,2,3,4' && rc.r.takes === MAX_TAKES && rc.r.fallback && rc.r.kept.length === 2 && rc.r.kept.map((p) => p.i).sort().join() === '3,5',
+    JSON.stringify({ b: rb.seen, c: rc.r.kept.map((p) => p.i) }));
+  check('the still asked without a flash where the camera lists fillLightMode off; the size alone, or nothing (a plain takePhoto) otherwise',
+    JSON.stringify(photoSettings({ w: 4000, h: 3000 }, ['auto', 'off', 'flash'])) === JSON.stringify({ imageWidth: 4000, imageHeight: 3000, fillLightMode: 'off' })
+      && JSON.stringify(photoSettings(null, ['off'])) === JSON.stringify({ fillLightMode: 'off' }) && JSON.stringify(photoSettings({ w: 10, h: 5 }, ['flash'])) === JSON.stringify({ imageWidth: 10, imageHeight: 5 })
+      && photoSettings(null, undefined) === null);
+  const lt = debugLine({ geo, method: 'still', video: { w: 3840, h: 2160 }, asked: { w: 4000, h: 3000 }, got: { w: 4000, h: 3000 }, takes: { n: 6, burnt: 2, black: 0 }, zoom: 'track', zoomValue: 2, torch: true });
+  check('the facts line says how many takes and why some were thrown away', lt.includes(`takes 6, burnt 2${DOT}zoom 2x track`) && !lt.includes('black'), lt);
+  check('the dark code at the tap rides with the burst\'s codes, and the admin reads it',
+    JSON.stringify(liveCap('still', 4000, 3000, 'track', true, true)) === JSON.stringify({ how: 'live', lm: 'still', lres: 'mp12', zoom: 'track', torch: 'yes', dark: 'yes' })
+      && capText({ how: 'live', dark: 'yes' }).includes('tamsu yra') && liveCap('frame', 100, 100, 'css', false, false, 3).zv === 'z3' && capText({ how: 'live', zoom: 'css', zv: 'z3' }).includes('3x'));
+  check('the live tab tips: its second line says only the distance, about 15 cm (it zooms by itself); the page without ?cam=1 keeps 2x and 10 cm',
+    LANGS.every((l) => { setCopyLang(l); const ok = T.capture.liveStep.includes('15') && !T.capture.liveStep.includes('10') && T.capture.steps[1].includes('10') && T.capture.steps[1].includes('2'); setCopyLang('en'); return ok; })
+      && app.includes('(CAM ? T.capture.steps.map((s, i) => (i === 1 ? T.capture.liveStep : s)) : T.capture.steps)'));
+  const darks = LANGS.map((l) => { setCopyLang(l); return [T.capture.liveDark, T.capture.liveBurst(4), T.capture.liveStill, T.capture.liveDone, T.capture.steps[0]]; });
+  setCopyLang('en');
+  check('the new words in every language: the darkness warning, the burst line with its number, hold still, done, and the mirror tip first among the four steps',
+    darks.every((w) => w.every((x) => typeof x === 'string' && x.length > 1 && x.length <= 60) && w[1].includes('4')) && darks.slice(1).every((w) => w[0] !== darks[0][0] && w[4] !== darks[0][4])
+      && darks[2][4].startsWith('Vienas?'), JSON.stringify(darks.map((w) => w[4])));
+  const cam2 = readFileSync('src/try/livecam/LiveCamera.tsx', 'utf8');
+  check('the view: the dark line replaces the second line (the shutter stays usable), the light button gets a gold ring while dark, the shutter waits after the torch is switched, the meter stops during the burst',
+    cam2.includes('<p data-testid="live-dark"') && cam2.includes("${dark && !torch.on ? 'ring-2 ring-gold' : ''}") && cam2.includes('disabled={!ready || busy || settling}')
+      && cam2.includes('if (!ready || busy || finished) return;') && cam2.includes('window.clearInterval(id)') && !/disabled=\{[^}]*dark/.test(cam2));
 
   // the server side
   const ev = readFileSync('api/_lib/events.py', 'utf8');

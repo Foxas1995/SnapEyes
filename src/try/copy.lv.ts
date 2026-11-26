@@ -76,7 +76,7 @@ export const lv: TryCopy = {
     // the guide video's button and the four steps under it, one line each (copy.ts says why)
     videoPlay: 'Atskaņot pamācības video',
     videoPause: 'Apturēt pamācības video',
-    steps: ['Aizmugurējā kamera, 2x tuvinājums', 'Apmēram 10 cm no acs', 'Gaisma no loga vai lukturīša, no sāniem', 'Pieskarieties varavīksnenei un nekustieties'],
+    steps: ['Viens? Spogulī redzēsiet ekrānu', 'Aizmugurējā kamera, 2x, 10 cm no acs', 'Gaisma no loga vai lukturīša, no sāniem', 'Pieskarieties varavīksnenei un nekustieties'],
     moreTips: 'Vairāk padomu',
     stepsOpen: 'Plaši atvērta acs. ',
     stepsOpenMore: 'Skatieties taisni uz priekšu un ar pirksta galu saudzīgi paceliet augšējo plakstiņu, lai plakstiņš un skropstas neaizsedz varavīksneni.',
@@ -87,6 +87,14 @@ export const lv: TryCopy = {
     liveHint: 'Turiet aci aplī',
     liveLight: 'Gaisma',
     liveShutter: 'Fotografēt',
+    // the live camera's burst (2026-11-26): under the hint before the tap (n is the number of pictures one tap takes), during it, and at its end
+    liveBurst: (n: number) => `Uzņemsim ${n} kadrus. Nekustieties.`,
+    liveStill: 'Nekustieties',
+    liveDone: 'Gatavs',
+    // the tips' second line in a tab with the live camera (?cam=1): it zooms by itself, so only the distance (closer than about 10 cm no phone focuses)
+    liveStep: 'Aizmugurējā kamera, apmēram 15 cm no acs',
+    // the live camera's second line while the middle of the picture is too dark (it never blocks the shutter)
+    liveDark: 'Par tumšu. Pieejiet pie loga vai ieslēdziet gaismu.',
     takePhoto: 'Fotografēt aci',
     pickShots: 'Augšupielādēt foto',
     consent: 'Saglabāt manas acs fotogrāfiju un rezultātu SnapEyes mācību atmiņā, lai atjaunošana ar laiku kļūtu arvien labāka. Anonīmi, bez vārda un sejas. Dzēšanu varat lūgt jebkurā brīdī.',

@@ -91,7 +91,7 @@ const en = {
     videoPause: 'Pause the guide video',
     // the capture guide under the video: four steps, one line each, numbered by the list (2026-10-22: the video shows them; the retake guide keeps the
     // full sentences, LIGHT, CAMERA, FOCUS and STEADY, and says nothing these lines contradict)
-    steps: ['Back camera, 2x zoom', 'About 10 cm from the eye', 'Window or torch light, from the side', 'Tap the iris to focus, hold still'],
+    steps: ['Alone? A mirror shows you the screen', 'Back camera, 2x zoom, 10 cm away', 'Window or torch light, from the side', 'Tap the iris to focus, hold still'],
     // the summary of the closed disclosure under the four steps that holds the three lines below (the open eye, the 3-5 shots, the pair): the first screen shows
     // the four steps and the buttons, the rest is one tap away
     moreTips: 'More tips',
@@ -108,6 +108,14 @@ const en = {
     liveHint: 'Keep your eye in the circle',
     liveLight: 'Light',
     liveShutter: 'Take the photo',
+    // the live camera's burst (2026-11-26): under the hint before the tap (n is the number of pictures one tap takes), during it, and at its end
+    liveBurst: (n: number) => `We take ${n} photos. Hold still.`,
+    liveStill: 'Hold still',
+    liveDone: 'Done',
+    // the tips' second line in a tab with the live camera (?cam=1): it zooms by itself, so only the distance (closer than about 10 cm no phone focuses)
+    liveStep: 'Back camera, about 15 cm from the eye',
+    // the live camera's second line while the middle of the picture is too dark (it never blocks the shutter)
+    liveDark: 'Too dark. Go to a window or turn on a light.',
     takePhoto: 'Photograph your eye',
     pickShots: 'Upload a photo',
     consent: "Save my eye photo and result to SnapEyes' training memory so restorations get better over time. Anonymous, no name or face. You can ask us to delete it any time.",
@@ -639,7 +647,7 @@ const de: TryCopy = {
     sampleLoadFailed: 'Das Beispielauge konnte nicht geladen werden.',
     videoPlay: 'Anleitungsvideo abspielen',
     videoPause: 'Anleitungsvideo anhalten',
-    steps: ['Rückkamera, 2-facher Zoom', 'Etwa 10 cm vor dem Auge', 'Fensterlicht oder Taschenlampe, seitlich', 'Auf die Iris tippen, still halten'],
+    steps: ['Allein? Im Spiegel sehen Sie den Bildschirm', 'Rückkamera, 2-fach Zoom, 10 cm Abstand', 'Fensterlicht oder Taschenlampe, seitlich', 'Auf die Iris tippen, still halten'],
     moreTips: 'Weitere Tipps',
     stepsOpen: 'Auge weit geöffnet. ',
     stepsOpenMore: 'Schauen Sie geradeaus und heben Sie das Oberlid sanft mit einer Fingerspitze an, damit weder Lid noch Wimpern über der Iris liegen.',
@@ -650,6 +658,14 @@ const de: TryCopy = {
     liveHint: 'Halten Sie das Auge im Kreis',
     liveLight: 'Licht',
     liveShutter: 'Foto aufnehmen',
+    // the live camera's burst (2026-11-26): under the hint before the tap (n is the number of pictures one tap takes), during it, and at its end
+    liveBurst: (n: number) => `Wir machen ${n} Fotos. Bitte stillhalten.`,
+    liveStill: 'Stillhalten',
+    liveDone: 'Fertig',
+    // the tips' second line in a tab with the live camera (?cam=1): it zooms by itself, so only the distance (closer than about 10 cm no phone focuses)
+    liveStep: 'Rückkamera, etwa 15 cm vor dem Auge',
+    // the live camera's second line while the middle of the picture is too dark (it never blocks the shutter)
+    liveDark: 'Zu dunkel. Gehen Sie ans Fenster oder machen Sie Licht.',
     takePhoto: 'Auge fotografieren',
     pickShots: 'Foto hochladen',
     consent: 'Mein Augenfoto und das Ergebnis im Trainingsspeicher von SnapEyes sichern, damit Restaurierungen mit der Zeit besser werden. Anonym, ohne Namen oder Gesicht. Sie können jederzeit die Löschung verlangen.',

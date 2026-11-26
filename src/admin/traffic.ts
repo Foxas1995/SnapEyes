@@ -162,7 +162,7 @@ const RETAKE_LT: Record<string, string> = { '0': 'Pirma nuotrauka', '1': 'Po vie
 // the live camera's codes (api/_lib/events.py CAPTURE)
 export const CAP_LT: Record<string, string> = {
   live: 'Puslapio kamera', native: 'Telefono kamera (įvestis)', gallery: 'Iš galerijos', still: 'Tikra nuotrauka', frame: 'Vaizdo kadras',
-  track: 'Kameros priartinimas', css: 'Mūsų apkirpimas', yes: 'Yra', no: 'Nėra',
+  track: 'Kameros priartinimas', css: 'Mūsų apkirpimas', z2: '2x', z3: '3x', yes: 'Yra', no: 'Nėra',
   unsupported: 'Naršyklė nepalaiko', denied: 'Neleista', nocamera: 'Nėra kameros', timeout: 'Neatsakė laiku', error: 'Klaida',
 };
 const LOCK_LT: Record<string, string> = { locked: 'Rainelė užfiksuota', unlocked: 'Nepavyko užfiksuoti' };
@@ -177,7 +177,7 @@ export function valueLt(metric: string, value: string, gateCode: (c: string) => 
     case 'an_iris': return IRIS_LT[value] ?? value;
     case 'an_source': return SOURCE_LT[value] ?? value;
     case 'an_how': return CAP_LT[value] ?? value;
-    case 'an_lm': case 'an_zoom': case 'an_torch': case 'an_lfail': return CAP_LT[value] ?? value;
+    case 'an_lm': case 'an_zoom': case 'an_torch': case 'an_lfail': case 'an_dark': case 'an_zv': return CAP_LT[value] ?? value;
     case 'an_lres': return value.replace(/^mp(\d+)$/, (_m, n) => (n === '0' ? 'iki 1 MP' : n === '12' ? '12 MP ir daugiau' : `nuo ${n} MP`));
     case 'an_lock': return LOCK_LT[value] ?? value;
     case 'en_gate': return GATE_LT[value] ?? value;

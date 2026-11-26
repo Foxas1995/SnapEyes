@@ -20,11 +20,16 @@ export interface Cap {
   zoom?: ZoomMode;
   torch?: 'yes' | 'no';
   lfail?: LiveFail;
+  dark?: 'yes' | 'no';
+  zv?: 'z2' | 'z3';         // the zoom's value (live only)      // the middle of the picture was too dark at the tap (live only)
 }
 
 export const CAM_KEY = 'snapeyes.cam';
-export const ZOOM_WANT = 2;               // the guide's "2x zoom"
+export const ZOOM_WANT = 3;               // 2026-11-26 (the owner: "gal x3 reikia artinti?"): 3x where it is real, from about 15 cm (closer, no phone focuses)
+export const ZOOM_MIN = 2;                // the track's own zoom is used from 2x up (the guide's 2x); our crop is 2x...
+export const CROP3_PIXELS = 11.5e6;       // ...or 3x when the still that will be cropped is about 12 MP (1.3 MP or more remain)
 export const BURST = 4;                   // frames per tap of the shutter...
+export const LIVE_DONE_MS = 500;         // the view's "Done" stays this long after the last picture (they are already on their way)
 export const BURST_GAP_MS = 500;          // ...over about a second and a half
 export const FRAME_WAIT_MS = 5000;        // no picture this long after the camera was granted: give way
 export const GRANT_WAIT_MS = 30000;       // a permission question nobody answers (or a browser that never answers): give way
@@ -33,7 +38,7 @@ export const IDEAL = { width: 3840, height: 2160 };
 export const VIDEO: MediaStreamConstraints = { audio: false, video: { facingMode: { ideal: 'environment' }, width: { ideal: IDEAL.width }, height: { ideal: IDEAL.height } } };
 export const STILL_LONG_MAX = 4096;       // a still asked of ImageCapture: at most this on its long side...
 export const STILL_PIXELS_MAX = 12e6;     // ...and about 12 MP (memory: one still is decoded, cropped and released at a time)
-export const SLOW_STILL_MS = 1200;        // a sized still slower than this: the burst takes 3, not 4
+// (2026-11-26: no shorter burst for a slow still any more: the view says how many pictures one tap takes, so the number is fixed before the burst)
 // Facebook's, Messenger's and Instagram's Android web views report a height about 85 to 90 px larger than what is visible (the owner's phone, 2026-11-26) and
 // can pan: in them every control keeps out of the top and the bottom of the view (the video still fills it). The same browser test as the server's
 // (api/_lib/counter.py ua_classes).
@@ -81,13 +86,16 @@ export function liveSupported(nav: { mediaDevices?: { getUserMedia?: unknown } }
 }
 
 /** The zoom we ask for: on the track when it reaches 2x (at most its max), otherwise 2x by CSS and the kept frame cropped alike. */
-export function chooseZoom(caps: { zoom?: { min?: number; max?: number } } | null | undefined): { mode: ZoomMode; value: number } {
+export function chooseZoom(caps: { zoom?: { min?: number; max?: number } } | null | undefined, stillPixels = 0): { mode: ZoomMode; value: number } {
   const z = caps?.zoom;
   const max = typeof z?.max === 'number' && Number.isFinite(z.max) ? z.max : 0;
   const min = typeof z?.min === 'number' && Number.isFinite(z.min) ? z.min : 1;
-  if (max >= ZOOM_WANT) return { mode: 'track', value: Math.max(min, Math.min(ZOOM_WANT, max)) };
-  return { mode: 'css', value: ZOOM_WANT };
+  if (max >= ZOOM_MIN) return { mode: 'track', value: Math.max(min, Math.min(ZOOM_WANT, max)) };
+  return { mode: 'css', value: stillPixels >= CROP3_PIXELS ? 3 : 2 };
 }
+
+/** The zoom's value as a code (zv): z2 or z3 (a track's 2.5x counts as z3). */
+export const zoomCode = (value: number): 'z2' | 'z3' => (value >= 2.5 ? 'z3' : 'z2');
 
 /** The middle part of a w x h picture that a zoom of `factor` shows (the CSS zoom's crop). */
 export function centreCrop(w: number, h: number, factor: number): { sx: number; sy: number; sw: number; sh: number } {
@@ -118,8 +126,61 @@ export function resClass(w: number, h: number): string {
 }
 
 /** The codes of a burst of the live camera. */
-export function liveCap(method: LiveMethod, w: number, h: number, zoom: ZoomMode, torch: boolean): Cap {
-  return { how: 'live', lm: method, lres: resClass(w, h), zoom, torch: torch ? 'yes' : 'no' };
+export function liveCap(method: LiveMethod, w: number, h: number, zoom: ZoomMode, torch: boolean, dark?: boolean, zoomValue?: number): Cap {
+  return { how: 'live', lm: method, lres: resClass(w, h), zoom, torch: torch ? 'yes' : 'no', ...(dark === undefined ? {} : { dark: dark ? 'yes' : 'no' }),
+    ...(zoomValue === undefined ? {} : { zv: zoomCode(zoomValue) }) };
+}
+
+// The darkness warning (2026-11-26: the owner's dark room gave a frame whose skin was about 60 to 80 of 255 and the iris about 50): twice a second the middle
+// of the video, drawn into a 32 x 32 canvas, is averaged (Rec. 601 luma); under DARK_LUMA the second line says so. It never blocks the shutter.
+export const DARK_LUMA = 70;
+export const DARK_EVERY_MS = 500;
+export const DARK_SIDE = 32;
+/** The mean luma (0 to 255) of RGBA pixels. */
+export function meanLuma(px: ArrayLike<number>): number {
+  let sum = 0, n = 0;
+  for (let i = 0; i + 2 < px.length; i += 4) { sum += 0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2]; n += 1; }
+  return n ? sum / n : 0;
+}
+export const tooDark = (luma: number): boolean => luma < DARK_LUMA;
+
+// The burst keeps only usable pictures (2026-11-26: with the torch on, the owner's phone gave two burnt white stills, mean 252, and two dark ones, 43 and 47):
+// the middle of each picture is averaged on the phone; above BURNT_LUMA or below BLACK_LUMA it is thrown away and another is taken, at most MAX_TAKES in all.
+// If none is usable the best two are sent anyway (the server answers something). The count on screen follows the usable pictures, so it never goes back.
+export const BURNT_LUMA = 235;
+export const BLACK_LUMA = 25;
+export const MAX_TAKES = 6;
+export const SETTLE_MS = 700;             // after the torch is switched the shutter waits this long, so the exposure settles
+export type StillVerdict = 'ok' | 'burnt' | 'black';
+export const stillVerdict = (luma: number): StillVerdict => (luma > BURNT_LUMA ? 'burnt' : luma < BLACK_LUMA ? 'black' : 'ok');
+
+export interface BurstResult<P> { kept: P[]; takes: number; burnt: number; black: number; fallback: boolean }
+/** Take pictures until `want` usable ones are in or MAX_TAKES were taken. take(i) returns a picture with its middle's luma, or null (it failed: it counts as
+ *  a take). progress(k) is called before each take with the usable picture being taken (1 to want, never smaller than before). */
+export async function takeBurst<P extends { luma: number }>(take: (i: number) => Promise<P | null>, progress: (k: number) => void,
+  want: number = BURST, max: number = MAX_TAKES): Promise<BurstResult<P>> {
+  const kept: P[] = [], thrown: P[] = [];
+  let takes = 0, burnt = 0, black = 0;
+  while (kept.length < want && takes < max) {
+    progress(Math.min(want, kept.length + 1));
+    const p = await take(takes);
+    takes += 1;
+    if (!p) continue;
+    const v = stillVerdict(p.luma);
+    if (v === 'ok') kept.push(p);
+    else { thrown.push(p); if (v === 'burnt') burnt += 1; else black += 1; }
+  }
+  if (kept.length) return { kept, takes, burnt, black, fallback: false };
+  // nothing usable: the two closest to a middle grey, so the server still answers
+  const best = [...thrown].sort((x, y) => Math.abs(x.luma - 128) - Math.abs(y.luma - 128)).slice(0, 2);
+  return { kept: best, takes, burnt, black, fallback: true };
+}
+
+/** The photo settings asked of takePhoto: the size (chooseStill) and no flash where the camera lists fillLightMode 'off' (the torch stays as the person set it). */
+export function photoSettings(size: { w: number; h: number } | null, fillModes: unknown): { imageWidth?: number; imageHeight?: number; fillLightMode?: string } | null {
+  const off = Array.isArray(fillModes) && fillModes.includes('off');
+  if (!size && !off) return null;
+  return { ...(size ? { imageWidth: size.w, imageHeight: size.h } : {}), ...(off ? { fillLightMode: 'off' } : {}) };
 }
 
 /** The plain line the owner reads on the camera view (?cam=1 only): the geometry the browser reports, then what the camera gave:
@@ -133,6 +194,7 @@ export interface Facts {
   zoom: ZoomMode;
   zoomValue: number;
   torch: boolean;
+  takes?: { n: number; burnt: number; black: number } | null;   // the pictures taken and thrown away (burnt white, black)
 }
 export function debugLine(f: Facts): string {
   const g = f.geo;
@@ -142,5 +204,6 @@ export function debugLine(f: Facts): string {
     : f.method === 'still' ? `still ${f.asked ? sz(f.asked) : 'plain'}${f.got ? ` > ${sz(f.got)}` : ''}`
     : `frame ${f.got ? sz(f.got) : sz(f.video)}`;
   const zoom = f.zoom === 'track' ? `zoom ${Math.round(f.zoomValue * 10) / 10}x track` : `zoom ${Math.round(f.zoomValue * 10) / 10}x crop`;
-  return [geo, what, zoom, `light ${f.torch ? 'yes' : 'no'}`].join(' · ');
+  const takes = f.takes ? [`takes ${f.takes.n}${f.takes.burnt ? `, burnt ${f.takes.burnt}` : ''}${f.takes.black ? `, black ${f.takes.black}` : ''}`] : [];
+  return [geo, what, ...takes, zoom, `light ${f.torch ? 'yes' : 'no'}`].join(' · ');
 }

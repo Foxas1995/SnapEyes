@@ -64,7 +64,7 @@ export const lt: TryCopy = {
     // the guide video's button and the four steps under it, one line each (copy.ts says why)
     videoPlay: 'Paleisti vaizdo įrašą',
     videoPause: 'Pristabdyti vaizdo įrašą',
-    steps: ['Galinė kamera, 2x priartinimas', 'Maždaug 10 cm nuo akies', 'Dienos šviesa arba žibintuvėlis iš šono', 'Bakstelėkite rainelę ir nejudėkite'],
+    steps: ['Vienas? Prieš veidrodį matysite ekraną', 'Galinė kamera, 2x, 10 cm nuo akies', 'Dienos šviesa arba žibintuvėlis iš šono', 'Bakstelėkite rainelę ir nejudėkite'],
     moreTips: 'Daugiau patarimų',
     stepsOpen: 'Plačiai atmerkta akis. ',
     stepsOpenMore: 'Žiūrėkite tiesiai į priekį ir piršto galiuku švelniai pakelkite viršutinį voką, kad nei vokas, nei blakstienos nedengtų rainelės.',
@@ -75,6 +75,14 @@ export const lt: TryCopy = {
     liveHint: 'Laikykite akį apskritime',
     liveLight: 'Šviesa',
     liveShutter: 'Fotografuoti',
+    // the live camera's burst (2026-11-26): under the hint before the tap (n is the number of pictures one tap takes), during it, and at its end
+    liveBurst: (n: number) => `Padarysime ${n} kadrus. Nejudėkite.`,
+    liveStill: 'Nejudėkite',
+    liveDone: 'Paruošta',
+    // the tips' second line in a tab with the live camera (?cam=1): it zooms by itself, so only the distance (closer than about 10 cm no phone focuses)
+    liveStep: 'Galinė kamera, apie 15 cm nuo akies',
+    // the live camera's second line while the middle of the picture is too dark (it never blocks the shutter)
+    liveDark: 'Per tamsu. Prieikite prie lango arba įjunkite šviesą.',
     takePhoto: 'Fotografuoti akį',
     pickShots: 'Įkelti nuotrauką',
     consent: 'Išsaugoti mano akies nuotrauką ir rezultatą SnapEyes mokymosi atmintyje, kad atkūrimas laikui bėgant gerėtų. Anonimiškai, be vardo ir veido. Bet kada galite paprašyti juos ištrinti.',

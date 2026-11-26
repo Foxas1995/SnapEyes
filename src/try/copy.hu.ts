@@ -93,7 +93,7 @@ export const hu: TryCopy = {
     sampleLoadFailed: 'A mintaszemet nem sikerült betölteni.',
     videoPlay: 'Útmutató videó lejátszása',
     videoPause: 'Útmutató videó szüneteltetése',
-    steps: ['Hátsó kamera, 2x-es zoom', 'Kb. 10 cm-re a szemtől', 'Ablakfény vagy zseblámpa oldalról', 'Koppints az íriszre, ne mozdulj'],
+    steps: ['Egyedül? A tükörben látod a kijelzőt', 'Hátsó kamera, 2x zoom, kb. 10 cm-re', 'Ablakfény vagy zseblámpa oldalról', 'Koppints az íriszre, ne mozdulj'],
     moreTips: 'További tippek',
     stepsOpen: 'Tágra nyitott szem. ',
     stepsOpenMore: 'Nézz egyenesen előre, és egy ujjheggyel óvatosan emeld meg a felső szemhéjadat, hogy se a szemhéj, se a szempillák ne takarják az íriszt.',
@@ -104,6 +104,14 @@ export const hu: TryCopy = {
     liveHint: 'Tartsd a szemed a körben',
     liveLight: 'Fény',
     liveShutter: 'Fotó készítése',
+    // the live camera's burst (2026-11-26): under the hint before the tap (n is the number of pictures one tap takes), during it, and at its end
+    liveBurst: (n: number) => `${n} fotót készítünk. Ne mozdulj.`,
+    liveStill: 'Ne mozdulj',
+    liveDone: 'Kész',
+    // the tips' second line in a tab with the live camera (?cam=1): it zooms by itself, so only the distance (closer than about 10 cm no phone focuses)
+    liveStep: 'Hátsó kamera, kb. 15 cm-re a szemtől',
+    // the live camera's second line while the middle of the picture is too dark (it never blocks the shutter)
+    liveDark: 'Túl sötét. Menj ablakhoz, vagy kapcsolj fényt.',
     takePhoto: 'Szemfotó készítése',
     pickShots: 'Fotó feltöltése',
     consent: 'A szemfotóm és az eredmény mentése a SnapEyes tanító adattárába, hogy a helyreállítások idővel jobbak legyenek. Névtelenül, név és arc nélkül. Bármikor kérheted a törlésüket.',

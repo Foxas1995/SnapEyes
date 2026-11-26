@@ -8,16 +8,24 @@
 // visible and can pan, so the shutter fell below the screen. Now the page behind is locked while the view is open, the view is sized from visualViewport, and
 // in Facebook's, Messenger's and Instagram's browsers the controls keep out of the top 72 and the bottom 100 px. Pure parts: ./logic.ts.
 import React, { useEffect, useRef, useState } from 'react';
-import { Camera, X, Flashlight } from 'lucide-react';
+import { Camera, Check, X, Flashlight } from 'lucide-react';
 import {
-  BURST, BURST_GAP_MS, FRAME_WAIT_MS, GRANT_WAIT_MS, SLOW_STILL_MS, type Cap, type Facts, type LiveFail, type LiveMethod, type ZoomMode,
-  centreCrop, chooseStill, chooseZoom, circleCentre, debugLine, failClass, inApp, liveCap, viewInsets,
+  BURST, BURST_GAP_MS, DARK_EVERY_MS, DARK_SIDE, FRAME_WAIT_MS, GRANT_WAIT_MS, SETTLE_MS, type Cap, type Facts, type LiveFail, type LiveMethod, type ZoomMode,
+  centreCrop, chooseStill, chooseZoom, circleCentre, debugLine, failClass, inApp, liveCap, meanLuma, photoSettings, takeBurst, tooDark, viewInsets,
 } from './logic';
 
 export interface LiveCameraProps {
   /** the camera, asked by the page inside the tap (getUserMedia keeps the user's gesture; nothing is awaited before it) */
   stream: Promise<MediaStream>;
   hint: string;
+  /** the second line while the picture is too dark (instead of burstLine) */
+  darkLine: string;
+  /** under the hint before the tap: how many pictures one tap takes and to hold still (the number is BURST) */
+  burstLine: string;
+  /** during the burst, large, with the count */
+  holdStill: string;
+  /** when the last picture is in */
+  done: string;
   light: string;
   shutter: string;
   close: string;
@@ -29,7 +37,8 @@ export interface LiveCameraProps {
 
 type Caps = MediaTrackCapabilities & { zoom?: { min?: number; max?: number }; torch?: boolean; focusMode?: string[] };
 type Range = { min?: number; max?: number };
-interface ImageCaptureLike { takePhoto(settings?: { imageWidth?: number; imageHeight?: number }): Promise<Blob>; getPhotoCapabilities?(): Promise<{ imageWidth?: Range; imageHeight?: Range }> }
+type PhotoSettings = { imageWidth?: number; imageHeight?: number; fillLightMode?: string };
+interface ImageCaptureLike { takePhoto(settings?: PhotoSettings): Promise<Blob>; getPhotoCapabilities?(): Promise<{ imageWidth?: Range; imageHeight?: Range }> }
 declare global { interface Window { ImageCapture?: new (t: MediaStreamTrack) => ImageCaptureLike } }
 
 const timeout = (ms: number) => new Promise<never>((_, rej) => setTimeout(() => rej(Object.assign(new Error('timeout'), { name: 'TimeoutError' })), ms));
@@ -56,7 +65,7 @@ function visible(): { top: number; h: number; vvH: number; vvTop: number; inner:
   return { top: vv ? vv.offsetTop : 0, h: vv ? vv.height : inner, vvH: vv ? vv.height : 0, vvTop: vv ? vv.offsetTop : 0, inner, screen: window.screen?.height ?? 0 };
 }
 
-const LiveCamera: React.FC<LiveCameraProps> = ({ stream: asked, hint, light, shutter, close, debug, onFrames, onFail, onClose }) => {
+const LiveCamera: React.FC<LiveCameraProps> = ({ stream: asked, hint, darkLine, burstLine, holdStill, done, light, shutter, close, debug, onFrames, onFail, onClose }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const doneRef = useRef(false);
@@ -64,6 +73,12 @@ const LiveCamera: React.FC<LiveCameraProps> = ({ stream: asked, hint, light, shu
   const [torch, setTorch] = useState<{ has: boolean; on: boolean }>({ has: false, on: false });
   const [ready, setReady] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [taken, setTaken] = useState(0);          // the picture of the burst being taken (1 to BURST); 0 before the tap
+  const [finished, setFinished] = useState(false);
+  const [dark, setDark] = useState(false);          // the middle of the picture is too dark (the second line warns; the shutter stays usable)
+  const [settling, setSettling] = useState(false);  // the torch was just switched: the exposure settles
+  const [takes, setTakes] = useState<Facts['takes']>(null);
+  const still = typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   const [view, setView] = useState(visible);
   const [shot, setShot] = useState<Pick<Facts, 'method' | 'video' | 'asked' | 'got'>>({ method: null, video: { w: 0, h: 0 }, asked: null, got: null });
   const app = typeof navigator !== 'undefined' && inApp(navigator.userAgent || '');
@@ -100,12 +115,27 @@ const LiveCamera: React.FC<LiveCameraProps> = ({ stream: asked, hint, light, shu
         const t = stream.getVideoTracks()[0];
         if (!t) throw Object.assign(new Error('no track'), { name: 'NotFoundError' });
         const caps = ((t.getCapabilities?.() ?? {}) as Caps);
-        const z = chooseZoom(caps);
-        if (z.mode === 'track') {
-          try { await t.applyConstraints({ advanced: [{ zoom: z.value } as MediaTrackConstraintSet] }); } catch { z.mode = 'css'; z.value = 2; }
+        // the still that will be taken (its pixels decide whether our crop may be 3x: 1.3 MP or more must remain), then the zoom: the track's own up to 3x,
+        // otherwise our crop of 2x or 3x; the preview is scaled the same, so the circle shows what will be kept
+        let stillPx = 0;
+        if (window.ImageCapture) {
+          try { const sz = chooseStill(await new window.ImageCapture(t).getPhotoCapabilities?.()); stillPx = sz ? sz.w * sz.h : 0; } catch { stillPx = 0; }
         }
-        if (Array.isArray(caps.focusMode) && caps.focusMode.includes('continuous')) {
-          try { await t.applyConstraints({ advanced: [{ focusMode: 'continuous' } as MediaTrackConstraintSet] }); } catch { /* not this one */ }
+        const z = chooseZoom(caps, stillPx);
+        if (z.mode === 'track') {
+          try { await t.applyConstraints({ advanced: [{ zoom: z.value } as MediaTrackConstraintSet] }); } catch { Object.assign(z, chooseZoom(null, stillPx)); }
+        }
+        // continuous focus, exposure and white balance, metered at the middle (the circle), each only where the track offers it, each on its own
+        const modes = caps as Caps & { exposureMode?: string[]; whiteBalanceMode?: string[] };
+        const sup = (navigator.mediaDevices?.getSupportedConstraints?.() ?? {}) as Record<string, boolean>;
+        for (const c of [
+          Array.isArray(caps.focusMode) && caps.focusMode.includes('continuous') ? { focusMode: 'continuous' } : null,
+          Array.isArray(modes.exposureMode) && modes.exposureMode.includes('continuous') ? { exposureMode: 'continuous' } : null,
+          Array.isArray(modes.whiteBalanceMode) && modes.whiteBalanceMode.includes('continuous') ? { whiteBalanceMode: 'continuous' } : null,
+          sup.pointsOfInterest ? { pointsOfInterest: [{ x: 0.5, y: 0.5 }] } : null,
+        ]) {
+          if (!c) continue;
+          try { await t.applyConstraints({ advanced: [c as unknown as MediaTrackConstraintSet] }); } catch { /* not this one */ }
         }
         setZoom({ ...z });
         setTorch({ has: caps.torch === true, on: false });
@@ -139,52 +169,103 @@ const LiveCamera: React.FC<LiveCameraProps> = ({ stream: asked, hint, light, shu
     t.applyConstraints({ advanced: [{ pointsOfInterest: [{ x, y }], focusMode: 'single-shot' } as unknown as MediaTrackConstraintSet] }).catch(() => undefined);
   };
 
+  // after the torch is switched the shutter waits SETTLE_MS, so the camera's exposure settles before a picture (the owner's burnt and dark stills)
   const toggleTorch = () => {
     const t = track();
     if (!t || !torch.has) return;
     const on = !torch.on;
-    t.applyConstraints({ advanced: [{ torch: on } as unknown as MediaTrackConstraintSet] }).then(() => setTorch({ has: true, on })).catch(() => undefined);
+    setSettling(true);
+    t.applyConstraints({ advanced: [{ torch: on } as unknown as MediaTrackConstraintSet] }).then(() => setTorch({ has: true, on })).catch(() => undefined)
+      .finally(() => { window.setTimeout(() => setSettling(false), SETTLE_MS); });
   };
+
+  // the darkness warning: twice a second the middle of the video (the picture as it is, with the torch in its current state) is averaged in a 32 x 32
+  // canvas; it stops during the burst and when the view closes
+  useEffect(() => {
+    if (!ready || busy || finished) return;
+    const c = document.createElement('canvas');
+    c.width = DARK_SIDE; c.height = DARK_SIDE;
+    const g = c.getContext('2d', { willReadFrequently: true });
+    if (!g) return;
+    const id = window.setInterval(() => {
+      const v = videoRef.current;
+      if (!v || !v.videoWidth) return;
+      try {
+        const r = centreCrop(v.videoWidth, v.videoHeight, (zoom.mode === 'css' ? zoom.value : 1) * 2);
+        g.drawImage(v, r.sx, r.sy, r.sw, r.sh, 0, 0, DARK_SIDE, DARK_SIDE);
+        setDark(tooDark(meanLuma(g.getImageData(0, 0, DARK_SIDE, DARK_SIDE).data)));
+      } catch { /* a frame that cannot be read: no warning */ }
+    }, DARK_EVERY_MS);
+    return () => { window.clearInterval(id); c.width = 0; c.height = 0; };
+  }, [ready, busy, finished, zoom]);
 
   const shoot = async () => {
     const t = track(), v = videoRef.current;
     if (!t || !v || busy || doneRef.current) return;
     setBusy(true);
+    const darkAtTap = dark;
     try {
-      const files: File[] = [];
       let method: LiveMethod = window.ImageCapture ? 'still' : 'frame';
       const ic = method === 'still' && window.ImageCapture ? new window.ImageCapture(t) : null;
-      // the largest still the camera offers, up to about 12 MP (a plain takePhoto when it says nothing, or when the sized one fails)
+      // the largest still the camera offers, up to about 12 MP, and no flash where the camera lets us say so (the torch stays as the person set it); a plain
+      // takePhoto when it says nothing or the asked one is refused, the video's frames when stills fail
+      let settings: PhotoSettings | null = null;
       let size: { w: number; h: number } | null = null;
-      if (ic?.getPhotoCapabilities) { try { size = chooseStill(await ic.getPhotoCapabilities()); } catch { size = null; } }
+      if (ic?.getPhotoCapabilities) {
+        try { const pc = await ic.getPhotoCapabilities(); size = chooseStill(pc); settings = photoSettings(size, (pc as { fillLightMode?: unknown }).fillLightMode); } catch { settings = null; }
+      }
       const crop = zoom.mode === 'css' ? zoom.value : 1;          // real zoom on the track: no crop on top of it
-      let burst = BURST;
+      const meter = document.createElement('canvas');
+      meter.width = DARK_SIDE; meter.height = DARK_SIDE;
+      const mg = meter.getContext('2d', { willReadFrequently: true });
+      const lumaOf = (src: CanvasImageSource, w: number, h: number): number => {
+        if (!mg) return 128;
+        const r = centreCrop(w, h, crop * 2);
+        mg.drawImage(src, r.sx, r.sy, r.sw, r.sh, 0, 0, DARK_SIDE, DARK_SIDE);
+        return meanLuma(mg.getImageData(0, 0, DARK_SIDE, DARK_SIDE).data);
+      };
       let got: { w: number; h: number } | null = null;
-      for (let i = 0; i < burst; i++) {
-        const t0 = Date.now();
-        let pic: { blob: Blob; w: number; h: number } | null = null;
+      let last = 0;
+      // the number of usable pictures is fixed before the burst starts (the line under the hint and the count say it): a burnt or black one is thrown away and
+      // another taken (at most MAX_TAKES), so the burst may be longer, never shorter, and the count never goes back
+      const res = await takeBurst<{ blob: Blob; w: number; h: number; luma: number }>(async (i) => {
+        if (i > 0) await sleep(Math.max(0, BURST_GAP_MS - (Date.now() - last)));
+        last = Date.now();
+        let pic: { blob: Blob; w: number; h: number; luma: number } | null = null;
         if (method === 'still' && ic) {
           try {
             let still: Blob;
-            if (size) { try { still = await ic.takePhoto({ imageWidth: size.w, imageHeight: size.h }); } catch { size = null; still = await ic.takePhoto(); } }
+            if (settings) { try { still = await ic.takePhoto(settings); } catch { settings = null; size = null; still = await ic.takePhoto(); } }
             else still = await ic.takePhoto();
-            if (i === 0 && size && Date.now() - t0 > SLOW_STILL_MS) burst = Math.min(burst, 3);   // a slow sized still: 3 of them, not 4
-            const bmp = await createImageBitmap(still);                  // one still at a time: decoded, cropped, released
-            pic = crop > 1 ? await cropped(bmp, bmp.width, bmp.height, crop) : { blob: still, w: bmp.width, h: bmp.height };
+            const bmp = await createImageBitmap(still);                  // one still at a time: measured, cropped, released
+            const luma = lumaOf(bmp, bmp.width, bmp.height);
+            const c = crop > 1 ? await cropped(bmp, bmp.width, bmp.height, crop) : { blob: still, w: bmp.width, h: bmp.height };
             bmp.close();
+            if (c) pic = { ...c, luma };
           } catch {
             method = 'frame';       // a browser whose stills fail: the video's frames for the rest of the burst (and the codes say so)
           }
         }
-        if (!pic) pic = await cropped(v, v.videoWidth, v.videoHeight, crop);
-        if (pic) { files.push(new File([pic.blob], `live-${i + 1}.jpg`, { type: 'image/jpeg' })); got = { w: pic.w, h: pic.h }; }
+        if (!pic) {
+          const luma = lumaOf(v, v.videoWidth, v.videoHeight);
+          const c = await cropped(v, v.videoWidth, v.videoHeight, crop);
+          if (c) pic = { ...c, luma };
+        }
+        if (pic) got = { w: pic.w, h: pic.h };
         setShot((s) => ({ ...s, method, asked: method === 'still' ? size : null, got }));
-        if (i < burst - 1) await sleep(Math.max(0, BURST_GAP_MS - (Date.now() - t0)));
-      }
+        return pic;
+      }, (k) => setTaken(k));
+      meter.width = 0; meter.height = 0;
+      setTakes({ n: res.takes, burnt: res.burnt, black: res.black });
+      const files = res.kept.map((p, i) => new File([p.blob], `live-${i + 1}.jpg`, { type: 'image/jpeg' }));
       if (!files.length || !got) throw new Error('no frame');
+      const size0 = { w: res.kept[0].w, h: res.kept[0].h };
       doneRef.current = true;
       stop();
-      onFrames(files, liveCap(method, got.w, got.h, zoom.mode, torch.has));
+      // the last one is in: "Done" with a check (the page keeps the view a moment while the pictures are already on their way) and one short buzz where allowed
+      setFinished(true);
+      try { navigator.vibrate?.(40); } catch { /* blocked or missing */ }
+      onFrames(files, liveCap(method, size0.w, size0.h, zoom.mode, torch.has, darkAtTap, zoom.value));
     } catch (e) {
       fail(e);
     }
@@ -204,7 +285,25 @@ const LiveCamera: React.FC<LiveCameraProps> = ({ stream: asked, hint, light, shu
       {/* where the eye goes: in the middle of the part that is surely visible */}
       <div aria-hidden className="pointer-events-none absolute left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white/80 shadow-[0_0_0_9999px_rgba(0,0,0,0.35)]"
         style={{ top: cy, width: 'min(58vw, 46vh)', height: 'min(58vw, 46vh)' }} />
-      <p data-testid="live-hint" className="absolute inset-x-0 text-center text-base font-semibold drop-shadow" style={{ top: `calc(${top} + 16px)` }}>{hint}</p>
+      {/* before the tap: the hint and how many pictures one tap takes; during the burst: "Hold still" with the count; at the end: "Done" with a check.
+          Kept clear of the close button on both sides (px-14) and inside the band the in-app browsers surely show */}
+      <div data-testid="live-hint" role="status" className="absolute inset-x-0 px-14 text-center drop-shadow" style={{ top: `calc(${top} + 14px)` }}>
+        {finished ? (
+          <p data-testid="live-done" className="text-2xl font-bold flex items-center justify-center gap-2"><Check className="w-7 h-7 text-emerald-300" /> {done}</p>
+        ) : busy && taken > 0 ? (
+          <>
+            <p className="text-2xl font-bold">{holdStill}</p>
+            <p data-testid="live-count" className="text-lg font-semibold tabular-nums">{taken} / {BURST}</p>
+          </>
+        ) : (
+          <>
+            <p className="text-base font-semibold">{hint}</p>
+            {dark
+              ? <p data-testid="live-dark" className="text-sm font-semibold text-amber-200">{darkLine}</p>
+              : <p data-testid="live-burst" className="text-sm text-zinc-200">{burstLine}</p>}
+          </>
+        )}
+      </div>
       <button type="button" data-testid="live-close" onClick={shut} aria-label={close} className="absolute right-3 w-11 h-11 rounded-full bg-black/50 flex items-center justify-center"
         style={{ top: `calc(${top} + 10px)` }}>
         <X className="w-6 h-6" />
@@ -212,17 +311,26 @@ const LiveCamera: React.FC<LiveCameraProps> = ({ stream: asked, hint, light, shu
       <div className="absolute inset-x-0 flex items-center justify-center h-28" style={{ bottom }}>
         {torch.has && (
           <button type="button" onClick={toggleTorch} aria-pressed={torch.on}
-            className={`absolute left-4 px-3 py-2 rounded-full text-sm font-semibold flex items-center gap-1 ${torch.on ? 'bg-gold text-black' : 'bg-black/50'}`}>
+            className={`absolute left-4 px-3 py-2 rounded-full text-sm font-semibold flex items-center gap-1 ${torch.on ? 'bg-gold text-black' : 'bg-black/50'} ${dark && !torch.on ? 'ring-2 ring-gold' : ''}`}>
             <Flashlight className="w-4 h-4" /> {light}
           </button>
         )}
-        <button type="button" data-testid="live-shutter" onClick={shoot} disabled={!ready || busy} aria-label={shutter}
-          className="w-20 h-20 rounded-full border-4 border-white bg-white/20 disabled:opacity-40 flex items-center justify-center active:scale-95">
-          <Camera className="w-8 h-8" />
-        </button>
+        <span className="relative w-20 h-20">
+          <button type="button" data-testid="live-shutter" onClick={shoot} disabled={!ready || busy || settling} aria-label={shutter}
+            className={`w-20 h-20 rounded-full border-4 border-white bg-white/20 flex items-center justify-center active:scale-95 ${busy ? 'disabled:opacity-70' : 'disabled:opacity-40'}`}>
+            <Camera className="w-8 h-8" />
+          </button>
+          {/* the ring around the shutter fills one step per picture (under reduced motion the count above says it alone) */}
+          {busy && !still && (
+            <svg data-testid="live-ring" aria-hidden viewBox="0 0 100 100" className="pointer-events-none absolute -inset-2 w-24 h-24 -rotate-90">
+              <circle cx="50" cy="50" r="46" fill="none" stroke="rgb(212 175 55)" strokeWidth="6" strokeLinecap="round" pathLength={100}
+                strokeDasharray="100" strokeDashoffset={100 - (100 * (finished ? BURST : taken)) / BURST} style={{ transition: 'stroke-dashoffset 450ms ease-out' }} />
+            </svg>
+          )}
+        </span>
         {debug && (
           <p data-testid="live-facts" className="absolute -bottom-1 inset-x-0 text-center text-[10px] text-zinc-300 drop-shadow">
-            {debugLine({ geo: view, ...shot, zoom: zoom.mode, zoomValue: zoom.value, torch: torch.has })}
+            {debugLine({ geo: view, ...shot, takes, zoom: zoom.mode, zoomValue: zoom.value, torch: torch.has })}
           </p>
         )}
       </div>
