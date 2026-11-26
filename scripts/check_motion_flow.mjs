@@ -703,7 +703,10 @@ async function checkGuide() {
 // without its paragraph about Stripe's page and with one short file line, the payment methods: server only) moved the base of /try by +632 B JS (201,087 to
 // 201,719 B) and of /order by +1,707 B JS (142,557 to 144,264 B: the pixel's module, its Purchase and InitiateCheckout calls), and of both pages by +36 B CSS (the
 // utilities of the pupil's note: 14,080 to 14,116 B), measured on 26c0c28 against the tree with them. Advertising measurement and words, not motion.
-const BEFORE = { try: { js: 152765 + 1961 + 4483 + 1144 + 1108 - 1373 - 3730 + 8838 + 5366 + 3068 + 29190 - 5390 + 632, css: 10975 + 245 + 494 + 261 + 74 + 135 + 94 + 36 }, order: { js: 108723 + 414 + 110 + 3953 + 4052 + 794 + 13127 + 7903 + 483 + 2024 + 709 + 117 + 1707, css: 10975 + 245 + 494 + 261 + 74 + 135 + 94 + 36 } };
+// The live camera of the photo step (2026-11-26, behind ?cam=1: its switch, its codes for the counter and its words in eight languages in the page's own chunk; the
+// view itself is a chunk loaded only when the camera opens) moved the base of /try by +1,970 B JS (201,393 to 203,363 B) and of both pages by +197 B CSS (the
+// utilities of the camera view in the shared stylesheet: 14,282 to 14,479 B), measured on c85de06 against the tree with it. A product, not motion.
+const BEFORE = { try: { js: 152765 + 1961 + 4483 + 1144 + 1108 - 1373 - 3730 + 8838 + 5366 + 3068 + 29190 - 5390 + 632 + 1970, css: 10975 + 245 + 494 + 261 + 74 + 135 + 94 + 36 + 197 }, order: { js: 108723 + 414 + 110 + 3953 + 4052 + 794 + 13127 + 7903 + 483 + 2024 + 709 + 117 + 1707, css: 10975 + 245 + 494 + 261 + 74 + 135 + 94 + 36 + 197 } };
 function firstLoad(page) {
   const html = readFileSync(join(dist, page), 'utf8');
   const seen = new Map();
