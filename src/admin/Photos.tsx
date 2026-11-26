@@ -1,6 +1,6 @@
 // Nuotrauku kokybe: what the server saw of the photos people sent, as anonymous classes (the resolution class of the original, its orientation, the size of the iris in it, the colour class of the eye,
-// the pupil class, the lid and fill results with their reason codes, how many eyes, the style chosen) and the server times, by campaign (default), device class or browser family. No photo of a
-// free preview is stored anywhere (the privacy policy says so): these are counts of classes.
+// the pupil class, the lid and fill results with their reason codes, how many eyes, the style chosen) and the server times, by campaign (default), device class or browser family. These are
+// counts of classes; the photos themselves are kept up to 30 days since 2026-11-26 and shown on the page Peržiūros (api/_lib/keep.py, src/admin/Previews.tsx).
 import { useState } from 'react';
 import type React from 'react';
 import type { Call } from './AdminApp';
@@ -23,7 +23,7 @@ export const PhotosPage: React.FC<{ call: Call }> = ({ call }) => {
     <div className="flex flex-col gap-4">
       <H2>Nuotraukų kokybė</H2>
       <FilterBar days={days} setDays={setDays} filters={filters} setFilters={setFilters} available={data?.available} only={['dev', 'br']} busy={busy} onReload={reload}
-        note="Nuotraukų nesaugome. Čia tik klasės: nuotraukos dydžio klasė, padėtis, rainelės dydis, akies spalvos klasė, vyzdžio klasė, vartų rezultatai su priežasčių kodais, akių skaičius ir pasirinktas stilius."
+        note="Pačios nuotraukos matomos puslapyje „Peržiūros“ (saugomos iki 30 dienų). Čia tik klasės: nuotraukos dydžio klasė, padėtis, rainelės dydis, akies spalvos klasė, vyzdžio klasė, vartų rezultatai su priežasčių kodais, akių skaičius ir pasirinktas stilius."
         extra={
           <span className="flex flex-wrap gap-1.5 items-center ml-1" role="group" aria-label="Išskaidyti">
             <span className={`text-xs ${MUTED}`}>Išskaidyti:</span>
