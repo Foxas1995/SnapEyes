@@ -518,20 +518,20 @@
     "privacyTitle": "Lupaus silmästäsi",
     "privacy": [
       {
-        "t": "Vain taideteostasi varten",
-        "b": "Kuvaasi käytetään vain taideteoksesi tekemiseen. Jokaisesta otoksesta kirjaamme lokiin muutaman mittaustuloksen, mutta emme itse kuvaa, jotta voimme parantaa kuvausohjetta."
+        "t": "Taideteostasi varten",
+        "b": "Kuvaasi käytetään taideteoksesi tekemiseen ja sen laadun tarkistamiseen."
       },
       {
         "t": "Ei koskaan tunnistamiseen",
         "b": "Sitä ei koskaan käytetä kenenkään tunnistamiseen, sitä ei koskaan myydä eikä sillä kouluteta tekoälyä."
       },
       {
-        "t": "Esikatselut säilytetään enintään 30 päivää",
-        "b": "Säilytämme ilmaisen esikatselusi kuvan ja tuloksen enintään 30 päivää, jotta voimme tarkistaa ja parantaa laatua, ja poistamme ne sitten. Niitä ei yhdistetä nimeesi eikä sähköpostiisi. Jos tilaat, säilytämme tilauksesi tiedostot 12 kuukautta latauksia varten."
+        "t": "Tilauksen tiedostot: 12 kuukautta",
+        "b": "Jos tilaat, säilytämme tilauksesi tiedostot 12 kuukautta latauksia varten."
       },
       {
         "t": "Muutama ulkopuolinen palvelu",
-        "b": "Vercel pyörittää sivua ja esikatselua, Googlen Gemini API entisöintiä (Google säilyttää pyyntölokeja rajoitetun ajan). Tilauksissa mukaan tulevat Stripe maksua varten ja yksityinen Supabase-tallennustila EU:ssa."
+        "b": "Vercel pyörittää sivua ja esikatselua, Googlen Gemini API entisöintiä (Google säilyttää pyyntölokeja rajoitetun ajan). Maksut hoitaa Stripe, ja tiedostot säilyvät yksityisessä Supabase-tallennustilassa EU:ssa."
       }
     ],
     "controller": "Tiedoistasi vastaa: MB ”Portretizuokis”, Kaunas, Liettua (kaikki tiedot tämän sivun alaosassa).",
@@ -609,7 +609,7 @@
       {
         "id": "photo",
         "q": "Mitä kuvalleni tapahtuu?",
-        "a": "Säilytämme ilmaisen esikatselusi kuvan ja tuloksen enintään 30 päivää, jotta voimme tarkistaa ja parantaa laatua, ja poistamme ne sitten. Niitä ei yhdistetä nimeesi eikä sähköpostiisi. Kun tilaat, säilytämme tilauksesi tiedostot 12 kuukautta, jotta voit ladata ne uudelleen, ja poistamme ne sen jälkeen. Iiristäsi ei koskaan käytetä kenenkään tunnistamiseen eikä tekoälyn kouluttamiseen. Tarkemmat tiedot ovat tietosuojaselosteessamme, jonka linkki on tämän sivun alaosassa."
+        "a": "Kuvaasi käytetään taideteoksesi tekemiseen. Säilytämme ilmaisen esikatselun kopion enintään 30 päivää laadun tarkistamista varten ja poistamme sen sitten. Kun tilaat, säilytämme tilauksesi tiedostot 12 kuukautta, jotta voit ladata ne uudelleen. Iiristäsi ei koskaan käytetä kenenkään tunnistamiseen eikä tekoälyn kouluttamiseen. Tarkemmat tiedot ovat tietosuojaselosteessamme, jonka linkki on tämän sivun alaosassa."
       },
       {
         "id": "order",

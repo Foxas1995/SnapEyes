@@ -518,20 +518,20 @@
     "privacyTitle": "Unser Versprechen für Ihr Auge",
     "privacy": [
       {
-        "t": "Nur für Ihr Kunstwerk",
-        "b": "Ihr Foto dient nur dazu, Ihr Kunstwerk zu erstellen. Von jeder Aufnahme protokollieren wir einige Messwerte, nie das Bild, um die Aufnahmeanleitung zu verbessern."
+        "t": "Für Ihr Kunstwerk",
+        "b": "Ihr Foto dient dazu, Ihr Kunstwerk zu erstellen und seine Qualität zu prüfen."
       },
       {
         "t": "Nie zur Identifizierung",
         "b": "Es wird nie genutzt, um jemanden zu identifizieren, nie verkauft und nicht zum Training von KI verwendet."
       },
       {
-        "t": "Vorschauen werden bis zu 30 Tage aufbewahrt",
-        "b": "Das Foto und das Ergebnis Ihrer kostenlosen Vorschau bewahren wir bis zu 30 Tage auf, um die Qualität zu prüfen und zu verbessern, dann löschen wir sie. Sie werden nicht mit Ihrem Namen oder Ihrer E-Mail-Adresse verknüpft. Wenn Sie bestellen, bewahren wir die Dateien Ihrer Bestellung 12 Monate auf, damit Sie sie herunterladen können."
+        "t": "Bestelldateien: 12 Monate",
+        "b": "Wenn Sie bestellen, bewahren wir die Dateien Ihrer Bestellung 12 Monate auf, damit Sie sie herunterladen können."
       },
       {
         "t": "Wenige externe Dienste",
-        "b": "Vercel betreibt die Seite und die Vorschau, die Gemini-API von Google die Restaurierung (Google speichert Anfrageprotokolle für begrenzte Zeit). Bei Bestellungen kommen Stripe für die Zahlung und ein privater Supabase-Speicher in der EU hinzu."
+        "b": "Vercel betreibt die Seite und die Vorschau, die Gemini-API von Google die Restaurierung (Google speichert Anfrageprotokolle für begrenzte Zeit). Stripe übernimmt die Zahlung, ein privater Supabase-Speicher in der EU bewahrt die Dateien auf."
       }
     ],
     "controller": "Verantwortlich für Ihre Daten: MB „Portretizuokis“, Kaunas, Litauen (vollständige Angaben am Ende dieser Seite).",
@@ -609,7 +609,7 @@
       {
         "id": "photo",
         "q": "Was passiert mit meinem Foto?",
-        "a": "Das Foto und das Ergebnis Ihrer kostenlosen Vorschau bewahren wir bis zu 30 Tage auf, um die Qualität zu prüfen und zu verbessern, dann löschen wir sie. Sie werden nicht mit Ihrem Namen oder Ihrer E-Mail-Adresse verknüpft. Wenn Sie bestellen, bewahren wir die Dateien Ihrer Bestellung 12 Monate auf, damit Sie sie erneut herunterladen können, und löschen sie danach. Ihre Iris wird nie zur Identifizierung oder zum Training von KI verwendet. Einzelheiten finden Sie in unserer Datenschutzerklärung, verlinkt am Ende dieser Seite."
+        "a": "Ihr Foto dient dazu, Ihr Kunstwerk zu erstellen. Eine Kopie der kostenlosen Vorschau bewahren wir bis zu 30 Tage auf, um die Qualität zu prüfen, dann löschen wir sie. Wenn Sie bestellen, bewahren wir die Dateien Ihrer Bestellung 12 Monate auf, damit Sie sie erneut herunterladen können. Ihre Iris wird nie zur Identifizierung oder zum Training von KI verwendet. Einzelheiten finden Sie in unserer Datenschutzerklärung, verlinkt am Ende dieser Seite."
       },
       {
         "id": "order",

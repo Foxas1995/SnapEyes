@@ -134,7 +134,7 @@ Fake Stripe + Resend + legal pack (wave-r-back/pb/harness.py), a local store fol
 # replaced and one block added after its legal basis (what is kept, why, who sees it, where, 30 days, not linked to a name, an email or an IP address; the
 # legal basis Art. 6(1)(f) and how to object or ask for deletion), "orders" its first block (the order keeps no full phone photo, the preview's copy apart),
 # "retention" its table (the free previews' row), "services" its list (Supabase holds the copies too); the checkout wording by photoNotice alone (the photo
-# step's line: kept 30 days to check quality). The terms, the withdrawal page, the legal notice, the pack and the consent version as they were; LEGAL_UPDATED
+# step's line: no "only" any more, the 30 days not named there by the owner's word). The terms, the withdrawal page, the legal notice, the pack and the consent version as they were; LEGAL_UPDATED
 # is the lead's to raise. eu_keep.json is the EXACT pin of the EU edition as of this work (snap_eu_edition.mjs), eu_value.json stays as the base: the 1125v
 # step is now checked between the pins of the refund conditions and of the value vouchers. eu_keep_raw.json (snap_eu.mjs) holds the raw docs the same way
 # (their privacy policy, en and de, is the base of the AU and US editions, whose own sections say the 30 days too). A3, A6, B1, B2, C10 and U4 moved with
@@ -334,10 +334,11 @@ def nophoto(x):
 
 
 def photo_1126(new, old):
-    """1126: the photo step's line of every language: the same link, and its text the old one with its sentence about the photo's use replaced by one that
-    names the 30 days (and no "only" any more)."""
+    """1126: the photo step's line of every language: the same link, and its text the old one with its sentence about the photo's use replaced by one
+    without "only" (the owner's word: no extra sentence on the pages, so the 30 days are not named here; the privacy policy and the FAQ say them)."""
+    a, b = (new[0]["text"].split(". ") if isinstance(new, list) and new else []), (old[0]["text"].split(". ") if isinstance(old, list) and old else [])
     return (isinstance(new, list) and isinstance(old, list) and len(new) == len(old) == 2 and new[1] == old[1] and new[0]["text"] != old[0]["text"]
-            and "30" in new[0]["text"] and new[0]["text"].split(". ")[0] == old[0]["text"].split(". ")[0])
+            and "30" not in new[0]["text"] and len(a) == len(b) and sum(x != y for x, y in zip(a, b)) == 1 and a[0] == b[0])
 set_pack(PACK)
 
 r = subprocess.run(["node", os.path.join(HERE, "au_client_check.mjs")], cwd=H.REPO, capture_output=True, text=True,
@@ -377,7 +378,7 @@ check("A3 EU checkbox and checkout wording exactly as before (text, and the old 
       "the old versions still quote the en and de text - 1028: hr added and pinned whole (client = server in all five), 2026-09-30.2 still quotes the four texts it had"
       " - 1028c: every wording as before but the print box (printConsent) added in all five languages, pinned whole to eu_prints.json"
       " - 1113: fi, et and lv added and pinned whole to eu_langs3.json (client = server in all eight); the five older wordings exactly as the pin of the vouchers has them"
-      " - 1126: pinned whole to eu_keep.json; the photo step's line (photoNotice) of every language names the 30 days the free preview is kept, the rest of every wording as before",
+      " - 1126: pinned whole to eu_keep.json; the photo step's line (photoNotice) of every language without 'only' (the 30 days are not named there), the rest of every wording as before",
       # English and German: as before the AU step, on the page and on the server (1028c: the print box aside, which is new)
       all(nopc(CL["checkoutEu"][l]) == nopc(EU_BEFORE["checkout"][l]) for l in LANG2)
       and all(CL["checkoutEu"][l]["printConsent"] and nopc(CL["checkoutEu"][l]) == nopc(EU_HR["checkout"][l]) and nophoto(CL["checkoutEu"][l]) == nophoto(EU_GIFT["checkout"][l]) for l in LANG5)

@@ -518,20 +518,20 @@
     "privacyTitle": "Pažadas dėl Jūsų akies",
     "privacy": [
       {
-        "t": "Tik Jūsų kūriniui",
-        "b": "Jūsų nuotrauka naudojama tik Jūsų kūriniui sukurti. Iš kiekvieno kadro fiksuojame kelis matavimus, bet niekada paties vaizdo, kad tobulintume fotografavimo patarimus."
+        "t": "Jūsų kūriniui",
+        "b": "Jūsų nuotrauka naudojama Jūsų kūriniui sukurti ir jo kokybei tikrinti."
       },
       {
         "t": "Niekada tapatybei nustatyti",
         "b": "Ji niekada nenaudojama kieno nors tapatybei nustatyti, niekada neparduodama ir nenaudojama DI mokyti."
       },
       {
-        "t": "Peržiūros saugomos iki 30 dienų",
-        "b": "Nemokamos peržiūros nuotrauką ir rezultatą saugome iki 30 dienų, kad galėtume tikrinti ir gerinti kokybę, tada ištriname. Jie nesiejami su Jūsų vardu ar el. paštu. Jei užsisakote, užsakymo failus saugome 12 mėnesių, kad galėtumėte juos atsisiųsti."
+        "t": "Užsakymo failai: 12 mėnesių",
+        "b": "Jei užsisakote, užsakymo failus saugome 12 mėnesių, kad galėtumėte juos atsisiųsti."
       },
       {
         "t": "Keletas išorinių paslaugų",
-        "b": "Puslapį ir peržiūrą palaiko Vercel, atkūrimą atlieka Google Gemini API (Google užklausų žurnalus saugo ribotą laiką). Užsakymams taip pat naudojame Stripe mokėjimams ir privačią Supabase saugyklą ES."
+        "b": "Puslapį ir peržiūrą palaiko Vercel, atkūrimą atlieka Google Gemini API (Google užklausų žurnalus saugo ribotą laiką). Mokėjimus tvarko Stripe, o failus saugo privati Supabase saugykla ES."
       }
     ],
     "controller": "Už Jūsų duomenis atsako MB „Portretizuokis“, Kaunas, Lietuva (visi rekvizitai pateikti šio puslapio apačioje).",
@@ -609,7 +609,7 @@
       {
         "id": "photo",
         "q": "Kas nutinka mano nuotraukai?",
-        "a": "Nemokamos peržiūros nuotrauką ir rezultatą saugome iki 30 dienų, kad galėtume tikrinti ir gerinti kokybę, tada ištriname. Jie nesiejami su Jūsų vardu ar el. paštu. Jei užsisakote, Jūsų užsakymo failus saugome 12 mėnesių, kad galėtumėte juos vėl atsisiųsti, o tada ištriname. Jūsų rainelė niekada nenaudojama tapatybei nustatyti ar DI mokyti. Išsamiau apie tai rašoma mūsų privatumo politikoje, kurios nuoroda yra šio puslapio apačioje."
+        "a": "Jūsų nuotrauka naudojama Jūsų kūriniui sukurti. Nemokamos peržiūros kopiją saugome iki 30 dienų kokybei tikrinti, tada ištriname. Jei užsisakote, užsakymo failus saugome 12 mėnesių, kad galėtumėte juos vėl atsisiųsti. Jūsų rainelė niekada nenaudojama tapatybei nustatyti ar DI mokyti. Išsamiau apie tai rašoma mūsų privatumo politikoje, kurios nuoroda yra šio puslapio apačioje."
       },
       {
         "id": "order",

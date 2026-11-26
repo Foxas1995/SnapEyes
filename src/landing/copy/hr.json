@@ -518,20 +518,20 @@
     "privacyTitle": "Obećanje o vašem oku",
     "privacy": [
       {
-        "t": "Samo za vašu sliku",
-        "b": "Vašu fotografiju upotrebljavamo samo za izradu vaše slike. Iz svake snimke bilježimo nekoliko mjerenja, nikad samu sliku, kako bismo poboljšali vodič za snimanje."
+        "t": "Za vašu sliku",
+        "b": "Vašu fotografiju upotrebljavamo za izradu vaše slike i provjeru njezine kvalitete."
       },
       {
         "t": "Nikad za identifikaciju",
         "b": "Nikad se ne upotrebljava za identifikaciju bilo koga, nikad se ne prodaje i ne upotrebljava se za treniranje umjetne inteligencije."
       },
       {
-        "t": "Preglede čuvamo do 30 dana",
-        "b": "Fotografiju i rezultat vašeg besplatnog pregleda čuvamo do 30 dana kako bismo mogli provjeravati i poboljšavati kvalitetu, a zatim ih brišemo. Nisu povezani s vašim imenom ni adresom e-pošte. Ako naručite, datoteke vaše narudžbe čuvamo 12 mjeseci radi preuzimanja."
+        "t": "Datoteke narudžbe: 12 mjeseci",
+        "b": "Ako naručite, datoteke vaše narudžbe čuvamo 12 mjeseci radi preuzimanja."
       },
       {
         "t": "Nekoliko vanjskih usluga",
-        "b": "Vercel pokreće stranicu i pregled, a Googleov Gemini API obnovu (Google zapise o zahtjevima čuva ograničeno vrijeme). Za narudžbe tome se pridružuju Stripe za plaćanje i privatna pohrana Supabase u EU-u."
+        "b": "Vercel pokreće stranicu i pregled, a Googleov Gemini API obnovu (Google zapise o zahtjevima čuva ograničeno vrijeme). Plaćanje obavlja Stripe, a datoteke čuva privatna pohrana Supabase u EU-u."
       }
     ],
     "controller": "Za vaše podatke odgovoran je MB „Portretizuokis“, Kaunas, Litva (svi podaci nalaze se u podnožju ove stranice).",
@@ -609,7 +609,7 @@
       {
         "id": "photo",
         "q": "Što se događa s mojom fotografijom?",
-        "a": "Fotografiju i rezultat vašeg besplatnog pregleda čuvamo do 30 dana kako bismo mogli provjeravati i poboljšavati kvalitetu, a zatim ih brišemo. Nisu povezani s vašim imenom ni adresom e-pošte. Kad naručite, datoteke vaše narudžbe čuvamo 12 mjeseci kako biste ih mogli ponovno preuzeti, a zatim ih brišemo. Vaša se šarenica nikad ne upotrebljava za identifikaciju bilo koga ni za treniranje umjetne inteligencije. Pojedinosti su u našoj politici privatnosti, na koju vodi poveznica u podnožju ove stranice."
+        "a": "Vašu fotografiju upotrebljavamo za izradu vaše slike. Kopiju besplatnog pregleda čuvamo do 30 dana radi provjere kvalitete, a zatim je brišemo. Kad naručite, datoteke vaše narudžbe čuvamo 12 mjeseci kako biste ih mogli ponovno preuzeti. Vaša se šarenica nikad ne upotrebljava za identifikaciju bilo koga ni za treniranje umjetne inteligencije. Pojedinosti su u našoj politici privatnosti, na koju vodi poveznica u podnožju ove stranice."
       },
       {
         "id": "order",

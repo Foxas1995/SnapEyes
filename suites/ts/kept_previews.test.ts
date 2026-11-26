@@ -46,7 +46,7 @@ export async function run(): Promise<Row[]> {
       && !!a2.held && a2.held.includes('SNAPEYES_KEEP_VISITS_DAY') && areaText(undefined).held === null, JSON.stringify([a0, a1, a2]));
   const us = JSON.stringify(checkoutLegal('en', 'us').photoNotice);
   const eu = JSON.stringify(checkoutLegal('en', 'eu').photoNotice);
-  check('the line of the photo step: the US one as before (only to make the artwork: a US visitor is not kept), the EU one names the 30 days', us.includes('used only to make your artwork')
-    && !us.includes('30') && eu.includes('up to 30 days'), `${us} | ${eu}`);
+  check('the line of the photo step: the US one as before (only to make the artwork: a US visitor is not kept), the EU one without only and without the 30 days', us.includes('used only to make your artwork')
+    && !us.includes('30') && eu.includes('Your photo is used to make your artwork.') && !eu.includes('30') && !eu.includes('only'), `${us} | ${eu}`);
   return out;
 }

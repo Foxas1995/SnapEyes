@@ -518,20 +518,20 @@
     "privacyTitle": "Solījums par jūsu aci",
     "privacy": [
       {
-        "t": "Tikai jūsu mākslas darbam",
-        "b": "Jūsu fotogrāfiju izmantojam tikai jūsu mākslas darba izveidei. No katra kadra pierakstām dažus mērījumus, nekad pašu attēlu, lai uzlabotu fotografēšanas pamācību."
+        "t": "Jūsu mākslas darbam",
+        "b": "Jūsu fotogrāfiju izmantojam jūsu mākslas darba izveidei un tā kvalitātes pārbaudei."
       },
       {
         "t": "Nekad identificēšanai",
         "b": "To nekad neizmanto, lai kādu identificētu, nekad nepārdod un neizmanto mākslīgā intelekta apmācībai."
       },
       {
-        "t": "Priekšskatījumus glabājam līdz 30 dienām",
-        "b": "Jūsu bezmaksas priekšskatījuma fotogrāfiju un rezultātu glabājam līdz 30 dienām, lai varētu pārbaudīt un uzlabot kvalitāti, un pēc tam dzēšam. Tie netiek saistīti ar jūsu vārdu vai e-pasta adresi. Ja pasūtāt, jūsu pasūtījuma failus glabājam 12 mēnešus, lai tos varētu lejupielādēt."
+        "t": "Pasūtījuma faili: 12 mēneši",
+        "b": "Ja pasūtāt, jūsu pasūtījuma failus glabājam 12 mēnešus, lai tos varētu lejupielādēt."
       },
       {
         "t": "Daži ārējie pakalpojumi",
-        "b": "Vercel darbina lapu un priekšskatījumu, Google Gemini API veic atjaunošanu (Google ierobežotu laiku glabā pieprasījumu žurnālus). Pasūtījumiem klāt nāk Stripe maksājumiem un privāta Supabase krātuve ES."
+        "b": "Vercel darbina lapu un priekšskatījumu, Google Gemini API veic atjaunošanu (Google ierobežotu laiku glabā pieprasījumu žurnālus). Maksājumus apstrādā Stripe, un failus glabā privāta Supabase krātuve ES."
       }
     ],
     "controller": "Par jūsu datiem atbild MB „Portretizuokis”, Kauņa, Lietuva (visi dati ir šīs lapas apakšā).",
@@ -609,7 +609,7 @@
       {
         "id": "photo",
         "q": "Kas notiek ar manu fotogrāfiju?",
-        "a": "Jūsu bezmaksas priekšskatījuma fotogrāfiju un rezultātu glabājam līdz 30 dienām, lai varētu pārbaudīt un uzlabot kvalitāti, un pēc tam dzēšam. Tie netiek saistīti ar jūsu vārdu vai e-pasta adresi. Kad pasūtāt, jūsu pasūtījuma failus glabājam 12 mēnešus, lai varat tos lejupielādēt vēlreiz, un pēc tam dzēšam. Jūsu varavīksneni nekad neizmanto, lai kādu identificētu vai apmācītu mākslīgo intelektu. Sīkāka informācija ir mūsu privātuma politikā, uz kuru ved saite šīs lapas apakšā."
+        "a": "Jūsu fotogrāfiju izmantojam jūsu mākslas darba izveidei. Bezmaksas priekšskatījuma kopiju glabājam līdz 30 dienām kvalitātes pārbaudei un pēc tam dzēšam. Kad pasūtāt, jūsu pasūtījuma failus glabājam 12 mēnešus, lai varat tos lejupielādēt vēlreiz. Jūsu varavīksneni nekad neizmanto, lai kādu identificētu vai apmācītu mākslīgo intelektu. Sīkāka informācija ir mūsu privātuma politikā, uz kuru ved saite šīs lapas apakšā."
       },
       {
         "id": "order",

@@ -518,20 +518,20 @@
     "privacyTitle": "A promise about your eye",
     "privacy": [
       {
-        "t": "Only for your artwork",
-        "b": "Your photo is used only to make your artwork. From each shot we log a few measurements, never the image, to improve the capture guide."
+        "t": "For your artwork",
+        "b": "Your photo is used to make your artwork and to check its quality."
       },
       {
         "t": "Never for identification",
         "b": "It is never used to identify anyone, never sold and not used to train AI."
       },
       {
-        "t": "Previews are kept for up to 30 days",
-        "b": "We keep the photo and the result of your free preview for up to 30 days so that we can check and improve the quality, then we delete them. They are not linked to your name or email. If you order, we keep your order's files for 12 months so you can download them."
+        "t": "Order files: 12 months",
+        "b": "If you order, we keep your order's files for 12 months so you can download them."
       },
       {
         "t": "A few outside services",
-        "b": "Vercel runs the page and the preview, Google's Gemini API the restoration (Google keeps request logs for a limited time). Orders add Stripe for payment and a private Supabase store in the EU."
+        "b": "Vercel runs the page and the preview, Google's Gemini API the restoration (Google keeps request logs for a limited time). Stripe handles payment and a private Supabase store in the EU keeps the files."
       }
     ],
     "controller": "Responsible for your data: MB \"Portretizuokis\", Kaunas, Lithuania (full details at the foot of this page).",
@@ -609,7 +609,7 @@
       {
         "id": "photo",
         "q": "What happens to my photo?",
-        "a": "We keep the photo and the result of your free preview for up to 30 days so that we can check and improve the quality, then we delete them. They are not linked to your name or email. When you order, we keep the files of your order for 12 months so you can download them again, and then delete them. Your iris is never used to identify anyone or to train AI. The details are in our privacy policy, linked at the foot of this page."
+        "a": "Your photo is used to make your artwork. We keep a copy of the free preview for up to 30 days to check quality, then delete it. If you order, we keep the files of your order for 12 months so you can download them again. Your iris is never used to identify anyone or to train AI. The details are in our privacy policy, linked at the foot of this page."
       },
       {
         "id": "order",

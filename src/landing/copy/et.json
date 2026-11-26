@@ -518,20 +518,20 @@
     "privacyTitle": "Lubadus sinu silma kohta",
     "privacy": [
       {
-        "t": "Ainult sinu kunstiteose jaoks",
-        "b": "Sinu fotot kasutatakse ainult sinu kunstiteose tegemiseks. Igast võttest salvestame mõne mõõtmistulemuse, mitte kunagi pilti ennast, et pildistamisjuhendit paremaks teha."
+        "t": "Sinu kunstiteose jaoks",
+        "b": "Sinu fotot kasutatakse sinu kunstiteose tegemiseks ja selle kvaliteedi kontrollimiseks."
       },
       {
         "t": "Mitte kunagi tuvastamiseks",
         "b": "Seda ei kasutata kunagi kellegi tuvastamiseks, ei müüda kunagi ega kasutata tehisintellekti treenimiseks."
       },
       {
-        "t": "Eelvaateid säilitame kuni 30 päeva",
-        "b": "Sinu tasuta eelvaate fotot ja tulemust säilitame kuni 30 päeva, et saaksime kvaliteeti kontrollida ja parandada, seejärel kustutame need. Neid ei seota sinu nime ega e-posti aadressiga. Kui tellid, säilitame sinu tellimuse faile 12 kuud, et saaksid need alla laadida."
+        "t": "Tellimuse failid: 12 kuud",
+        "b": "Kui tellid, säilitame sinu tellimuse faile 12 kuud, et saaksid need alla laadida."
       },
       {
         "t": "Mõned välised teenused",
-        "b": "Vercel käitab lehte ja eelvaadet, Google’i Gemini API teeb taastamise (Google säilitab päringute logisid piiratud aja). Tellimuste puhul lisanduvad Stripe makseteks ja privaatne Supabase’i salvestusruum ELis."
+        "b": "Vercel käitab lehte ja eelvaadet, Google’i Gemini API teeb taastamise (Google säilitab päringute logisid piiratud aja). Makseid töötleb Stripe ja faile hoiab privaatne Supabase’i salvestusruum ELis."
       }
     ],
     "controller": "Sinu andmete eest vastutab MB „Portretizuokis“, Kaunas, Leedu (täielikud andmed on selle lehe jaluses).",
@@ -609,7 +609,7 @@
       {
         "id": "photo",
         "q": "Mis saab minu fotost?",
-        "a": "Sinu tasuta eelvaate fotot ja tulemust säilitame kuni 30 päeva, et saaksime kvaliteeti kontrollida ja parandada, seejärel kustutame need. Neid ei seota sinu nime ega e-posti aadressiga. Kui tellid, säilitame sinu tellimuse faile 12 kuud, et saaksid need uuesti alla laadida, ja seejärel kustutame need. Sinu iirist ei kasutata kunagi kellegi tuvastamiseks ega tehisintellekti treenimiseks. Üksikasjad on meie privaatsuspoliitikas, mille link on selle lehe jaluses."
+        "a": "Sinu fotot kasutatakse sinu kunstiteose tegemiseks. Tasuta eelvaate koopiat säilitame kuni 30 päeva kvaliteedi kontrollimiseks ja seejärel kustutame selle. Kui tellid, säilitame sinu tellimuse faile 12 kuud, et saaksid need uuesti alla laadida. Sinu iirist ei kasutata kunagi kellegi tuvastamiseks ega tehisintellekti treenimiseks. Üksikasjad on meie privaatsuspoliitikas, mille link on selle lehe jaluses."
       },
       {
         "id": "order",
