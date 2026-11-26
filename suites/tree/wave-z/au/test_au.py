@@ -128,6 +128,17 @@ Fake Stripe + Resend + legal pack (wave-r-back/pb/harness.py), a local store fol
 # of this work (snap_eu_edition.mjs), eu_terms.json stays as the base: the 1125c step is now checked between the pins of the pixel and of the refund
 # conditions. eu_value_raw.json (snap_eu.mjs) holds the raw docs: they did not change (the AU and US editions sell no voucher), only the pack inside it.
 # B1, B2 and B3 moved with " - 1125v:" added.
+# 1126 refresh (2026-11-26, the owner's decision: every free preview's photo and result are kept 30 days for his quality checks, api/_lib/keep.py). The EU
+# edition changed on purpose in its PRIVACY POLICY and in ONE line of the checkout wording only, in all eight languages: the policy's lead (one sentence:
+# the photo is used to make the artwork and to check its quality; the free previews are kept 30 days) and exactly these blocks: "preview" its second block
+# replaced and one block added after its legal basis (what is kept, why, who sees it, where, 30 days, not linked to a name, an email or an IP address; the
+# legal basis Art. 6(1)(f) and how to object or ask for deletion), "orders" its first block (the order keeps no full phone photo, the preview's copy apart),
+# "retention" its table (the free previews' row), "services" its list (Supabase holds the copies too); the checkout wording by photoNotice alone (the photo
+# step's line: kept 30 days to check quality). The terms, the withdrawal page, the legal notice, the pack and the consent version as they were; LEGAL_UPDATED
+# is the lead's to raise. eu_keep.json is the EXACT pin of the EU edition as of this work (snap_eu_edition.mjs), eu_value.json stays as the base: the 1125v
+# step is now checked between the pins of the refund conditions and of the value vouchers. eu_keep_raw.json (snap_eu.mjs) holds the raw docs the same way
+# (their privacy policy, en and de, is the base of the AU and US editions, whose own sections say the 30 days too). A3, A6, B1, B2, C10 and U4 moved with
+# " - 1126:" added.
 import os, sys, json, time, re, subprocess, importlib.util, calendar
 HERE = os.path.dirname(os.path.abspath(__file__))
 SP = os.path.dirname(os.path.dirname(HERE))
@@ -297,6 +308,8 @@ EU_NOW = json.load(open(os.path.join(HERE, "eu_terms.json"), encoding="utf-8")) 
 EU_TERMS_RAW = json.load(open(os.path.join(HERE, "eu_terms_raw.json"), encoding="utf-8"))   # 1125c refresh: the raw docs the same way (snap_eu.mjs), held to eu_pixel_raw.json
 EU_VALUE = json.load(open(os.path.join(HERE, "eu_value.json"), encoding="utf-8"))   # 1125v refresh: the EU edition with the value vouchers (snap_eu_edition.mjs), the base is eu_terms.json
 EU_VALUE_RAW = json.load(open(os.path.join(HERE, "eu_value_raw.json"), encoding="utf-8"))   # 1125v refresh: the raw docs (snap_eu.mjs), equal to eu_terms_raw.json but for the pack
+EU_KEEP = json.load(open(os.path.join(HERE, "eu_keep.json"), encoding="utf-8"))   # 1126 refresh: the EU edition whose privacy policy says the free previews are kept 30 days (snap_eu_edition.mjs), the base is eu_value.json
+EU_KEEP_RAW = json.load(open(os.path.join(HERE, "eu_keep_raw.json"), encoding="utf-8"))   # 1126 refresh: the raw docs the same way (snap_eu.mjs), held to eu_value_raw.json
 EU_PIXEL_RAW = json.load(open(os.path.join(HERE, "eu_pixel_raw.json"), encoding="utf-8"))   # 1125 refresh: the raw docs with the Meta pixel's privacy passages (snap_eu.mjs), the base of the AU and US editions' privacy policy
 EU_CAP_RAW = json.load(open(os.path.join(HERE, "eu_cap_raw.json"), encoding="utf-8"))   # 1111 refresh: the raw docs (snap_eu.mjs), the base of the Australian and US editions' privacy policy
 LEGAL_NOW = "2026-11-25"        # 1125 refresh: the Meta pixel in the privacy policy. 1124 refresh: the terms' list of prints and prices (the acrylic block, the canvas' price). 1121 refresh (2026-11-21): the print paragraphs (a print is ordered after the artwork). 1113 refresh (2026-11-13): the Finnish, Estonian and Latvian texts of the EU edition. 1111 refresh (2026-11-11): the ceiling of free previews in the privacy policy. 1028 refresh: LEGAL_UPDATED, one date for every legal page and the pack (2026-10-20 for the counter, 2026-10-06 since WP18, 2026-10-05 at WP12, 2026-09-30 before)
@@ -310,8 +323,21 @@ LANG2 = ("en", "de")            # the two languages the snapshots of before the 
 
 
 def nopc(x):
-    """1028c: a checkout wording without the print box (printConsent), to compare it with the pins of before the prints."""
-    return {k: v for k, v in x.items() if k != "printConsent"} if isinstance(x, dict) else x
+    """1028c: a checkout wording without the print box (printConsent), to compare it with the pins of before the prints. 1126: and without the photo step's
+    line (photoNotice), which the kept free previews changed (nophoto holds it to the pins)."""
+    return {k: v for k, v in x.items() if k not in ("printConsent", "photoNotice")} if isinstance(x, dict) else x
+
+
+def nophoto(x):
+    """1126: a checkout wording without the photo step's line, to compare it with the pins of before the kept free previews."""
+    return {k: v for k, v in x.items() if k != "photoNotice"} if isinstance(x, dict) else x
+
+
+def photo_1126(new, old):
+    """1126: the photo step's line of every language: the same link, and its text the old one with its sentence about the photo's use replaced by one that
+    names the 30 days (and no "only" any more)."""
+    return (isinstance(new, list) and isinstance(old, list) and len(new) == len(old) == 2 and new[1] == old[1] and new[0]["text"] != old[0]["text"]
+            and "30" in new[0]["text"] and new[0]["text"].split(". ")[0] == old[0]["text"].split(". ")[0])
 set_pack(PACK)
 
 r = subprocess.run(["node", os.path.join(HERE, "au_client_check.mjs")], cwd=H.REPO, capture_output=True, text=True,
@@ -349,21 +375,23 @@ check("A3 EU checkbox and checkout wording exactly as before (text, and the old 
       " - 0930: en and de word for word as before, lt and hu added by 30efee7 and pinned whole (client = server in all four), "
       "the old versions still quote the en and de text - 1028: hr added and pinned whole (client = server in all five), 2026-09-30.2 still quotes the four texts it had"
       " - 1028c: every wording as before but the print box (printConsent) added in all five languages, pinned whole to eu_prints.json"
-      " - 1113: fi, et and lv added and pinned whole to eu_langs3.json (client = server in all eight); the five older wordings exactly as the pin of the vouchers has them",
+      " - 1113: fi, et and lv added and pinned whole to eu_langs3.json (client = server in all eight); the five older wordings exactly as the pin of the vouchers has them"
+      " - 1126: pinned whole to eu_keep.json; the photo step's line (photoNotice) of every language names the 30 days the free preview is kept, the rest of every wording as before",
       # English and German: as before the AU step, on the page and on the server (1028c: the print box aside, which is new)
-      all(nopc(CL["checkoutEu"][l]) == EU_BEFORE["checkout"][l] for l in LANG2)
-      and all(CL["checkoutEu"][l]["printConsent"] and nopc(CL["checkoutEu"][l]) == EU_HR["checkout"][l] and CL["checkoutEu"][l] == EU_GIFT["checkout"][l] for l in LANG5)
+      all(nopc(CL["checkoutEu"][l]) == nopc(EU_BEFORE["checkout"][l]) for l in LANG2)
+      and all(CL["checkoutEu"][l]["printConsent"] and nopc(CL["checkoutEu"][l]) == nopc(EU_HR["checkout"][l]) and nophoto(CL["checkoutEu"][l]) == nophoto(EU_GIFT["checkout"][l]) for l in LANG5)
       and all(pay.CONSENT_TEXT[l] == PAY0.CONSENT_TEXT[l] for l in LANG2)
       # the four languages: the page's whole wording is the pin of 1acef38, and the server records the page's checkbox text
-      and sorted(CL["checkoutEu"]) == ["de", "en", "et", "fi", "hr", "hu", "lt", "lv"] == sorted(pay.CONSENT_TEXT) and CL["checkoutEu"] == EU_NOW["checkout"]
+      and sorted(CL["checkoutEu"]) == ["de", "en", "et", "fi", "hr", "hu", "lt", "lv"] == sorted(pay.CONSENT_TEXT) and CL["checkoutEu"] == EU_KEEP["checkout"]
+      and all(nophoto(EU_KEEP["checkout"][l]) == nophoto(EU_NOW["checkout"][l]) and photo_1126(EU_KEEP["checkout"][l]["photoNotice"], EU_NOW["checkout"][l]["photoNotice"]) for l in sorted(EU_NOW["checkout"]))
       and all(pay.CONSENT_TEXT[l] == CL["checkoutEu"][l]["withdrawalConsent"] for l in pay.LANGS) and len(pay.LANGS) == 8
       # 1028: the four texts of before the Croatian one are word for word the counter's pin, and their version still quotes them
-      and all(nopc(CL["checkoutEu"][l]) == EU_COUNTER["checkout"][l] for l in ("en", "de", "lt", "hu"))
+      and all(nopc(CL["checkoutEu"][l]) == nopc(EU_COUNTER["checkout"][l]) for l in ("en", "de", "lt", "hu"))
       and pay.CONSENT_TEXTS[CONSENT_0930] == {l: EU_COUNTER["checkout"][l]["withdrawalConsent"] for l in ("en", "de", "lt", "hu")}
       # the versions: the old ones still quote what their customers ticked (en, de), the current one all four languages
       and pay.CONSENT_TEXTS[PAY0.CONSENT_VERSION] == PAY0.CONSENT_TEXT and pay.CONSENT_TEXTS["2026-09-30.1"] == PAY0.CONSENT_TEXT
       and pay.CONSENT_TEXTS[pay.CONSENT_VERSION] == pay.CONSENT_TEXT,
-      (sorted(CL["checkoutEu"]), sorted(pay.CONSENT_TEXT), CL["checkoutEu"] == EU_NOW["checkout"]))
+      (sorted(CL["checkoutEu"]), sorted(pay.CONSENT_TEXT), CL["checkoutEu"] == EU_KEEP["checkout"]))
 au_en = pay.CONSENT_TEXT_AU["en"]
 check("A4 AU checkbox keeps both EU elements and the ACL (express start before the period ends, losing the right, "
       "no change-of-mind cancelling, ACL not affected)",
@@ -382,11 +410,11 @@ check("A5 editions: au reads the Australian texts; eu, lt, hu and unknown the EU
       and not any(pay.edition_market(m) for m in ("eu", "lt", None, "HU", "zz")),
       (CL["edition"], pay.ACL_MARKETS, pay.EDITION_MARKETS, CL["editionMarkets"]))
 cf = CL["checkoutFor"]
-check("A6 checkoutLegal: au gets the AU checkbox and a link to terms#australia; eu and lt the EU wording as before - 1028c: and the print box",
+check("A6 checkoutLegal: au gets the AU checkbox and a link to terms#australia; eu and lt the EU wording as before - 1028c: and the print box - 1126: and the photo step's line",
       cf["en_au"]["withdrawalConsent"] == au_en and any(p.get("section") == "australia" and p.get("doc") == "terms"
                                                          for p in cf["en_au"]["acceptance"])
       and cf["de_au"]["withdrawalConsent"] == pay.CONSENT_TEXT_AU["de"] and cf["en_au"]["continueButton"] == "Continue to payment"
-      and nopc(cf["en_eu"]) == EU_BEFORE["checkout"]["en"] and nopc(cf["en_lt"]) == EU_BEFORE["checkout"]["en"]   # 1028c: the print box aside
+      and nopc(cf["en_eu"]) == nopc(EU_BEFORE["checkout"]["en"]) and nopc(cf["en_lt"]) == nopc(EU_BEFORE["checkout"]["en"])   # 1028c: the print box aside; 1126: the photo step's line too
       and cf["en_eu"]["printConsent"] == cf["en_lt"]["printConsent"], cf["en_au"]["acceptance"])
 check("A7 links: a section link carries the market before the #; the EU link none",
       CL["hrefs"] == {"auSection": "/terms?lang=en&m=au#australia", "euSection": "/terms?lang=en#australia",
@@ -737,12 +765,12 @@ _AMOUNTS = (3000, 6000, 10000, 12000, 17000)
 
 
 def _step1125v(l):
-    t_fr, t_d = doc_diff(EDI["eu"]["terms"][l], EU_NOW["terms"][l])
-    p_fr, p_d = doc_diff(EDI["eu"]["privacy"][l], EU_NOW["privacy"][l])
+    t_fr, t_d = doc_diff(EU_VALUE["terms"][l], EU_NOW["terms"][l])      # 1126: between the pins of the refund conditions and of the value vouchers
+    p_fr, p_d = doc_diff(EU_VALUE["privacy"][l], EU_NOW["privacy"][l])
     if not (t_fr and p_fr and sorted(t_d) == ["vouchers"] and sorted(p_d) == ["vouchers"]):
         return False
     add, rem = t_d["vouchers"]
-    new = next(s for s in EDI["eu"]["terms"][l]["sections"] if s["id"] == "vouchers")["blocks"]
+    new = next(s for s in EU_VALUE["terms"][l]["sections"] if s["id"] == "vouchers")["blocks"]
     old = next(s for s in EU_NOW["terms"][l]["sections"] if s["id"] == "vouchers")["blocks"]
     table = next((b for b in add if isinstance(b, dict) and "dl" in b), None)
     eur = [_digits(r[1]) for r in (table or {}).get("dl", [])]
@@ -752,9 +780,29 @@ def _step1125v(l):
 
 
 value1125v = {l: _step1125v(l) for l in LANG8}
-value1125v_ok = (all(value1125v.values()) and all(EDI["eu"][d][l] == EU_NOW[d][l] for d in ("withdrawal", "imprint") for l in LANG8)
+value1125v_ok = (all(value1125v.values()) and all(EU_VALUE[d][l] == EU_NOW[d][l] for d in ("withdrawal", "imprint") for l in LANG8)
                  and EU_VALUE["checkout"] == EU_NOW["checkout"] and all(EU_VALUE_RAW[d] == EU_TERMS_RAW[d] for d in ("terms", "withdrawal", "privacy", "imprint", "checkout")))
-pinned = {d: all(EDI["eu"][d][l] == EU_VALUE[d][l] for l in LANG2) for d in DOCS4}
+# 1126 (the kept free previews, see the header): the privacy policy differs from the pin of the value vouchers by its lead and exactly the blocks of PRIV1126, each
+# new one about the 30 days; the terms, the withdrawal page and the legal notice not at all, in all eight languages; the raw docs (en, de) the same way
+PRIV1126 = {"preview": (2, 1), "orders": (1, 1), "retention": (1, 1), "services": (1, 1)}
+
+
+def _step1126(new, old, basis=None):
+    """1126: one language's policy against the pin of the value vouchers: the lead and exactly the blocks of PRIV1126, every new one naming the 30 days; basis: a
+    phrase of the legal basis the new blocks of "preview" must hold (the English one)."""
+    fr, d = doc_diff(dict(new, lead=old["lead"]), old)
+    return (fr and new["lead"] != old["lead"] and "30" in new["lead"] and sorted(d) == sorted(PRIV1126)
+            and all((len(d[k][0]), len(d[k][1])) == n for k, n in PRIV1126.items())
+            and all("30" in json.dumps(d[k][0], ensure_ascii=False) for k in PRIV1126)
+            and (basis is None or basis in json.dumps(d["preview"][0], ensure_ascii=False)))
+
+
+keep1126 = {l: _step1126(EU_KEEP["privacy"][l], EU_VALUE["privacy"][l], "Art. 6(1)(f) GDPR" if l == "en" else None) for l in LANG8}
+keep1126_raw = {l: _step1126(EU_KEEP_RAW["privacy"][l], EU_VALUE_RAW["privacy"][l]) for l in LANG2}
+keep1126_ok = (all(keep1126.values()) and all(keep1126_raw.values())
+               and all(EDI["eu"][d][l] == EU_VALUE[d][l] for d in ("terms", "withdrawal", "imprint") for l in LANG8)
+               and all(EU_KEEP_RAW[d] == EU_VALUE_RAW[d] for d in ("terms", "withdrawal", "imprint")) and EU_KEEP["pack"] == EU_VALUE["pack"])
+pinned = {d: all(EDI["eu"][d][l] == EU_KEEP[d][l] for l in LANG2) for d in DOCS4}
 editions4 = {d: sorted(EDI["eu"][d]) for d in DOCS4}
 check("B1 EU terms, withdrawal page and legal notice exactly as before (en, de)"
       " - 0930: the terms differ from before by exactly the contract languages sentence (30efee7) and the price list sentence "
@@ -790,9 +838,12 @@ check("B1 EU terms, withdrawal page and legal notice exactly as before (en, de)"
       " - 1125v: the pin is eu_value.json; the 1125c step is checked between the pins of the pixel and of the refund conditions; the value vouchers (the owner's"
       " decision of 2026-11-25): the terms differ from the pin of the refund conditions by exactly three blocks of the section vouchers (the intro, one row of the"
       " five amounts for the two prices, the rules), its contract and withdrawal blocks as they were, and the privacy policy by exactly one block of its section"
-      " vouchers, in all eight languages; the withdrawal page, the legal notice, the checkout wording and the raw docs not at all",
-      all(same.values()) and terms12_ok and terms18_ok and terms28_ok and prints28c_ok and gift1111g_ok and langs1113_ok and later1121_ok and block1124_ok and pixel1125_ok and terms1125c_ok and value1125v_ok and all(pinned.values()) and all(v == ["de", "en", "et", "fi", "hr", "hu", "lt", "lv"] for v in editions4.values()),
-      (same, value1125v, terms12_ok, terms18_ok, terms28_ok, prints28c_ok, gift1111g_ok, langs1113_ok, later1121_ok, block1124_ok, block1124, pixel1125, pixel1125_raw, terms1125c, terms1125c_raw, {n: {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in x.items()} for n, x in later1121.items()}, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in terms1111g.items()}, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in terms28c.items()}, pinned, editions4, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in terms18.items()}))
+      " vouchers, in all eight languages; the withdrawal page, the legal notice, the checkout wording and the raw docs not at all"
+      " - 1126: the pin is eu_keep.json; the 1125v step is checked between the pins of the refund conditions and of the value vouchers; the kept free previews (the owner's"
+      " decision of 2026-11-26): the privacy policy differs from the pin of the value vouchers by its lead and exactly the blocks of PRIV1126 (preview two for one, orders,"
+      " retention and services one each), in all eight languages, and the raw docs the same way (en, de); the terms, the withdrawal page, the legal notice and the pack not at all",
+      all(same.values()) and terms12_ok and terms18_ok and terms28_ok and prints28c_ok and gift1111g_ok and langs1113_ok and later1121_ok and block1124_ok and pixel1125_ok and terms1125c_ok and value1125v_ok and keep1126_ok and all(pinned.values()) and all(v == ["de", "en", "et", "fi", "hr", "hu", "lt", "lv"] for v in editions4.values()),
+      (same, keep1126, keep1126_raw, value1125v, terms12_ok, terms18_ok, terms28_ok, prints28c_ok, gift1111g_ok, langs1113_ok, later1121_ok, block1124_ok, block1124, pixel1125, pixel1125_raw, terms1125c, terms1125c_raw, {n: {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in x.items()} for n, x in later1121.items()}, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in terms1111g.items()}, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in terms28c.items()}, pinned, editions4, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in terms18.items()}))
 priv_diff = {l: doc_diff(EU_1ACEF["privacy"][l], EU_BEFORE["privacy"][l]) for l in LANG2}   # 1005: the old differences, on the pin of 1acef38
 priv_ok = {l: fr and sorted(d) == sorted(PRIV_ALLOWED[l])
            and all(len(d[sec][0]) == na and len(d[sec][1]) == nr and holds(d[sec][0], pa) and holds(d[sec][1], pr)
@@ -800,13 +851,13 @@ priv_ok = {l: fr and sorted(d) == sorted(PRIV_ALLOWED[l])
            for l, (fr, d) in priv_diff.items()}
 priv_diff12 = {l: doc_diff(EU_WP18["privacy"][l], EU_1ACEF["privacy"][l]) for l in LANG2}      # 1020: the policy as of WP18 against the pin of 1acef38 (the live one is checked against WP18 in B2b)
 priv12_ok = {l: fr and wp12_ok(d, PRIV12[l]) for l, (fr, d) in priv_diff12.items()}
-priv_pinned = {l: EDI["eu"]["privacy"][l] == EU_VALUE["privacy"][l] for l in LANG2}      # 1125v: the pin of the value vouchers
+priv_pinned = {l: EDI["eu"]["privacy"][l] == EU_KEEP["privacy"][l] for l in LANG2}      # 1125v: the pin of the value vouchers; 1126: of the kept free previews
 check("B2 EU privacy policy: only two sentences added per language (the market key, the country hint), all else as before"
       " - 0930: plus the language switch sentence (30efee7) and the price test sentences (1acef38: the anonymous visitor number, "
       "the events, the data passed to Stripe); pinned to eu_1acef38.json"
       " - 1005: pinned to eu_wp12.json; the policy differs from the pin of 1acef38 by exactly the blocks of PRIV12 (the example without a style, the order of the "
       "eyes, the date, the look, the derived eye profile, the plan code to Stripe, the same facts in the retention and storage lists)"
-      " - 1125v: pinned to eu_value.json (its one block of the section vouchers is held by B1)",
+      " - 1125v: pinned to eu_value.json (its one block of the section vouchers is held by B1) - 1126: pinned to eu_keep.json (the kept free previews, held by B1)",
       all(priv_ok.values()) and all(priv12_ok.values()) and all(priv_pinned.values()),
       (priv_ok, priv12_ok, priv_pinned, {l: {k: [len(v[0]), len(v[1])] for k, v in d.items()} for l, (fr, d) in priv_diff12.items()}))
 
@@ -1038,7 +1089,7 @@ T = EDI["au"]["terms"]
 # 1028c: the Australian edition is made from the EU texts BEFORE the prints (src/legal/editions.ts applies src/legal/docs/prints.ts to the EU edition only): its base
 # is the pin of hr, the EU edition as it was before the prints, which the EU edition of now differs from by exactly PRINTS28C and PRIV28C (B1, B2b)
 EU_BASE = {d: EU_HR[d] for d in DOCS4}
-EU_BASE["privacy"] = EU_PIXEL_RAW["privacy"]   # 1125: the raw policy with the Meta pixel's passages (B1 holds it to eu_cap_raw.json plus exactly those). 1111: the raw policy with the paragraph of the daily ceiling of free previews (B2b holds it to the pin of hr plus exactly that)
+EU_BASE["privacy"] = EU_KEEP_RAW["privacy"]   # 1126: the raw policy with the kept free previews (B1 holds it to eu_value_raw.json plus exactly those). 1125: the raw policy with the Meta pixel's passages (B1 holds it to eu_cap_raw.json plus exactly those). 1111: the raw policy with the paragraph of the daily ceiling of free previews (B2b holds it to the pin of hr plus exactly that)
 ids_eu = [s["id"] for s in EU_BASE["terms"]["en"]["sections"]]
 ids_au = [s["id"] for s in T["en"]["sections"]]
 check("C1 AU terms: the EU sections in order, with 'australia' right after 'defects' (en, de) - 1028c: the EU sections before the prints (the pin of hr)",
@@ -1124,7 +1175,9 @@ pids = [s["id"] for s in PAU["en"]["sections"]]
 psec = {lang: next(s for s in PAU[lang]["sections"] if s["id"] == "australia") for lang in ("en", "de")}
 ptext = " ".join(psec["en"]["blocks"])
 check("C10 AU privacy: 'australia' right after 'rights' (biometric info never used to identify, outside Australia, APPs and "
-      "the small business exemption, the tort of 10 June 2025, OAIC); all else = the EU policy - 1028c: the EU policy before the prints (the pin of hr)",
+      "the small business exemption, the tort of 10 June 2025, OAIC); all else = the EU policy - 1028c: the EU policy before the prints (the pin of hr)"
+      " - 1126: the raw policy with the kept free previews (eu_keep_raw.json); its section says the 30 days too",
+      "30 days" in ptext and
       pids[pids.index("rights") + 1] == "australia" and [p for p in pids if p != "australia"] == [s["id"] for s in EU_BASE["privacy"]["en"]["sections"]]
       and all(x in ptext for x in ("biometric information", "sensitive information", "never identify or verify anyone",
                                    "outside Australia", "Australian Privacy Principles", "A$3 million", "10 June 2025",
@@ -1521,10 +1574,11 @@ check("U3 consent versions: the US text only under 2026-10-28.2; 2026-10-28.1 st
       and pay.US_MARKETS == ("us",) and pay.us_market("us") and not pay.us_market("au") and not pay.acl_market("us") and pay.edition_market("us")
       and not pay.edition_market("hr") and not pay.edition_market("uk") and tuple(pay.edition_langs("us")) == ("en",),
       (pay.CONSENT_TEXTS_US, pay.US_MARKETS))
-check("U4 checkoutLegal: us gets the US checkbox in English (a German page too) and a link to terms#united-states; hr the EU wording; the links carry m=us, m=hr",
+check("U4 checkoutLegal: us gets the US checkbox in English (a German page too) and a link to terms#united-states; hr the EU wording; the links carry m=us, m=hr"
+      " - 1126: hr's wording is the pin of the kept free previews",
       cf["en_us"]["withdrawalConsent"] == us_en == cf["de_us"]["withdrawalConsent"] and cf["de_us"]["continueButton"] == "Continue to payment"
       and any(p.get("section") == "united-states" and p.get("doc") == "terms" for p in cf["en_us"]["acceptance"])
-      and cf["en_hr"] == EU_NOW["checkout"]["en"] and CL["usHrefs"] == {"usSection": "/terms?lang=en&m=us#united-states", "hrPlain": "/terms?lang=hr&m=hr"},
+      and cf["en_hr"] == EU_KEEP["checkout"]["en"] and CL["usHrefs"] == {"usSection": "/terms?lang=en&m=us#united-states", "hrPlain": "/terms?lang=hr&m=hr"},
       (cf["en_us"]["acceptance"], CL["usHrefs"]))
 EUS = PACK["editions"]["us"]
 links_us = re.findall(r"https://snapeyes\.com/(?:terms|privacy|withdrawal|imprint)\?[^\s)]*", json.dumps(EUS))

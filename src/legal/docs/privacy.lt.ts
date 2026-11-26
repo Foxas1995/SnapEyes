@@ -50,7 +50,7 @@ export const lt: LegalDoc = {
   description:
     'Kaip SnapEyes tvarko Jūsų akies nuotrauką, Jūsų peržiūrą ir, jei užsisakote, Jūsų užsakymo duomenis: ką tvarkome, kodėl, kokiomis paslaugomis, kiek laiko ir kokias teises turite.',
   lead:
-    'Ši politika paaiškina, kas vyksta su Jūsų duomenimis, kai naudojatės svetaine snapeyes.com: nemokama peržiūra ir, jei užsisakote, Jūsų skaitmeniniu kūriniu. Trumpai: Jūsų nuotrauka naudojama tik Jūsų kūriniui sukurti, niekada kieno nors tapatybei nustatyti ir niekada DI mokyti. Nemokamų peržiūrų nesaugome. Apmokėtų užsakymų failai saugomi 12 mėnesių, kad galėtumėte juos vėl atsisiųsti, tada ištrinami.',
+    'Ši politika paaiškina, kas vyksta su Jūsų duomenimis, kai naudojatės svetaine snapeyes.com: nemokama peržiūra ir, jei užsisakote, Jūsų skaitmeniniu kūriniu. Trumpai: Jūsų nuotrauka naudojama Jūsų kūriniui sukurti ir jo kokybei tikrinti, niekada kieno nors tapatybei nustatyti ir niekada DI mokyti. Nemokamas peržiūras saugome 30 dienų, kad galėtume tikrinti ir gerinti jų kokybę, tada ištriname. Apmokėtų užsakymų failai saugomi 12 mėnesių, kad galėtumėte juos vėl atsisiųsti, tada ištrinami.',
   toc: true,
   numbered: true,
   sections: [
@@ -77,9 +77,10 @@ export const lt: LegalDoc = {
       title: 'Jūsų nemokama peržiūra',
       blocks: [
         'Kad sukurtume Jūsų peržiūrą, iš savo naršyklės mūsų serverio funkcijoms siunčiate vieną ar kelias akies nuotraukas. Ten nuotrauka apdorojama atmintyje: randame rainelę, ją iškerpame, patikriname, ar ji pakankamai ryški ir šviesi, pašaliname atspindžius, su Google Gemini API atkuriame smulkias skaidulas ir perteikiame rainelę Jūsų matomais stiliais. Rezultatas grįžta į Jūsų naršyklę. Visi duomenų perdavimai šifruojami (HTTPS).',
-        '**Jūsų nuotraukos, rainelės iškarpos ir peržiūros savo serveriuose nesaugome.** Jos ištrinamos, kai užklausa baigiasi. Peržiūra lieka Jūsų naršyklėje, kol uždarote puslapį (kol esate mokėjimo puslapyje, Jūsų naršyklės skirtuko sesijos saugykloje: žr. [Slapukai ir vietinė saugykla](#storage)), nebent ją išsisaugote patys. Rainelės iškarpą ir patvirtintą peržiūrą saugome tik tada, kai pradedate užsakymą: žr. [Kai užsisakote](#orders).',
+        '**Nemokamos peržiūros kopiją saugome 30 dienų.** Mūsų serveris mūsų privačioje Supabase saugykloje ES išsaugo: Jūsų siunčiamas nuotraukas (sumažintas, ilgoji kraštinė ne daugiau kaip 1280 pikselių), aplink rainelę iškirptą kvadratą, jo atkūrimą, Jums parodytas peržiūras ir anoniminius kodus: ką parodė mūsų patikros (pavyzdžiui, ar nuotrauką buvo galima panaudoti, o jei ne, kodėl), stilių, laiką ir tą pačią anoniminę informaciją kaip mūsų paslaugos statistikoje (kampanijos kodą, įrenginio ir naršyklės rūšį, kalbą ir šalį). Jas saugome, kad galėtume tikrinti ir gerinti peržiūrų kokybę ir išsiaiškinti, kodėl nuotraukos nepavyksta. Jas matome tik mes, savo administravimo skydelyje. Jos nesiejamos su Jūsų vardu, el. pašto adresu ar IP adresu ir, kaip ir visa kita, niekada nenaudojamos kieno nors tapatybei nustatyti, neparduodamos ir nenaudojamos DI mokyti. Po 30 dienų mūsų kasdienis valymas jas automatiškai ištrina. Peržiūra taip pat lieka Jūsų naršyklėje, kol uždarote puslapį (kol esate mokėjimo puslapyje, Jūsų naršyklės skirtuko sesijos saugykloje: žr. [Slapukai ir vietinė saugykla](#storage)), nebent ją išsisaugote patys. Kai pradedate užsakymą, rainelės iškarpą ir patvirtintą peržiūrą dar saugome kartu su užsakymu: žr. [Kai užsisakote](#orders).',
         'Google apdoroja vaizdą, kad jį atkurtų. Naudojamės mokama Google API paslauga, pagal kurios sąlygas Google nenaudoja vaizdų savo produktams tobulinti ar savo modeliams mokyti. Google gali ribotą laiką saugoti užklausas, tik piktnaudžiavimui nustatyti ir įstatymų reikalaujamiems atskleidimams.',
         'Teisinis pagrindas: Jūs prašote sukurti peržiūrą, o tam reikalinga nuotrauka (BDAR 6 straipsnio 1 dalies b punktas, veiksmai, atliekami Jūsų prašymu).',
+        `Šios kopijos teisinis pagrindas: mūsų teisėtas interesas tikrinti ir gerinti peržiūrų kokybę ir išsiaiškinti, kodėl nuotraukos nepavyksta (BDAR 6 straipsnio 1 dalies f punktas). Bet kada galite tam prieštarauti arba paprašyti ją ištrinti: parašykite ${MAIL} ir nurodykite apytikslę savo apsilankymo datą ir laiką, kad galėtume ją rasti.`,
         'Mūsų programa automatiškai nusprendžia, ar nuotrauką galima panaudoti (pavyzdžiui, kai ji per neryški ar per tamsi). Šis sprendimas nesukelia Jums jokių teisinių ar panašiai reikšmingų pasekmių: galite tiesiog padaryti kitą nuotrauką.',
       ],
     },
@@ -122,7 +123,7 @@ export const lt: LegalDoc = {
       id: 'orders',
       title: 'Kai užsisakote',
       blocks: [
-        'Kai pradedate užsakymą, į mūsų privačią saugyklą įkeliami du kiekvienos akies vaizdai, kad Jūsų failas būtų sukurtas būtent iš to, ką matėte: iš Jūsų nuotraukos iškirptas kvadratas aplink rainelę (su pašalintais atspindžiais) ir Jūsų patvirtinta peržiūra. Kartu saugome trumpą matavimų, atliktų iš tos peržiūros, įrašą (spalvas aplink Jūsų rainelę, spalvos klasę, vyzdžio formą, dvi kokybės reikšmes ir peržiūros kodą). Jame nėra vaizdo, ir jis ištrinamas kartu su vaizdais. **Visa Jūsų telefono nuotrauka nesaugoma, net ir užsakymo atveju.** Užsakymo, kuris neapmokamas per 24 valandas, apmokėti nebegalima. Tada kartą per dieną veikiantis automatinis valymas ištrina jo vaizdus ir įrašus, paprastai per dvi dienas nuo užsakymo ir ne vėliau kaip per 30 dienų.',
+        'Kai pradedate užsakymą, į mūsų privačią saugyklą įkeliami du kiekvienos akies vaizdai, kad Jūsų failas būtų sukurtas būtent iš to, ką matėte: iš Jūsų nuotraukos iškirptas kvadratas aplink rainelę (su pašalintais atspindžiais) ir Jūsų patvirtinta peržiūra. Kartu saugome trumpą matavimų, atliktų iš tos peržiūros, įrašą (spalvas aplink Jūsų rainelę, spalvos klasę, vyzdžio formą, dvi kokybės reikšmes ir peržiūros kodą). Jame nėra vaizdo, ir jis ištrinamas kartu su vaizdais. **Užsakymo įraše visos Jūsų telefono nuotraukos nesaugome;** nemokamai peržiūrai siųstų nuotraukų kopiją saugome atskirai 30 dienų (žr. [Jūsų nemokama peržiūra](#preview)). Užsakymo, kuris neapmokamas per 24 valandas, apmokėti nebegalima. Tada kartą per dieną veikiantis automatinis valymas ištrina jo vaizdus ir įrašus, paprastai per dvi dienas nuo užsakymo ir ne vėliau kaip per 30 dienų.',
         'Kad įkėlimai neviršytų ribų, mūsų serveris kiekvienam įkėlimui dar įrašo nedidelę žymę (jo dydį, dieną ir užsakymo numerį, be vaizdo). Šios žymės automatiškai ištrinamos po kelių dienų.',
         'Kad parduotume ir pristatytume Jūsų kūrinį, tvarkome: užsakymą (užsakymo numerį, datą, akis, stilių, išdėstymą, akių tvarką, Jūsų pridėtus vardus, datą ar užrašą, kalbą, kainą), Jūsų el. pašto adresą (jį įvedate mokėjimo puslapyje), iš Stripe gaunamą mokėjimo būseną, Jūsų sutikimą, kad pradėtume iš karto (žr. [Teisė atsisakyti sutarties](doc:withdrawal)), ir Jūsų užsakymo failus: du minėtus kiekvienos akies vaizdus, kiekvienos akies 4096 px atvaizdą ir baigtą kūrinį su techniniais kokybės įrašais.',
         'Šiuos failus saugome privačioje Supabase saugykloje, esančioje ES. Juos pasiekiate per savo užsakymo puslapį, kurio nuorodą atsiunčiame Jums el. paštu; joje yra privatus raktas, todėl kiekvienas, turintis nuorodą, gali atsisiųsti Jūsų kūrinį. Kiekviena ten sukurta atsisiuntimo nuoroda nustoja galioti po 7 dienų.',
@@ -157,7 +158,7 @@ export const lt: LegalDoc = {
           ul: [
             'Vercel: svetainės ir serverio funkcijų, kurios kuria Jūsų peržiūrą ir Jūsų failą, priegloba. Vercel duomenų centrai gali būti už ES ribų, pavyzdžiui, JAV.',
             'Google (Gemini API): DI rainelės atkūrimas ir Jūsų nuotraukos patikros. Google serveriai gali būti už ES ribų.',
-            'Supabase: užsakymų failų privati saugykla ES regione.',
+            'Supabase: užsakymų failų ir 30 dienų nemokamų peržiūrų kopijų privati saugykla ES regione.',
             'Stripe: mokėjimų apdorojimas, su skyriuje [Kai užsisakote](#orders) nurodytais užsakymo duomenimis.',
             hostingerLt,
             ...senderLt,
@@ -174,7 +175,7 @@ export const lt: LegalDoc = {
       blocks: [
         {
           dl: [
-            ['Nemokamos peržiūros', 'Mes jų nesaugome. Jos ištrinamos, kai užklausa baigiasi.'],
+            ['Nemokamos peržiūros', 'Siųstų nuotraukų, rainelės iškarpos, atkūrimo, peržiūrų ir jų anoniminių kodų kopija: automatiškai ištrinama po 30 dienų arba anksčiau, jei paprašote.'],
             ['Neapmokėti užsakymai', 'Užsakymo, kuris neapmokamas per 24 valandas, apmokėti nebegalima. Mūsų kasdienis automatinis valymas ištrina jo vaizdus ir įrašus, paprastai per dvi dienas nuo užsakymo ir ne vėliau kaip per 30 dienų.'],
             ['Įkėlimų ir pareiškimų žymės', 'Nedideli skaitikliai be vaizdų, vardų ir el. pašto adresų (gavimo patvirtinimų skaitiklyje yra tik trumpa el. pašto adreso maiša), automatiškai ištrinami po kelių dienų; mėnesiniai gavimo patvirtinimų skaitikliai ištrinami praėjus maždaug 40 dienų nuo jų mėnesio pabaigos.'],
             ['Apmokėti užsakymai', 'Jūsų užsakymo failai saugomi 12 mėnesių nuo apmokėjimo, kad galėtumėte juos vėl atsisiųsti iš savo užsakymo puslapio, tada juos ištrina mūsų kasdienis automatinis valymas. Jūsų prašymu juos ištriname anksčiau; po to Jūsų užsakymo puslapis failo nebegali pateikti.'],

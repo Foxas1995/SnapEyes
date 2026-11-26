@@ -526,8 +526,8 @@
         "b": "Nikad se ne upotrebljava za identifikaciju bilo koga, nikad se ne prodaje i ne upotrebljava se za treniranje umjetne inteligencije."
       },
       {
-        "t": "Besplatne preglede ne čuvamo",
-        "b": "Vaš besplatni pregled ne pohranjujemo. Isječak šarenice i pregled čuvamo samo ako započnete narudžbu. Ako naručite, datoteke vaše narudžbe (ne fotografiju s mobitela) čuvamo 12 mjeseci radi preuzimanja."
+        "t": "Preglede čuvamo 30 dana",
+        "b": "Fotografiju i rezultat vašeg besplatnog pregleda čuvamo 30 dana kako bismo mogli provjeravati i poboljšavati kvalitetu, a zatim ih brišemo. Nisu povezani s vašim imenom ni adresom e-pošte. Ako naručite, datoteke vaše narudžbe čuvamo 12 mjeseci radi preuzimanja."
       },
       {
         "t": "Nekoliko vanjskih usluga",
@@ -609,7 +609,7 @@
       {
         "id": "photo",
         "q": "Što se događa s mojom fotografijom?",
-        "a": "Vaš besplatni pregled ne pohranjujemo. Isječak šarenice i pregled čuvamo samo ako započnete narudžbu. Kad naručite, datoteke vaše narudžbe (ne fotografiju s mobitela) čuvamo 12 mjeseci kako biste ih mogli ponovno preuzeti, a zatim ih brišemo. Vaša se šarenica nikad ne upotrebljava za identifikaciju bilo koga ni za treniranje umjetne inteligencije. Pojedinosti su u našoj politici privatnosti, na koju vodi poveznica u podnožju ove stranice."
+        "a": "Fotografiju i rezultat vašeg besplatnog pregleda čuvamo 30 dana kako bismo mogli provjeravati i poboljšavati kvalitetu, a zatim ih brišemo. Nisu povezani s vašim imenom ni adresom e-pošte. Kad naručite, datoteke vaše narudžbe čuvamo 12 mjeseci kako biste ih mogli ponovno preuzeti, a zatim ih brišemo. Vaša se šarenica nikad ne upotrebljava za identifikaciju bilo koga ni za treniranje umjetne inteligencije. Pojedinosti su u našoj politici privatnosti, na koju vodi poveznica u podnožju ove stranice."
       },
       {
         "id": "order",

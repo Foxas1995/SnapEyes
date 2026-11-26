@@ -526,8 +526,8 @@
         "b": "Soha nem használjuk senki azonosítására, soha nem adjuk el, és mesterséges intelligencia tanítására sem használjuk."
       },
       {
-        "t": "Az ingyenes előnézeteket nem őrizzük meg",
-        "b": "Az ingyenes előnézetedet nem tároljuk. Csak ha rendelést indítasz, őrizzük meg az íriszkivágást és az előnézetet. Ha rendelsz, a rendelésed fájljait (a telefonos fotódat nem) 12 hónapig megőrizzük a letöltésekhez."
+        "t": "Az előnézeteket 30 napig őrizzük meg",
+        "b": "Az ingyenes előnézeted fotóját és eredményét 30 napig megőrizzük, hogy ellenőrizhessük és javíthassuk a minőséget, aztán töröljük. Nem kapcsoljuk össze a neveddel vagy az e-mail-címeddel. Ha rendelsz, a rendelésed fájljait 12 hónapig megőrizzük a letöltésekhez."
       },
       {
         "t": "Néhány külső szolgáltatás",
@@ -609,7 +609,7 @@
       {
         "id": "photo",
         "q": "Mi történik a fotómmal?",
-        "a": "Az ingyenes előnézetedet nem tároljuk. Csak ha rendelést indítasz, őrizzük meg az íriszkivágást és az előnézetet. Ha rendelsz, a rendelésed fájljait (a telefonos fotódat nem) 12 hónapig megőrizzük, hogy újra letölthesd őket, azután töröljük. Az íriszedet soha nem használjuk senki azonosítására, sem mesterséges intelligencia tanítására. A részleteket az adatkezelési tájékoztatóban találod, az oldal alján."
+        "a": "Az ingyenes előnézeted fotóját és eredményét 30 napig megőrizzük, hogy ellenőrizhessük és javíthassuk a minőséget, aztán töröljük. Nem kapcsoljuk össze a neveddel vagy az e-mail-címeddel. Ha rendelsz, a rendelésed fájljait 12 hónapig megőrizzük, hogy újra letölthesd őket, azután töröljük. Az íriszedet soha nem használjuk senki azonosítására, sem mesterséges intelligencia tanítására. A részleteket az adatkezelési tájékoztatóban találod, az oldal alján."
       },
       {
         "id": "order",

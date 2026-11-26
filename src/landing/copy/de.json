@@ -526,8 +526,8 @@
         "b": "Es wird nie genutzt, um jemanden zu identifizieren, nie verkauft und nicht zum Training von KI verwendet."
       },
       {
-        "t": "Vorschauen werden nicht aufbewahrt",
-        "b": "Wir speichern Ihre kostenlose Vorschau nicht. Nur wenn Sie eine Bestellung beginnen, bewahren wir den Irisausschnitt und die Vorschau auf. Wenn Sie bestellen, bewahren wir die Dateien Ihrer Bestellung (nicht Ihr Smartphone-Foto) 12 Monate für Ihre Downloads auf."
+        "t": "Vorschauen werden 30 Tage aufbewahrt",
+        "b": "Das Foto und das Ergebnis Ihrer kostenlosen Vorschau bewahren wir 30 Tage auf, um die Qualität zu prüfen und zu verbessern, dann löschen wir sie. Sie werden nicht mit Ihrem Namen oder Ihrer E-Mail-Adresse verknüpft. Wenn Sie bestellen, bewahren wir die Dateien Ihrer Bestellung 12 Monate auf, damit Sie sie herunterladen können."
       },
       {
         "t": "Wenige externe Dienste",
@@ -609,7 +609,7 @@
       {
         "id": "photo",
         "q": "Was passiert mit meinem Foto?",
-        "a": "Wir speichern Ihre kostenlose Vorschau nicht. Nur wenn Sie eine Bestellung beginnen, bewahren wir den Irisausschnitt und die Vorschau auf. Wenn Sie bestellen, bewahren wir die Dateien Ihrer Bestellung (nicht Ihr Smartphone-Foto) 12 Monate auf, damit Sie sie erneut herunterladen können, und löschen sie danach. Ihre Iris wird nie zur Identifizierung oder zum Training von KI verwendet. Einzelheiten finden Sie in unserer Datenschutzerklärung, verlinkt am Ende dieser Seite."
+        "a": "Das Foto und das Ergebnis Ihrer kostenlosen Vorschau bewahren wir 30 Tage auf, um die Qualität zu prüfen und zu verbessern, dann löschen wir sie. Sie werden nicht mit Ihrem Namen oder Ihrer E-Mail-Adresse verknüpft. Wenn Sie bestellen, bewahren wir die Dateien Ihrer Bestellung 12 Monate auf, damit Sie sie erneut herunterladen können, und löschen sie danach. Ihre Iris wird nie zur Identifizierung oder zum Training von KI verwendet. Einzelheiten finden Sie in unserer Datenschutzerklärung, verlinkt am Ende dieser Seite."
       },
       {
         "id": "order",

@@ -526,8 +526,8 @@
         "b": "To nekad neizmanto, lai kādu identificētu, nekad nepārdod un neizmanto mākslīgā intelekta apmācībai."
       },
       {
-        "t": "Bezmaksas priekšskatījumus neglabājam",
-        "b": "Jūsu bezmaksas priekšskatījumu mēs neglabājam. Varavīksnenes izgriezumu un priekšskatījumu saglabājam tikai tad, ja sākat pasūtījumu. Ja pasūtāt, jūsu pasūtījuma failus (nevis telefona fotogrāfiju) glabājam 12 mēnešus, lai tos varētu lejupielādēt."
+        "t": "Priekšskatījumus glabājam 30 dienas",
+        "b": "Jūsu bezmaksas priekšskatījuma fotogrāfiju un rezultātu glabājam 30 dienas, lai varētu pārbaudīt un uzlabot kvalitāti, un pēc tam dzēšam. Tie netiek saistīti ar jūsu vārdu vai e-pasta adresi. Ja pasūtāt, jūsu pasūtījuma failus glabājam 12 mēnešus, lai tos varētu lejupielādēt."
       },
       {
         "t": "Daži ārējie pakalpojumi",
@@ -609,7 +609,7 @@
       {
         "id": "photo",
         "q": "Kas notiek ar manu fotogrāfiju?",
-        "a": "Jūsu bezmaksas priekšskatījumu mēs neglabājam. Varavīksnenes izgriezumu un priekšskatījumu saglabājam tikai tad, ja sākat pasūtījumu. Kad pasūtāt, jūsu pasūtījuma failus (nevis telefona fotogrāfiju) glabājam 12 mēnešus, lai varat tos lejupielādēt vēlreiz, un pēc tam dzēšam. Jūsu varavīksneni nekad neizmanto, lai kādu identificētu vai apmācītu mākslīgo intelektu. Sīkāka informācija ir mūsu privātuma politikā, uz kuru ved saite šīs lapas apakšā."
+        "a": "Jūsu bezmaksas priekšskatījuma fotogrāfiju un rezultātu glabājam 30 dienas, lai varētu pārbaudīt un uzlabot kvalitāti, un pēc tam dzēšam. Tie netiek saistīti ar jūsu vārdu vai e-pasta adresi. Kad pasūtāt, jūsu pasūtījuma failus glabājam 12 mēnešus, lai varat tos lejupielādēt vēlreiz, un pēc tam dzēšam. Jūsu varavīksneni nekad neizmanto, lai kādu identificētu vai apmācītu mākslīgo intelektu. Sīkāka informācija ir mūsu privātuma politikā, uz kuru ved saite šīs lapas apakšā."
       },
       {
         "id": "order",

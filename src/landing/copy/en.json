@@ -526,8 +526,8 @@
         "b": "It is never used to identify anyone, never sold and not used to train AI."
       },
       {
-        "t": "Free previews are not kept",
-        "b": "We do not store your free preview. Only if you start an order do we keep the iris crop and the preview. If you order, we keep your order's files (not your phone photo) for 12 months, for downloads."
+        "t": "Previews are kept for 30 days",
+        "b": "We keep the photo and the result of your free preview for 30 days so that we can check and improve the quality, then we delete them. They are not linked to your name or email. If you order, we keep your order's files for 12 months so you can download them."
       },
       {
         "t": "A few outside services",
@@ -609,7 +609,7 @@
       {
         "id": "photo",
         "q": "What happens to my photo?",
-        "a": "We do not store your free preview. Only if you start an order do we keep the iris crop and the preview. When you order, we keep the files of your order (not your phone photo) for 12 months so you can download them again, and then delete them. Your iris is never used to identify anyone or to train AI. The details are in our privacy policy, linked at the foot of this page."
+        "a": "We keep the photo and the result of your free preview for 30 days so that we can check and improve the quality, then we delete them. They are not linked to your name or email. When you order, we keep the files of your order for 12 months so you can download them again, and then delete them. Your iris is never used to identify anyone or to train AI. The details are in our privacy policy, linked at the foot of this page."
       },
       {
         "id": "order",

@@ -526,8 +526,8 @@
         "b": "Seda ei kasutata kunagi kellegi tuvastamiseks, ei müüda kunagi ega kasutata tehisintellekti treenimiseks."
       },
       {
-        "t": "Tasuta eelvaateid me ei säilita",
-        "b": "Me ei salvesta sinu tasuta eelvaadet. Iirise väljalõike ja eelvaate säilitame ainult siis, kui alustad tellimust. Kui tellid, säilitame sinu tellimuse faile (mitte sinu telefonifotot) 12 kuud, et saaksid need alla laadida."
+        "t": "Eelvaateid säilitame 30 päeva",
+        "b": "Sinu tasuta eelvaate fotot ja tulemust säilitame 30 päeva, et saaksime kvaliteeti kontrollida ja parandada, seejärel kustutame need. Neid ei seota sinu nime ega e-posti aadressiga. Kui tellid, säilitame sinu tellimuse faile 12 kuud, et saaksid need alla laadida."
       },
       {
         "t": "Mõned välised teenused",
@@ -609,7 +609,7 @@
       {
         "id": "photo",
         "q": "Mis saab minu fotost?",
-        "a": "Me ei salvesta sinu tasuta eelvaadet. Iirise väljalõike ja eelvaate säilitame ainult siis, kui alustad tellimust. Kui tellid, säilitame sinu tellimuse faile (mitte sinu telefonifotot) 12 kuud, et saaksid need uuesti alla laadida, ja seejärel kustutame need. Sinu iirist ei kasutata kunagi kellegi tuvastamiseks ega tehisintellekti treenimiseks. Üksikasjad on meie privaatsuspoliitikas, mille link on selle lehe jaluses."
+        "a": "Sinu tasuta eelvaate fotot ja tulemust säilitame 30 päeva, et saaksime kvaliteeti kontrollida ja parandada, seejärel kustutame need. Neid ei seota sinu nime ega e-posti aadressiga. Kui tellid, säilitame sinu tellimuse faile 12 kuud, et saaksid need uuesti alla laadida, ja seejärel kustutame need. Sinu iirist ei kasutata kunagi kellegi tuvastamiseks ega tehisintellekti treenimiseks. Üksikasjad on meie privaatsuspoliitikas, mille link on selle lehe jaluses."
       },
       {
         "id": "order",
