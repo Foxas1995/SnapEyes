@@ -584,13 +584,16 @@ async function checkMenu() {
 // ---------------------------------------------------------------------------------------------------- handoff
 async function checkHandoff() {
   console.log('handoff');
-  const SAMPLER = `window.__s = []; window.__swap = null;
-    new MutationObserver((_, o) => { if (!document.getElementById('shell') && document.getElementById('root') && document.getElementById('root').childElementCount) { window.__swap = Math.round(performance.now()); o.disconnect(); } }).observe(document, { childList: true, subtree: true });
+  const SAMPLER = `window.__s = []; window.__swap = null; window.__swapAt = null;
+    new MutationObserver((_, o) => { if (!document.getElementById('shell') && document.getElementById('root') && document.getElementById('root').childElementCount) { window.__swapAt = performance.now(); window.__swap = Math.round(window.__swapAt); o.disconnect(); } }).observe(document, { childList: true, subtree: true });
     // sampled in a task after each frame's rendering (a timer set inside the animation callback), so what it reads is what was painted: reading in the
     // callback itself would see the state before the frame's own callbacks (the handoff's included) have run
-    const sample = () => { const l = document.querySelector('.lp-hero .lp-lead'), s = document.querySelector('.lp-hero h1 .lp-line-mask > span'), c = document.querySelector('.lp-hero .lp-cta-row');
+    // a sample whose frame came before the swap but which runs after it reads the live hero before any frame has painted it (and before the handoff's own
+    // animation callback has set its clocks): reading there forces the styles, the animations stand at zero, and nothing of it is ever on screen. Such a
+    // sample is not a frame, so it is left out (found 2026-11-26: it failed the check 4 times of 6 on a build whose first painted frame was right)
+    const sample = (f) => { if (window.__swapAt !== null && f < window.__swapAt) return; const l = document.querySelector('.lp-hero .lp-lead'), s = document.querySelector('.lp-hero h1 .lp-line-mask > span'), c = document.querySelector('.lp-hero .lp-cta-row');
       if (l && s && c) { const ty = (e) => { const v = getComputedStyle(e).translate; const p = v.split(' '); return p.length > 1 ? parseFloat(p[1]) : 0; }; window.__s.push([Math.round(performance.now()), +getComputedStyle(l).opacity, ty(s), +getComputedStyle(c).opacity, ty(c)]); } };
-    (function loop() { setTimeout(sample, 0); requestAnimationFrame(loop); })();`;
+    (function loop() { const f = performance.now(); setTimeout(() => sample(f), 0); requestAnimationFrame(loop); })();`;
   const run = async (mutate) => {
     const page = await chrome.page({ width: 375, height: 812, mobile: true, dpr: 2, cpu: 4, throttle: { latency: 150, down: 200000, up: 93750 } });
     await page.send('Page.addScriptToEvaluateOnNewDocument', { source: (mutate ? 'Element.prototype.getAnimations = function () { return []; };' : '') + SAMPLER });
