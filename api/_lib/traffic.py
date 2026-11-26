@@ -23,7 +23,7 @@ GROUPS = {"src": 2, "cmp": 3, "trm": 4, "cnt": 5}          # how many of src, me
 PAGE_STEPS = ("landing", "try", "photo", "result", "soon", "buy", "order")
 SERVER_STEPS = ("an", "anok", "en", "rs", "sv", "co", "pd", "help")
 FUNNEL = ("landing", "try", "photo", "result", "buy", "order")      # the page steps in the order a visit meets them (soon is a branch of buy)
-PHOTO_METRICS = ("an_verdict", "an_res", "an_ori", "an_iris", "an_source", "en_cls", "en_pupil", "en_gate", "en_reason", "set_eyes", "sv_style")
+PHOTO_METRICS = ("an_verdict", "an_res", "an_ori", "an_iris", "an_source", "an_how", "an_lm", "an_lres", "an_zoom", "an_torch", "an_lfail", "en_cls", "en_pupil", "en_gate", "en_reason", "set_eyes", "sv_style")
 WHY_METRICS = ("an_verdict", "an_block", "an_lock", "en_gate", "en_reason", "en_retry", "en_qa", "set_gate", "set_retake", "err_ep", "err_cls", "err_reason", "req")
 MS_WHAT = ("analyze", "enhance", "compose")
 

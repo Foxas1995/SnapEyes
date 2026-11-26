@@ -71,7 +71,7 @@ export async function run(): Promise<Row[]> {
   const orderApp = read('src/order/OrderApp.tsx');
   check('the landing page does not load this module at all (its beacon is the head script, src/landing/shell/scripts.ts counterScript: the landing\'s JavaScript does not grow)', !/shared\/counter/.test(landing));
   check('/try counts: opened, a photo chosen (not the sample eye), the restored eye on screen with the time since the photo, the buy card that cannot be bought (once), the buy button',
-    /count\('try', T\.lang, currentMarket\(\)\)/.test(tryApp) && /count\('photo', T\.lang, currentMarket\(\)\)/.test(tryApp) && /if \(!sample\) \{ count\('result'/.test(tryApp) && /took: Date\.now\(\) - photoAt/.test(tryApp)
+    /count\('try', T\.lang, currentMarket\(\)\)/.test(tryApp) && /count\('photo', T\.lang, currentMarket\(\)(, \{ cap: capRef\.current \})?\)/.test(tryApp) && /if \(!sample\) \{ count\('result'/.test(tryApp) && /took: Date\.now\(\) - photoAt/.test(tryApp)
     && /count\('soon'/.test(tryApp) && /soonRef/.test(tryApp) && /count\('buy'/.test(tryApp) && /noteCounter\(h\.counter\)/.test(tryApp));
   check('the order page counts itself (not the withdrawal form) and reads the answer of /api/health', /count\('order', lang, market\)/.test(orderApp) && /LINK && !WITHDRAW_MODE/.test(orderApp) && /noteCounter\(h\?\.counter\)/.test(orderApp));
   const others = ['src/admin/AdminApp.tsx', 'src/legal/main.tsx', 'src/legal/LegalApp.tsx', 'src/order/WithdrawPanel.tsx', 'src/order/withdraw.ts'].map((p) => [p, read(p)] as const);

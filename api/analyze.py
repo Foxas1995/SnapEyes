@@ -673,9 +673,9 @@ def _analyze(body, box):
     res, ori, _irs = E.photo_classes(ow, oh)         # the analysis event keeps classes of the photo (never the photo)
     scale = ow / float(W)
     v = L.gemini_json(L.VISION_MODEL, L.PROMPT_VISION, im)
-    kept_no_eye = lambda: kp.done({"outcome": "refused", "reason": "no_eye", "res": res, "ori": ori, "source": E.device_source(device)})
+    kept_no_eye = lambda: kp.done({"outcome": "refused", "reason": "no_eye", "res": res, "ori": ori, "source": E.device_source(device), "cap": E.capture_codes((device or {}).get("cap")) or None})
     if not v or v.get("found") is False or "iris_box" not in v:
-        E.record("analyze", ok=False, verdict="no_eye", lang=lang, device=E.device_class(device), source=E.device_source(device), res=res, ori=ori, kept=kept_no_eye())
+        E.record("analyze", ok=False, verdict="no_eye", lang=lang, device=E.device_class(device), source=E.device_source(device), res=res, ori=ori, kept=kept_no_eye(), **E.capture_codes((device or {}).get("cap")))
         return {"ok": False, "reason": "no_eye", "targets": TARGETS,
                 "message": say("no_eye", "We could not find an eye in this photo. Fill the frame with one open eye and try again.")}
     box = v.get("iris_box")
@@ -683,7 +683,7 @@ def _analyze(body, box):
               and all(isinstance(c, (int, float)) and c == c and abs(c) < 1e6 for c in box)
               and box[2] > box[0] and box[3] > box[1])
     if not ok_box:
-        E.record("analyze", ok=False, verdict="no_eye", lang=lang, device=E.device_class(device), source=E.device_source(device), res=res, ori=ori, kept=kept_no_eye())
+        E.record("analyze", ok=False, verdict="no_eye", lang=lang, device=E.device_class(device), source=E.device_source(device), res=res, ori=ori, kept=kept_no_eye(), **E.capture_codes((device or {}).get("cap")))
         return {"ok": False, "reason": "no_eye", "targets": TARGETS,
                 "message": say("no_eye", "We could not find an eye in this photo. Fill the frame with one open eye and try again.")}
     # The model is asked for [x1,y1,x2,y2] but sometimes answers in its native [y1,x1,y2,x2] order. On a
@@ -901,9 +901,10 @@ def _analyze(body, box):
     kept = kp.done({"outcome": "accepted" if locked and not blocked else "refused", "reason": reason if blocked else (None if locked else "unlocked"),
                     "verdict": verdict, "detail": detail, "locked": bool(locked), "blocked": bool(blocked), "block_by": block_by, "diameter_px": int(diam_orig),
                     "glare_on_fibres_pct": round(glare_fib, 1), "occlusion_pct": occl, "pupil_size": pupil_size,
-                    "lid_wedge_pct": None if cover is None else cover["wedge_pct"], "res": res, "ori": ori, "source": E.device_source(device)})
+                    "lid_wedge_pct": None if cover is None else cover["wedge_pct"], "res": res, "ori": ori, "source": E.device_source(device),
+                    "cap": E.capture_codes((device or {}).get("cap")) or None})
     E.record("analyze", ok=True, verdict=verdict, detail=detail, blocked=bool(blocked), block_reason=reason, locked=bool(locked), shake_asked=bool(locked) and basis < FIBRE_OK and block_by in (None, "shake"), lang=lang, device=E.device_class(device), source=E.device_source(device),
-             res=res, ori=ori, irs=E.photo_classes(ow, oh, diam_orig)[2], kept=kept)
+             res=res, ori=ori, irs=E.photo_classes(ow, oh, diam_orig)[2], kept=kept, **E.capture_codes((device or {}).get("cap")))
     return {"ok": True, "ticket": L.mint_ticket("work") if locked and not blocked else None, "pupil_r": pupil_r, "fibre": round(fibre, 2),
             "iris": {"cx": cx / W, "cy": cy / H, "r": r / W}, "pad": pad, "glare_boxes_crop": boxes,
             "quality": {"diameter_px": int(diam_orig), "sharpness": round(sharp, 1), "fibre": round(fibre, 2), "sharpness_label": label, "occlusion_pct": occl,

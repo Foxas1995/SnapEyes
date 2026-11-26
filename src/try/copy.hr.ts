@@ -82,6 +82,10 @@ export const hr: TryCopy = {
     stepsShots: 'Napravite 3-5 snimaka i pošaljite sve.',
     stepsShotsMore: ' Između snimaka se malo okrenite. Mjerimo svaku i koristimo najoštriju; u pravom testu najbolja je snimka imala 3,7 puta više detalja od najslabije.',
     cameraTip: 'Najoštrija fotografija nastaje kamerom mobitela (2x, uz prozor): snimite je i učitajte ovdje.',
+    // the live camera of ?cam=1 (src/try/livecam): the hint inside the view, the torch button, the shutter's label for a screen reader
+    liveHint: 'Držite oko u krugu',
+    liveLight: 'Svjetlo',
+    liveShutter: 'Snimite fotografiju',
     takePhoto: 'Fotografirajte oko',
     pickShots: 'Učitajte fotografiju',
     consent: 'Spremiti fotografiju mojeg oka i rezultat u SnapEyes memoriju za učenje kako bi obnove s vremenom bile sve bolje. Anonimno, bez imena i lica. Brisanje možete zatražiti u bilo kojem trenutku.',

@@ -167,7 +167,7 @@ export type LightAnswer = 'window_daylight' | 'room_lamp' | 'phone_torch' | 'som
 export const LIGHT_ANSWERS: readonly LightAnswer[] = ['window_daylight', 'room_lamp', 'phone_torch', 'someone_helped'];
 
 /** Where the analysed photo came from. 'sample' is the site's own AI-generated demo eye, not a capture. */
-export type ShotOrigin = 'camera' | 'gallery' | 'sample';
+export type ShotOrigin = 'camera' | 'gallery' | 'sample' | 'live';      // live: the page's own camera of ?cam=1 (src/try/livecam)
 
 /** Sent with every /api/analyze request. w and h are the screen in CSS pixels. */
 export interface DeviceInfo { ua: string; w: number; h: number; source: ShotOrigin }

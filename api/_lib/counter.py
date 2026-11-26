@@ -253,4 +253,6 @@ def hit(body):
     style = body.get("style")
     if is_code(style):
         f["style"] = style
+    if step == "photo":                 # how the photo was taken (events.CAPTURE: live camera, phone camera, gallery and the live camera's facts)
+        f.update(E.capture_codes(body.get("cap")))
     return {"ok": True, "counted": bool(E.record("hit", _wait=BEACON_WAIT, **f))}

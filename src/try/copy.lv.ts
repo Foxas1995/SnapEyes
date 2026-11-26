@@ -83,6 +83,10 @@ export const lv: TryCopy = {
     stepsShots: 'Uzņemiet 3-5 kadrus un nosūtiet visus.',
     stepsShotsMore: ' Starp kadriem nedaudz pagriezieties. Mēs izmērām katru un izmantojam asāko; īstā testā labākajā kadrā bija 3,7 reizes vairāk detaļu nekā sliktākajā.',
     cameraTip: 'Visasākā fotogrāfija sanāk ar telefona kameru (2x, pie loga): nofotografējiet un augšupielādējiet to šeit.',
+    // the live camera of ?cam=1 (src/try/livecam): the hint inside the view, the torch button, the shutter's label for a screen reader
+    liveHint: 'Turiet aci aplī',
+    liveLight: 'Gaisma',
+    liveShutter: 'Fotografēt',
     takePhoto: 'Fotografēt aci',
     pickShots: 'Augšupielādēt foto',
     consent: 'Saglabāt manas acs fotogrāfiju un rezultātu SnapEyes mācību atmiņā, lai atjaunošana ar laiku kļūtu arvien labāka. Anonīmi, bez vārda un sejas. Dzēšanu varat lūgt jebkurā brīdī.',

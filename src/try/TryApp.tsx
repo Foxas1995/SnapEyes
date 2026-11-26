@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import { Camera, Upload, Sparkles, RefreshCcw, AlertTriangle, Info, ArrowLeft, X } from 'lucide-react';
 import {
   type Analysis, type Targets, targetsOf, rawFibre, bestIndex, topTip, wordsOf, mapPool,
@@ -46,6 +46,7 @@ import { BrandPicture } from '../shared/BrandLogo';
 import { LegalParts } from '../shared/LegalLinks';
 import { NO_SAVE } from './noSave';
 import { parseReveal } from '../reveal/revealMath';
+import { type Cap, type LiveFail, camOn, liveSupported } from './livecam/logic';
 import { wideFrame, type WideFrame } from '../reveal/wideFrame';
 
 type Step = 'capture' | 'analyzing' | 'quality' | 'processing' | 'result';
@@ -61,6 +62,10 @@ const ANALYZE_CONCURRENCY = 3;
 
 // The owner's capture study (?study=1): two questions after each analysed shot, sent with the next analyze.
 const STUDY = typeof window !== 'undefined' && studyOn(window.location.search);
+// the live camera inside the page (2026-11-26): only with ?cam=1 in the address (kept for the tab), until the owner has tried it on his phones;
+// a chunk of its own, loaded at the first tap, so the page of everybody else does not grow (src/try/livecam)
+const CAM = typeof window !== 'undefined' && camOn(window.location.search, (() => { try { return window.sessionStorage; } catch { return null; } })());
+const LiveCamera = lazy(() => import('./livecam/LiveCamera'));
 
 // The page's language, by the landing page's rule (./lang). Set before the first render, so no screen ever shows in
 // the wrong language; after that only the language switch in the header changes it.
@@ -289,6 +294,12 @@ export const TryApp: React.FC = () => {
   const bestShotRef = useRef<{ img: HTMLImageElement; url: string } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
+  // how the photo now on its way was taken (the anonymous codes of the 'photo' beacon and the analysis: src/try/livecam/logic.ts Cap)
+  const capRef = useRef<Cap>({ how: 'native' });
+  const [live, setLive] = useState(false);
+  // the live camera failed once on this page: every later tap goes straight to the capture input (a browser may not let the page open the input
+  // by itself once the tap is a few seconds old, so the next tap must not try the camera again)
+  const liveFailRef = useRef<LiveFail | null>(null);
   const imgRef = useRef<HTMLImageElement | null>(null);
   const photoUrlRef = useRef<string | null>(null);
   // the photo being captured is the site's own AI-generated demo eye (its studio is the prepared restoration, or the live one when that cannot be read)
@@ -581,14 +592,14 @@ export const TryApp: React.FC = () => {
     setStudyAsk(null);
   };
 
-  const onFile = async (file: File | Blob, isSample = false) => {
+  const onFile = async (file: File | Blob, isSample = false, source: ShotOrigin = 'gallery') => {
     sampleRef.current = isSample;
     setError(null); setProgress([]); clearShots();
     const url = URL.createObjectURL(file);
     try {
       const img = await loadImage(url);
       setPhoto(img, url);
-      await analyze(img, isSample ? 'sample' : 'gallery');
+      await analyze(img, isSample ? 'sample' : source);
     } catch (e) {
       if (photoUrlRef.current !== url) URL.revokeObjectURL(url);   // an unreadable file never became the photo
       setError((e as Error).message); setStep('capture');
@@ -598,10 +609,10 @@ export const TryApp: React.FC = () => {
   /** Several shots of the same eye are never equally good. On four real photos of one eye the sharpest
    *  carried 3.7x the fibre detail of the softest, and the largest iris of the four was the softest - so
    *  the customer cannot pick by eye and neither can a size rule. Measure each and use the best. */
-  const onFiles = async (all: File[]) => {
+  const onFiles = async (all: File[], source: ShotOrigin = 'gallery') => {
     const files = all.slice(0, GALLERY_MAX);
-    photoAt = Date.now(); count('photo', T.lang, currentMarket());       // a photo was chosen or taken (the sample eye never comes through here)
-    if (files.length === 1) return onFile(files[0]);
+    photoAt = Date.now(); count('photo', T.lang, currentMarket(), { cap: capRef.current });       // a photo was chosen or taken (the sample eye never comes through here)
+    if (files.length === 1) return onFile(files[0], false, source);
     sampleRef.current = false;
     setError(null); setStep('analyzing'); clearShots();
     // several run at once, so "photo 3 of 5" would be a lie: count the ones that are finished
@@ -613,7 +624,7 @@ export const TryApp: React.FC = () => {
       try {
         const img = await loadImage(url);
         sent++;
-        const a = await measure(img, 'gallery');
+        const a = await measure(img, source);
         if (a.ok && a.iris) return { img, url, a };
       } catch { /* an unreadable file just does not compete */ }
       finally { done++; tick(); }
@@ -623,7 +634,7 @@ export const TryApp: React.FC = () => {
     // mapPool keeps input order, so i is the photo's position in the customer's own selection
     const scored = measured.flatMap((m, i) => (m ? [{ ...m, i }] : []));
     const win = scored.length ? scored[bestIndex(scored.map((s) => s.a))] : null;
-    askStudy('gallery', sent, win ? outcomeOf(win.a) : 'no_eye');
+    askStudy(source, sent, win ? outcomeOf(win.a) : 'no_eye');
     if (!win) {
       setError(T.errors.noEyeAny); setStep('capture'); return;
     }
@@ -640,8 +651,9 @@ export const TryApp: React.FC = () => {
    *  so the customer can shoot, see the score, and shoot again until one is good. */
   const onCameraShot = async (file: Blob) => {
     // the 'photo' step of the counter: the first shot of a set (a retake is not a second photo step). Until 2026-11-26 only the gallery counted it,
-    // so a photo taken with the camera button never showed in the funnel, and the result's "took" time was missing for it
-    if (!shotsRef.current.length) { photoAt = Date.now(); count('photo', T.lang, currentMarket()); }
+    // so a photo taken with the camera button never showed in the funnel, and the result's "took" time was missing for it. It carries how the photo
+    // was taken (capRef: the capture input, with the live camera's failure class when it gave way to it)
+    if (!shotsRef.current.length) { photoAt = Date.now(); count('photo', T.lang, currentMarket(), { cap: capRef.current }); }
     sampleRef.current = false;
     setError(null); setShotNote(null);
     const t = targetsOf(analysis);
@@ -689,8 +701,19 @@ export const TryApp: React.FC = () => {
 
   const takeAnother = () => {
     setError(null);
+    capRef.current = { how: 'native' };
     fileRef.current?.click();
   };
+
+  /** The gold button. Without ?cam=1: the capture input, as before. With it: our own camera, which gives way to the capture input by
+   *  itself (no error text) when the browser has no camera API (here, still inside the tap) or when it fails (onLiveFail). */
+  const nativeCamera = (cap: Cap) => { capRef.current = cap; clearShots(); fileRef.current?.click(); };
+  const startCamera = () => {
+    if (CAM && !liveFailRef.current && liveSupported(navigator, window.isSecureContext)) { setError(null); setLive(true); return; }
+    nativeCamera(CAM ? { how: 'native', lfail: liveFailRef.current ?? 'unsupported' } : { how: 'native' });
+  };
+  const onLiveFail = (why: LiveFail) => { liveFailRef.current = why; setLive(false); nativeCamera({ how: 'native', lfail: why }); };
+  const onLiveFrames = (files: File[], cap: Cap) => { setLive(false); capRef.current = cap; void onFiles(files, 'live'); };
 
   /** /api/analyze for one photo. Always says what kind of device and source it came from. In study mode every
    *  answer that no logged analyze has carried yet rides along; the engine logs only a reply that found an
@@ -700,7 +723,7 @@ export const TryApp: React.FC = () => {
     const W = img.naturalWidth, H = img.naturalHeight;
     const f = Math.min(1, 1600 / Math.max(W, H));
     const small = drawToDataUrl(img, 0, 0, W, H, Math.round(W * f), Math.round(H * f), 0.9);
-    const body: Record<string, unknown> = { image: stripDataUrl(small), origWidth: W, origHeight: H, device: deviceInfo(source) };
+    const body: Record<string, unknown> = { image: stripDataUrl(small), origWidth: W, origHeight: H, device: { ...deviceInfo(source), cap: capRef.current } };
     // photos of one gallery pick are measured side by side: each answer rides on one request at a time
     const sending = pendingStudyRef.current.filter((s) => studyAnswered(s) && !studyInflightRef.current.has(s.shot));
     const study = studyBody(sending);
@@ -1067,6 +1090,12 @@ export const TryApp: React.FC = () => {
             shot collector. The value is cleared after every pick so the same file can be chosen again. */}
         <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden"
           onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) onCameraShot(f); }} />
+        {live && (
+          <Suspense fallback={<div className="fixed inset-0 z-50 bg-black" />}>
+            <LiveCamera hint={T.capture.liveHint} light={T.capture.liveLight} shutter={T.capture.liveShutter} close={T.buy.close} debug={CAM}
+              onFrames={onLiveFrames} onFail={onLiveFail} onClose={() => setLive(false)} />
+          </Suspense>
+        )}
         <input ref={galleryRef} type="file" accept="image/*" multiple className="hidden"
           onChange={(e) => { const fs = Array.from(e.target.files || []); e.target.value = ''; if (fs.length) onFiles(fs); }} />
 
@@ -1126,7 +1155,7 @@ export const TryApp: React.FC = () => {
                 2026-11-26, the owner ("everything must happen in the page": leaving for the camera app and coming back lost the first ad visitors): the page's
                 camera is the gold button again, the gallery the quiet one beside the sample eye, and the advice about the phone's own camera is one tip under
                 "more tips". Next planned: a live camera inside the page, with zoom and several frames. The first camera shot starts a fresh collection. */}
-            <button data-testid="camera-direct" onClick={() => { clearShots(); fileRef.current?.click(); }} className="fx-gold gold-metal w-full py-4 rounded-2xl font-luxury font-bold uppercase tracking-widest text-sm flex items-center justify-center gap-2">
+            <button data-testid="camera-direct" onClick={startCamera} className="fx-gold gold-metal w-full py-4 rounded-2xl font-luxury font-bold uppercase tracking-widest text-sm flex items-center justify-center gap-2">
               <Camera className="w-5 h-5" /> {T.capture.takePhoto}
             </button>
 
@@ -1134,7 +1163,7 @@ export const TryApp: React.FC = () => {
                 a computer has no camera to hold to an eye, so there it stays as the way to see a result) */}
             <div className={`grid gap-3 grid-cols-1 ${offerSample ? 'sm:grid-cols-2' : ''}`}>
               {/* a photo already on the phone, without the capture attribute (several at once: the gallery input is multiple) */}
-              <button data-testid="pick-photo" onClick={() => galleryRef.current?.click()} className="py-3 rounded-xl bg-white/5 border border-white/10 text-sm font-semibold flex items-center justify-center gap-2 hover:bg-white/10">
+              <button data-testid="pick-photo" onClick={() => { capRef.current = { how: 'gallery' }; galleryRef.current?.click(); }} className="py-3 rounded-xl bg-white/5 border border-white/10 text-sm font-semibold flex items-center justify-center gap-2 hover:bg-white/10">
                 <Upload className="w-4 h-4 text-gold" /> {T.capture.pickShots}
               </button>
               {offerSample && (

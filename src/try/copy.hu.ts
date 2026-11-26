@@ -100,6 +100,10 @@ export const hu: TryCopy = {
     stepsShots: 'Készíts 3-5 felvételt, és küldd el mindet.',
     stepsShotsMore: ' A felvételek között fordulj egy kicsit. Mindegyiket megmérjük, és a legélesebbet használjuk; egy valódi teszten a legjobb felvételen 3,7-szer annyi részlet volt, mint a leggyengébben.',
     cameraTip: 'A legélesebb fotót a telefonod kamerája adja (2x, ablak mellett): fotózz vele, és töltsd fel ide.',
+    // the live camera of ?cam=1 (src/try/livecam): the hint inside the view, the torch button, the shutter's label for a screen reader
+    liveHint: 'Tartsd a szemed a körben',
+    liveLight: 'Fény',
+    liveShutter: 'Fotó készítése',
     takePhoto: 'Szemfotó készítése',
     pickShots: 'Fotó feltöltése',
     consent: 'A szemfotóm és az eredmény mentése a SnapEyes tanító adattárába, hogy a helyreállítások idővel jobbak legyenek. Névtelenül, név és arc nélkül. Bármikor kérheted a törlésüket.',

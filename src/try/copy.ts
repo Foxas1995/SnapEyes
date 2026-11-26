@@ -104,6 +104,10 @@ const en = {
     // the capture screen's first way (the owner's decision of 2026-11-25): the phone's own camera app, then the picker; the page's camera button (capture="environment",
     // the phone's reduced capture mode, visibly softer in his test) is the second, quieter choice
     cameraTip: 'The sharpest photo comes from your phone camera (2x, by a window): take it there and upload it here.',
+    // the live camera of ?cam=1 (src/try/livecam): the hint inside the view, the torch button, the shutter's label for a screen reader
+    liveHint: 'Keep your eye in the circle',
+    liveLight: 'Light',
+    liveShutter: 'Take the photo',
     takePhoto: 'Photograph your eye',
     pickShots: 'Upload a photo',
     consent: "Save my eye photo and result to SnapEyes' training memory so restorations get better over time. Anonymous, no name or face. You can ask us to delete it any time.",
@@ -638,6 +642,10 @@ const de: TryCopy = {
     stepsShots: 'Machen Sie 3-5 Aufnahmen und senden Sie alle.',
     stepsShotsMore: ' Drehen Sie sich zwischen den Aufnahmen ein wenig. Wir messen jede und verwenden die schärfste; in einem echten Test hatte die beste Aufnahme 3,7-mal so viele Details wie die schlechteste.',
     cameraTip: 'Am schärfsten wird das Foto mit der Kamera-App Ihres Handys (2x, am Fenster): aufnehmen und hier hochladen.',
+    // the live camera of ?cam=1 (src/try/livecam): the hint inside the view, the torch button, the shutter's label for a screen reader
+    liveHint: 'Halten Sie das Auge im Kreis',
+    liveLight: 'Licht',
+    liveShutter: 'Foto aufnehmen',
     takePhoto: 'Auge fotografieren',
     pickShots: 'Foto hochladen',
     consent: 'Mein Augenfoto und das Ergebnis im Trainingsspeicher von SnapEyes sichern, damit Restaurierungen mit der Zeit besser werden. Anonym, ohne Namen oder Gesicht. Sie können jederzeit die Löschung verlangen.',

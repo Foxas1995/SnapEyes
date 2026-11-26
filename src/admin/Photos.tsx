@@ -8,7 +8,7 @@ import { CARD, H2, MUTED, Notice, Spinner, Tbl } from './ui';
 import { FilterBar, FxCard, Partial, useFilters, useReport } from './TrafficUi';
 import { fxTotal, groupLt, groupsOf, label, pctText, type FxReply } from './traffic';
 
-const PHOTO = ['an_res', 'an_ori', 'an_iris', 'an_source', 'an_verdict', 'en_cls', 'en_pupil', 'en_gate', 'en_reason', 'set_eyes', 'sv_style'] as const;
+const PHOTO = ['an_res', 'an_ori', 'an_iris', 'an_source', 'an_how', 'an_lm', 'an_lres', 'an_zoom', 'an_torch', 'an_lfail', 'an_verdict', 'en_cls', 'en_pupil', 'en_gate', 'en_reason', 'set_eyes', 'sv_style'] as const;
 const STEP_NAME: Record<string, string> = { analyze: 'Nuotraukos patikra', enhance: 'Restauravimas', compose: 'Stiliaus peržiūra' };
 
 export const PhotosPage: React.FC<{ call: Call }> = ({ call }) => {
@@ -46,6 +46,13 @@ export const PhotosPage: React.FC<{ call: Call }> = ({ call }) => {
           <FxCard title="Padėtis" fx={fx} metric="an_ori" by={by} groups={groups} />
           <FxCard title="Rainelės dydis nuotraukoje" hint="Žemiau 280 px nieko geriau už „silpną“ nebūna; nuo 420 px nuotrauka gali būti „gera“." fx={fx} metric="an_iris" by={by} groups={groups} />
           <FxCard title="Iš kur nuotrauka" fx={fx} metric="an_source" by={by} groups={groups} />
+          {/* the page's own live camera (?cam=1, 2026-11-26): how the photo was taken and what the camera gave */}
+          {fxTotal(fx, 'an_how') > 0 && <FxCard title="Kaip nufotografuota" fx={fx} metric="an_how" by={by} groups={groups} />}
+          {fxTotal(fx, 'an_lm') > 0 && <FxCard title="Gyva kamera: kadro būdas" fx={fx} metric="an_lm" by={by} groups={groups} />}
+          {fxTotal(fx, 'an_lres') > 0 && <FxCard title="Gyva kamera: kadro dydis" fx={fx} metric="an_lres" by={by} groups={groups} />}
+          {fxTotal(fx, 'an_zoom') > 0 && <FxCard title="Gyva kamera: priartinimas" fx={fx} metric="an_zoom" by={by} groups={groups} />}
+          {fxTotal(fx, 'an_torch') > 0 && <FxCard title="Gyva kamera: šviesa (žibintuvėlis)" fx={fx} metric="an_torch" by={by} groups={groups} />}
+          {fxTotal(fx, 'an_lfail') > 0 && <FxCard title="Gyva kamera neveikė" fx={fx} metric="an_lfail" by={by} groups={groups} />}
           <FxCard title="Verdiktas" fx={fx} metric="an_verdict" by={by} groups={groups} />
           <FxCard title="Akies spalvos klasė" fx={fx} metric="en_cls" by={by} groups={groups} />
           <FxCard title="Vyzdžio klasė" fx={fx} metric="en_pupil" by={by} groups={groups} />

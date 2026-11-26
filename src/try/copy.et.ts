@@ -84,6 +84,10 @@ export const et: TryCopy = {
     stepsShots: 'Tee 3-5 võtet ja saada kõik.',
     stepsShotsMore: ' Pööra end võtete vahel veidi. Mõõdame iga võtet ja kasutame kõige teravamat; päris katses oli parimal võttel 3,7 korda rohkem detaile kui kõige nõrgemal.',
     cameraTip: 'Kõige teravam foto tuleb telefoni kaameraga (2x, akna juures): pildista ja laadi see siia üles.',
+    // the live camera of ?cam=1 (src/try/livecam): the hint inside the view, the torch button, the shutter's label for a screen reader
+    liveHint: 'Hoia silm ringi sees',
+    liveLight: 'Valgus',
+    liveShutter: 'Tee foto',
     takePhoto: 'Pildista silma',
     pickShots: 'Laadi foto üles',
     consent: 'Salvesta minu silmafoto ja tulemus SnapEyesi õppemällu, et taastamine muutuks ajaga paremaks. Anonüümselt, ilma nime ja näota. Võid igal ajal paluda meil selle kustutada.',

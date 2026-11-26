@@ -80,6 +80,10 @@ export const fi: TryCopy = {
     stepsShots: 'Ota 3-5 otosta ja lähetä ne kaikki.',
     stepsShotsMore: ' Käänny hieman otosten välillä. Mittaamme jokaisen ja käytämme terävintä; oikeassa testissä parhaassa otoksessa oli 3,7 kertaa niin paljon yksityiskohtia kuin heikoimmassa.',
     cameraTip: 'Terävin kuva syntyy puhelimen omalla kameralla (2x, ikkunan ääressä): ota kuva ja lataa se tähän.',
+    // the live camera of ?cam=1 (src/try/livecam): the hint inside the view, the torch button, the shutter's label for a screen reader
+    liveHint: 'Pidä silmä ympyrässä',
+    liveLight: 'Valo',
+    liveShutter: 'Ota kuva',
     takePhoto: 'Kuvaa silmä',
     pickShots: 'Lataa kuva',
     consent: 'Tallenna silmäni kuva ja tulos SnapEyesin koulutusmuistiin, jotta entisöinnit paranevat ajan myötä. Nimetön, ei nimeä eikä kasvoja. Voit pyytää meitä poistamaan sen milloin tahansa.',

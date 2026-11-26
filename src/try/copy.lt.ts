@@ -71,6 +71,10 @@ export const lt: TryCopy = {
     stepsShots: 'Padarykite 3-5 kadrus ir siųskite visus.',
     stepsShotsMore: ' Tarp kadrų šiek tiek pasisukite. Įvertiname kiekvieną ir naudojame ryškiausią; tikrame bandyme geriausias kadras turėjo 3,7 karto daugiau detalių nei prasčiausias.',
     cameraTip: 'Ryškiausia nuotrauka išeina telefono kamera (2x, prie lango): nufotografuokite ir įkelkite ją čia.',
+    // the live camera of ?cam=1 (src/try/livecam): the hint inside the view, the torch button, the shutter's label for a screen reader
+    liveHint: 'Laikykite akį apskritime',
+    liveLight: 'Šviesa',
+    liveShutter: 'Fotografuoti',
     takePhoto: 'Fotografuoti akį',
     pickShots: 'Įkelti nuotrauką',
     consent: 'Išsaugoti mano akies nuotrauką ir rezultatą SnapEyes mokymosi atmintyje, kad atkūrimas laikui bėgant gerėtų. Anonimiškai, be vardo ir veido. Bet kada galite paprašyti juos ištrinti.',

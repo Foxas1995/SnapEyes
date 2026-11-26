@@ -159,6 +159,12 @@ const IRIS_LT: Record<string, string> = { d_lt280: 'rainelė iki 280 px', d_280_
 const CLS_LT: Record<string, string> = { own: 'Savo spalva', dark_brown: 'Tamsiai ruda', grey: 'Pilka' };
 const PUPIL_LT: Record<string, string> = { round: 'Apvalus', slit: 'Plyšinis', bar: 'Juostelė' };
 const RETAKE_LT: Record<string, string> = { '0': 'Pirma nuotrauka', '1': 'Po vieno pakartojimo', '2': 'Po dviejų ar daugiau' };
+// the live camera's codes (api/_lib/events.py CAPTURE)
+export const CAP_LT: Record<string, string> = {
+  live: 'Puslapio kamera', native: 'Telefono kamera (įvestis)', gallery: 'Iš galerijos', still: 'Tikra nuotrauka', frame: 'Vaizdo kadras',
+  track: 'Kameros priartinimas', css: 'Mūsų apkirpimas', yes: 'Yra', no: 'Nėra',
+  unsupported: 'Naršyklė nepalaiko', denied: 'Neleista', nocamera: 'Nėra kameros', timeout: 'Neatsakė laiku', error: 'Klaida',
+};
 const LOCK_LT: Record<string, string> = { locked: 'Rainelė užfiksuota', unlocked: 'Nepavyko užfiksuoti' };
 
 /** The words of a value of a metric (the code itself where no word is known). */
@@ -170,6 +176,9 @@ export function valueLt(metric: string, value: string, gateCode: (c: string) => 
     case 'an_ori': return ORI_LT[value] ?? value;
     case 'an_iris': return IRIS_LT[value] ?? value;
     case 'an_source': return SOURCE_LT[value] ?? value;
+    case 'an_how': return CAP_LT[value] ?? value;
+    case 'an_lm': case 'an_zoom': case 'an_torch': case 'an_lfail': return CAP_LT[value] ?? value;
+    case 'an_lres': return value.replace(/^mp(\d+)$/, (_m, n) => (n === '0' ? 'iki 1 MP' : n === '12' ? '12 MP ir daugiau' : `nuo ${n} MP`));
     case 'an_lock': return LOCK_LT[value] ?? value;
     case 'en_gate': return GATE_LT[value] ?? value;
     case 'en_reason': case 'set_gate': return value === 'ok' || GATE_LT[value] ? (GATE_LT[value] ?? value) : gateCode(value);

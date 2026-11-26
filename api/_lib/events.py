@@ -146,6 +146,22 @@ for _kind in ("analyze", "enhance", "compose"):
 EXP_STAGES = ("visit", "preview", "checkout", "paid")
 CHECKOUT_STAGES = ("start", "paid")
 SOURCES = ("camera", "gallery", "live", "sample", "lab")
+# How a photo was taken (2026-11-26, the page's own live camera of ?cam=1, src/try/livecam/logic.ts Cap): anonymous codes the 'photo' beacon and the
+# analysis carry, so the owner learns where the live camera works. how: live (our camera), native (the capture input), gallery; lm: still (a real
+# still) or frame (a frame of the video); lres: the frame's megapixel class; zoom: on the track or by our crop; torch: the track had one; lfail: why
+# the live camera gave way. Nothing else: no device identifier, no camera label, no exact size.
+CAPTURE = {"how": ("live", "native", "gallery"), "lm": ("still", "frame"), "lres": ("mp0", "mp1", "mp2", "mp5", "mp8", "mp12"),
+           "zoom": ("track", "css"), "torch": ("yes", "no"), "lfail": ("unsupported", "denied", "nocamera", "timeout", "error")}
+for _kind in ("analyze", "hit"):
+    for _field in CAPTURE:
+        FIELDS[_kind][_field] = "c"
+
+
+def capture_codes(cap):
+    """The capture codes of a request (the page's cap object), only the known values of the known keys; {} for anything else."""
+    if not isinstance(cap, dict):
+        return {}
+    return {k: cap[k] for k, allowed in CAPTURE.items() if isinstance(cap.get(k), str) and cap[k] in allowed}
 
 
 # ----------------------------------------------------------------------------- writing
@@ -513,7 +529,8 @@ def _server_counts(agg, ev):
         _fx(agg, ev, "an_verdict", verdict)
         if ev.get("blocked"):
             _fx(agg, ev, "an_block", ev.get("block_reason") or "unknown")
-        for metric, field in (("an_res", "res"), ("an_ori", "ori"), ("an_iris", "irs"), ("an_source", "source")):
+        for metric, field in (("an_res", "res"), ("an_ori", "ori"), ("an_iris", "irs"), ("an_source", "source"),
+                              ("an_how", "how"), ("an_lm", "lm"), ("an_lres", "lres"), ("an_zoom", "zoom"), ("an_torch", "torch"), ("an_lfail", "lfail")):
             _fx(agg, ev, metric, ev.get(field))
         if ev.get("locked") is not None:
             _fx(agg, ev, "an_lock", "locked" if ev["locked"] else "unlocked")

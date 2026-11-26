@@ -7,7 +7,7 @@ import type React from 'react';
 import type { Call } from './AdminApp';
 import { BLOCK_LT, STYLE_LT, VERDICT_LT, explain } from './format';
 import { BTN, CARD, ConfirmDialog, DANGER, H2, MUTED, Notice, Spinner, Thumb, type ConfirmSpec } from './ui';
-import { BR_LT, DEV_LT, LANG_LT, campText, label } from './traffic';
+import { BR_LT, CAP_LT, DEV_LT, LANG_LT, campText, label } from './traffic';
 
 export interface KeptStep {
   time: string;
@@ -54,6 +54,15 @@ export function outcomeText(s: KeptStep): { text: string; bad: boolean } | null 
   return { text: o || '-', bad: false };
 }
 
+/** How the photo was taken (api/_lib/events.py CAPTURE), in words: "puslapio kamera, tikra nuotrauka nuo 12 MP, kameros priartinimas, šviesa yra". */
+export function capText(c: unknown): string {
+  if (!c || typeof c !== 'object') return '';
+  const m = c as Record<string, unknown>;
+  const w = (k: string) => (typeof m[k] === 'string' ? (CAP_LT[m[k] as string] ?? String(m[k])).toLowerCase() : '');
+  return [w('how'), w('lm'), typeof m.lres === 'string' ? String(m.lres) : '', w('zoom'), m.torch ? `šviesa ${w('torch')}` : '', m.lfail ? `gyva kamera: ${w('lfail')}` : '']
+    .filter(Boolean).join(', ');
+}
+
 /** The codes beside a step, short: the numbers the server measured and the anonymous context. */
 export function codesText(s: KeptStep): string {
   const m = s.meta ?? {};
@@ -62,7 +71,7 @@ export function codesText(s: KeptStep): string {
   const parts = [
     m.detail !== undefined ? `detalumas ${str(m.detail)}` : '', m.diameter_px !== undefined ? `rainelė ${str(m.diameter_px)} px` : '',
     m.glare_on_fibres_pct !== undefined ? `atspindys ${str(m.glare_on_fibres_pct)} %` : '', m.lid_wedge_pct ? `vokas ${str(m.lid_wedge_pct)} %` : '',
-    m.source ? str(m.source) : '', m.qa_ok === false ? 'spalvos patikra nepraėjo' : '', m.retry ? `antras bandymas ${str(m.retry)}` : '',
+    m.source ? str(m.source) : '', capText(m.cap), m.qa_ok === false ? 'spalvos patikra nepraėjo' : '', m.retry ? `antras bandymas ${str(m.retry)}` : '',
     m.eyes ? `${str(m.eyes)} ${m.eyes === 1 ? 'akis' : 'akys'}` : '', camp, ctx.dev ? label(DEV_LT, str(ctx.dev)) : '', ctx.br ? label(BR_LT, str(ctx.br)) : '',
     ctx.lang ? label(LANG_LT, str(ctx.lang)) : '', ctx.cc ? str(ctx.cc).toUpperCase() : '',
   ];
