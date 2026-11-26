@@ -59,10 +59,10 @@ export async function run(): Promise<Row[]> {
     page = `THREW ${String(e)}`;
   }
   const C = GIFT_COPY.en;
-  check('the gift page: five amount buttons, 100 checked first, its one line under them, the button with 100 EUR; no buttons of the old kinds, no artwork pictures in the chooser',
-    GIFT_AMOUNTS.every((a) => has(page, `gift-amount-${a}`)) && /data-testid="gift-amount-10000"[^>]*aria-checked="true"|aria-checked="true"[^>]*data-testid="gift-amount-10000"/.test(page)
-      && (page.match(/aria-checked="true"/g) ?? []).length === 1 && has(page, 'gift-hint') && text(page).includes(C.amounts[10000])
-      && text(page).includes(text(C.buy(money(10000, 'eur', 'en')))) && !has(page, 'gift-kind-one') && !has(page, 'gift-kind-two') && !page.includes('gift-two-900')
+  check('the gift page: five amount buttons, 30 checked first (the smallest, since 2026-11-26), its one line under them, the button with 30 EUR; no buttons of the old kinds, no artwork pictures in the chooser',
+    GIFT_AMOUNTS.every((a) => has(page, `gift-amount-${a}`)) && /data-testid="gift-amount-3000"[^>]*aria-checked="true"|aria-checked="true"[^>]*data-testid="gift-amount-3000"/.test(page)
+      && (page.match(/aria-checked="true"/g) ?? []).length === 1 && has(page, 'gift-hint') && text(page).includes(C.amounts[3000])
+      && text(page).includes(text(C.buy(money(3000, 'eur', 'en')))) && !has(page, 'gift-kind-one') && !has(page, 'gift-kind-two') && !page.includes('gift-two-900')
       && page.includes('XXXX XXXX XXXX') && has(page, 'gift-flow'), text(page).slice(0, 600));
   const src = readFileSync('src/gift/GiftApp.tsx', 'utf8');
   check('the page buys with {gift: {amount}} (never a kind) and reads a code of the old kinds too', src.includes('gift: { amount }') && !src.includes('gift: { kind }')
