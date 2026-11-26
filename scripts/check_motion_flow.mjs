@@ -37,7 +37,7 @@
 //              shown, no retake card, no warning sign, the buy card's one line with its own retake button) and that the way out works: no price, no waiver, no button to buy, no
 //              "choose another", and the retake button opens the capture screen. Not about motion: the stand-in's `lid` eye
 //   guide      (2026-10-22) the guide video of the capture screen (src/shared/GuideVideo.tsx): with motion it asks for the page language's file and plays by itself, muted,
-//              inline and in a loop, at most 40 percent of the window tall so that the steps and the photo button stay on the first screen of a 412 x 915 phone; its
+//              inline and in a loop, at most 40 percent of the window tall so that the photo button stays on the first screen of a 412 x 915 phone (the steps come after the buttons since 2026-11-26); its
 //              button pauses it and it stays paused; a hidden tab stops it. (Under reduced motion it waits with its poster and asks for nothing: the `reduced` check.)
 import { readFileSync, existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
@@ -629,8 +629,8 @@ async function checkGuide() {
   expect('guide', ok && st.state === 'auto' && st.src === '/assets/howto/howto-11-lt.mp4' && st.muted && st.inline && st.loop && st.frame, `playing: ${JSON.stringify(st)}`, `the Lithuanian guide plays by itself, muted, inline, in a loop (${st.w} x ${st.h} px)`);
   const shot = await page.eval("(() => { const b = [...document.querySelectorAll('button')].find((x) => /fx-gold/.test(x.className)); return b ? Math.round(b.getBoundingClientRect().bottom) : -1; })()");
   const steps = await page.eval("Math.round(document.querySelector('[data-testid=capture-guide]').getBoundingClientRect().top)");
-  expect('guide', st.h <= Math.round(915 * 0.4) + 1 && steps > 0 && steps < shot && shot > 0 && shot <= 915, `the guide is ${st.h} px tall, the steps start at ${steps} px, the photo button ends at ${shot} px of 915`,
-    `the guide is ${st.h} px tall, the steps follow it and the photo button ends at ${shot} px: all on the first screen`);
+  expect('guide', st.h <= Math.round(915 * 0.4) + 1 && shot > 0 && shot <= 915 && steps >= shot, `the guide is ${st.h} px tall, the photo button ends at ${shot} px of 915, the steps start at ${steps} px`,
+    `the guide is ${st.h} px tall and the photo button ends at ${shot} px: both on the first screen, the steps come after the buttons (${steps} px)`);
   await page.eval("document.querySelector('[data-guide] button').click()");
   await sleep(400);
   const p1 = JSON.parse(await page.eval(`JSON.stringify((() => { const g = document.querySelector('[data-guide]'), v = g.querySelector('video'); return { state: g.dataset.guide, paused: v.paused, label: g.querySelector('button').getAttribute('aria-label') }; })())`));
