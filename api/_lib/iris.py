@@ -90,7 +90,24 @@ PROMPT_ENHANCE = (
     "reconstruct any specular highlights, reflections, glossy spots or bubbles: the source contains none. Output a "
     "visually identical photograph, only sharper, cleaner and more detailed."
 )
+# The owner's choice of 2026-11-26 after his own phone test ("neryškiai padarė macro editinimą, atrodo lyg kažko trūktų"; of six looks of his eye he
+# picked this one): the first prompt left a dim photo dim (his iris: luma 0.37 in the photo, 0.37 restored) and drew wavy, wormy fibres on a soft
+# photo. This one asks for the ring flash's exposure and for taut radial strands. On 8 eyes through _draw (today's kept crops and the private
+# fixtures, one draw each): brighter and straighter on every eye, the gate passed 4 of 8 against 5 of 8 (fill and lid, the rules a second draw
+# answers), low-frequency fidelity 0.36-0.79 against 0.42-0.82. The pupil the model draws smaller is put back by pupil_lock as before.
 PROMPT_ARTISTIC = (
+    "Photographed with a 100mm f/2.8 macro lens under a bright cross-polarised ring flash, so there is zero corneal "
+    "glare and the iris is evenly, generously lit: a luminous, well exposed iris, never dim or underexposed. Render "
+    "this isolated human iris to that standard: razor-sharp, long, straight radial stromal fibres running from the "
+    "collarette to the limbus, standing in crisp three-dimensional relief with fine shadows between them, deep Fuchs "
+    "crypts, contraction furrows and a clearly drawn collarette, a deep velvet black pupil, authentic natural melanin "
+    "saturation, luxury fine-art print. No wavy, wormy or squiggly texture: real iris fibres are taut radial strands. "
+    "Keep this person's colours, pupil size and position, overall pattern and any pigment spots; do not change the "
+    "framing or the black background. Photorealistic macro photograph, no painting style, no text, no added "
+    "highlights or reflections."
+)
+# The first artistic prompt (until 2026-11-26), kept for the record and for a comparison draw.
+PROMPT_ARTISTIC_V1 = (
     "Photographed with a 100mm f/2.8 macro lens under a cross-polarised ring flash, so there is zero corneal "
     "glare. Render this isolated human iris to that standard: razor-sharp trabecular meshwork, Fuchs crypts, "
     "contraction furrows and radial collarette fibres, a deep velvet black pupil, authentic natural melanin "
