@@ -107,12 +107,14 @@ def _draw(mode, base, source, r_frac, pad):
         out = L.chroma_lock(out, base)
         out = L.pupil_lock(out, base, r_frac)   # nor how wide their pupil is: no iris where the photo shows none
         out = L.lid_recolour(out, base, r_frac)   # where a thin lid covered the iris, the iris's colour, never the lid's skin (2026-11-26)
+        out = L.glare_recolour(out, base, r_frac)   # where a reflection the deglare left shows, the iris's colour and level (its lid left out)
         fid = L.ssim_lowfreq(base, out, r_frac)
     else:
         out = raw = L.gemini_image(L.PROMPT_ENHANCE, base, thinking="high")
         out = L.chroma_lock(out, base)   # the model restores structure; the colour stays the client's own
         out = L.pupil_lock(out, base, r_frac)
         out = L.lid_recolour(out, base, r_frac)   # where a thin lid covered the iris, the iris's colour, never the lid's skin (2026-11-26)
+        out = L.glare_recolour(out, base, r_frac)   # where a reflection the deglare left shows, the iris's colour and level (its lid left out)
         fid = L.ssim_lowfreq(base, out, r_frac)
         if fid < L.FIDELITY_FLOOR:
             out, fallback = base, True

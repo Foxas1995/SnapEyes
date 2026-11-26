@@ -3670,6 +3670,166 @@ def lid_recolour(out, src, r_frac=None):
         return out
 
 
+
+# ---- the colour and brightness under a reflection the deglare left (2026-11-26, the owner on his own 215208: "smoke where the window was"; and two
+# brown eyes of the same day). Two kinds reach the model: the dim halo round a window reflection whose core deglare filled (a light, flat wash: the
+# model draws almost no fibres into it and it stays a white smoke), and a dim room reflection on a dark iris that deglare never saw (no bright core:
+# the photo check read 0.1 to 0.8 percent of glare) whose grey chroma_lock keeps. glare_recolour gives such an area the chroma of the same eye's iris
+# at its radius (read on the clean angles) and brings a too light area's brightness level down toward the iris's at that radius, never darker; the
+# model's fibres (the high-pass of its luminance) are kept. An area is taken only where BOTH show it: the render is paler than its own ring there,
+# and the photo has a reflection there (clearly lighter than its ring, or much greyer without being darker), and a light blob is no more colourful
+# in the photo than its ring (a reflection lays white over the iris; real light tissue, cream or yellow crypts, is more colourful: 215208 at
+# 4 o'clock reads 1.27 of the ring's chroma, its window wash 1.02), in blobs of real size; a pale collarette, a lighter limbal ring and a whitish
+# sector are part of the ring's own median at their radius or no lighter than it in the photo. A thin lid's
+# cap (lid_cap_mask) is left out explicitly, whatever ran before. Over GLRC_MAX_PCT of the disc is a retake, not a fill: left alone.
+GLRC_ON = (os.environ.get("SNAPEYES_GLARECOLOUR") or "on").strip().lstrip("\ufeff").strip().lower() not in ("off", "0", "false", "no")
+GLRC_SIDE = 256
+GLRC_BAND = (0.30, 0.98)         # the radii read
+GLRC_SRC_LIGHT = 12.0            # the photo: a reflection at least this much lighter (L*) than its ring...
+GLRC_SRC_GREY = (0.60, -2.0)     # ...or at most this share of the ring's chroma and not darker than it by more than the second (a dim one on a dark iris)
+GLRC_OUT_LIGHT = (10.0, 4.0, 0.70)   # the render: at least the first lighter than its ring, or the second lighter and at most the third of its chroma...
+GLRC_OUT_GREY = (0.60, -3.0)     # ...or (under a grey reflection) at most this share of its chroma and not darker by more than the second
+GLRC_TISSUE_C = 1.10             # a light blob whose median chroma in the photo is over this share of its ring's is light tissue, not a reflection
+GLRC_SECTOR = (0.42, 0.92)       # a blob reaching in to the first radius AND out to the second is a sector of the iris itself, not a reflection...
+GLRC_SECTOR_IN = ((0.34, 0.55), 0.6)   # ...and so is one whose angles, further in (this band), are off their ring in the photo the same way as the blob:
+                                 # along the blob's Lab step at least this share of it (a sector of heterochromia or a whitish wedge runs from the
+                                 # pupil to the rim; a reflection lies over part of the radius)
+GLRC_MIN_PCT = 0.8               # a blob counts from this share of the disc (light crypt rims are smaller)...
+GLRC_MAX_PCT = 33.0              # ...and over this share in all it is a retake, not a fill
+GLRC_LID_GROW = 4                # the thin lid's cap, grown by this many px at GLRC_SIDE, is never touched here
+GLRC_LEVEL = 0.8                 # a too light area's low-pass brightness moves this share of the way down to the ring's, never below it
+GLRC_LOWPASS = 120.0             # the low-pass of the render's luminance: blur radius side / this
+
+
+def _ring_median(lab, rho, use, band, nb=30):
+    """The median Lab at each radius (nb bins over band) over the pixels in use, mapped back onto the frame."""
+    edges = np.linspace(band[0], band[1], nb)
+    rb = np.clip(np.digitize(rho, edges) - 1, 0, len(edges) - 2)
+    med = np.zeros((len(edges) - 1, lab.shape[-1]), np.float32)
+    have = np.zeros(len(edges) - 1, bool)
+    for b in range(len(edges) - 1):
+        s = use & (rb == b)
+        if s.sum() > 10:
+            med[b], have[b] = np.median(lab[s], 0), True
+    if have.any() and not have.all():
+        idx = np.arange(len(have))
+        med = np.stack([np.interp(idx, idx[have], med[have, c]) for c in range(med.shape[1])], 1).astype(np.float32)
+    return med[rb]
+
+
+def glare_veil_mask(out, src, r_frac=None, strict=True, debug=None):
+    """(weight float32 GLRC_SIDE x GLRC_SIDE 0..1, pct of the disc) of the reflection left in the render (see the section above), or (None, pct).
+    strict=False drops the light-tissue condition (GLRC_TISSUE_C: the looser variant, for comparison)."""
+    if r_frac is None:
+        r_frac = iris_radius_frac()
+    n = GLRC_SIDE
+    ax = (np.arange(n) + 0.5 - n / 2.0) / (r_frac * n)
+    X, Y = np.meshgrid(ax, ax)
+    rho = np.hypot(X, Y)
+    rgb = lambda im: np.asarray(im.convert("RGB").resize((n, n), Image.BILINEAR), np.float32)
+    ls = srgb_to_lab(rgb(src)).astype(np.float32)
+    lr = srgb_to_lab(rgb(out)).astype(np.float32)
+    lr = np.stack([_blur_f(lr[..., c], 2.0) for c in range(3)], -1)          # the render's level, not its fibres
+    lid = np.zeros((n, n), bool)
+    lw, _ = lid_cap_mask(src, r_frac)
+    if lw is not None:
+        lid = np.asarray(Image.fromarray(lw).resize((n, n), Image.BILINEAR), np.float32) > 0.05
+        for _ in range(GLRC_LID_GROW):
+            lid = _dilate8(lid)
+    use = (rho > GLRC_BAND[0]) & (rho < GLRC_BAND[1]) & (ls[..., 0] > 6) & ~lid
+    Ms = _ring_median(ls, rho, use, GLRC_BAND)
+    Mr = _ring_median(lr, rho, use & (lr[..., 0] > 6), GLRC_BAND)
+    C = lambda a: np.hypot(a[..., 1], a[..., 2])
+    dls, dlr = ls[..., 0] - Ms[..., 0], lr[..., 0] - Mr[..., 0]
+    src_light = dls >= GLRC_SRC_LIGHT
+    src_grey = (C(ls) <= GLRC_SRC_GREY[0] * C(Ms)) & (dls >= GLRC_SRC_GREY[1])
+    pale = ((src_light & ((dlr >= GLRC_OUT_LIGHT[0]) | ((dlr >= GLRC_OUT_LIGHT[1]) & (C(lr) <= GLRC_OUT_LIGHT[2] * C(Mr)))))
+            | (src_grey & (C(lr) <= GLRC_OUT_GREY[0] * C(Mr)) & (dlr >= GLRC_OUT_GREY[1])))
+    ev = pale & use
+    m = (_blur_f(ev.astype(np.float32), 4.0) >= 0.4) & use
+    if not m.any():
+        return None, 0.0
+    cratio = C(ls) / np.maximum(C(Ms), 1e-3)
+    abin = (np.degrees(np.arctan2(Y, X)) % 360.0 / 5.0).astype(int) % 72
+    lab_c, k = _components(m)
+    disk = rho < 1.0
+    nd = max(1.0, float(disk.sum()))
+    keep = np.zeros_like(m)
+    for i in range(1, k + 1):
+        comp = lab_c == i
+        pct = 100.0 * float(comp.sum()) / nd
+        if pct < GLRC_MIN_PCT:
+            continue
+        if float(rho[comp].min()) <= GLRC_SECTOR[0] and float(rho[comp].max()) >= GLRC_SECTOR[1]:
+            continue                                                       # from near the pupil to the rim: a sector of the iris (heterochromia, a whitish wedge)
+        bins = np.unique(abin[comp])
+        inner = np.isin(abin, bins) & (rho >= GLRC_SECTOR_IN[0][0]) & (rho <= GLRC_SECTOR_IN[0][1]) & (ls[..., 0] > 6)
+        if inner.sum() >= 20:
+            o = np.median(ls[comp] - Ms[comp], 0)
+            i_ = np.median(ls[inner] - Ms[inner], 0)
+            ol = float(np.linalg.norm(o))
+            if ol > 1e-3 and float(np.dot(i_, o)) / ol >= GLRC_SECTOR_IN[1] * ol:
+                continue                                                   # the same step further in: a sector, not a reflection
+        if strict and float(np.median(dls[comp])) >= GLRC_SRC_LIGHT and float(np.median(cratio[comp])) > GLRC_TISSUE_C:
+            continue                                                       # light and more colourful than the ring in the photo: real tissue
+        keep |= comp
+    if debug is not None:
+        debug.update(candidates=m, kept=keep, cratio=cratio, dls=dls, lid=lid)
+    tot = 100.0 * float(keep.sum()) / nd
+    if not keep.any() or tot > GLRC_MAX_PCT:
+        return None, tot
+    w = np.clip(_blur_f(keep.astype(np.float32), 4.0) * 1.6, 0.0, 1.0) * ~lid
+    return np.maximum(w, keep).astype(np.float32), tot
+
+
+def glare_recolour(out, src, r_frac=None, strict=True):
+    """The render out with the iris's chroma and, where it is too light, the iris's brightness level at each radius where a reflection the deglare
+    left shows (glare_veil_mask), its fibres (the high-pass of its luminance) kept. The very object out when the switch is off, nothing is found, or
+    anything fails."""
+    if not GLRC_ON:
+        return out
+    try:
+        w, _pct = glare_veil_mask(out, src, r_frac, strict=strict)
+        if w is None:
+            return out
+        if r_frac is None:
+            r_frac = iris_radius_frac()
+        n = GLRC_SIDE
+        y, cb, cr = out.convert("YCbCr").split()
+        Yf = np.asarray(y, np.float32)
+        Ylow = np.asarray(y.filter(ImageFilter.GaussianBlur(out.size[0] / GLRC_LOWPASS)), np.float32)
+        small = lambda a: np.asarray(Image.fromarray(a.astype(np.float32), mode="F").resize((n, n), Image.BILINEAR), np.float32)
+        CBs, CRs, YLs = small(np.asarray(cb, np.float32)), small(np.asarray(cr, np.float32)), small(Ylow)
+        ax = (np.arange(n) + 0.5 - n / 2.0) / (r_frac * n)
+        GX, GY = np.meshgrid(ax, ax)
+        rho = np.hypot(GX, GY)
+        edges = np.linspace(0.0, 1.02, 52)
+        rb = np.clip(np.digitize(rho, edges) - 1, 0, len(edges) - 2)
+        free = (w < 0.05) & (rho < 1.0) & (YLs > 12.0)
+        refs = np.zeros((3, len(edges) - 1), np.float32)
+        have = np.zeros(len(edges) - 1, bool)
+        for b in range(len(edges) - 1):
+            sel = free & (rb == b)
+            if sel.sum() >= 12:
+                refs[:, b] = np.median(CBs[sel]), np.median(CRs[sel]), np.median(YLs[sel])
+                have[b] = True
+        if not have.any():
+            return out
+        idx = np.arange(len(have))
+        refs = np.stack([np.interp(idx, idx[have], r[have]) for r in refs]).astype(np.float32)
+        big = lambda a: np.asarray(Image.fromarray(a.astype(np.float32), mode="F").resize(out.size, Image.BILINEAR), np.float32)
+        W, RCB, RCR, RY = big(w), big(refs[0][rb]), big(refs[1][rb]), big(refs[2][rb])
+        CB, CR = np.asarray(cb, np.float32).copy(), np.asarray(cr, np.float32).copy()
+        CB += (RCB - CB) * W
+        CR += (RCR - CR) * W
+        Y2 = Yf + np.minimum(RY - Ylow, 0.0) * W * GLRC_LEVEL       # only ever down, and only as far as the ring's level: never darker than the iris there
+        new = np.asarray(Image.merge("YCbCr", tuple(Image.fromarray(np.clip(np.round(a), 0, 255).astype(np.uint8)) for a in (Y2, CB, CR))).convert("RGB"))
+        return Image.fromarray(np.where((W > 0.0)[..., None], new, np.asarray(out.convert("RGB"))))
+    except Exception as e:  # noqa: the render as it was
+        print("snapeyes glare_recolour " + json.dumps({"error": _scrub(repr(e))[:160]}), flush=True)
+        return out
+
+
 DARK_BLEND = 24.0        # below this luminance a colour ratio is noise, so the lift is applied as an offset
 PUPIL_EDGE_FRAC = 0.25
 PUPIL_DARK = (10.0, 30.0)   # pupil colour: full neutral below the first luminance, none above the second

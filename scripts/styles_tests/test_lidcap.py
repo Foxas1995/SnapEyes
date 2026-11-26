@@ -344,6 +344,75 @@ en = read("api/enhance.py")
 check("/api/enhance re-colours every restoration after its chroma and pupil locks, on the crop the model was given",
       en.count("out = L.lid_recolour(out, base, r_frac)") == 2)
 
+# ============================================================================================ 6. the colour and level under a reflection the deglare left (2026-11-26)
+section("6  iris.glare_recolour: a reflection left in the render takes the iris's colour and level, light tissue and the lid stay")
+
+
+def blob(r0, r1, a0, a1, k=0.03, ka=5.0):
+    return lambda r, t: (soft(r - r0, k) * soft(r1 - r, k) * soft(t - a0, ka) * soft(a1 - t, ka))
+
+
+def mixed(base, wfn, rgb, amt):
+    return painted(base, lambda r, t: (wfn(r, t) * amt, rgb))[0]
+
+
+brown = L.mask_disk(SI.make("amber", seed=11), 1.12)
+greeng = L.mask_disk(SI.make("green", seed=12), 1.12)
+rf_ = L.iris_radius_frac(1.12)
+grey_over = mixed(brown, blob(0.62, 0.92, 150.0, 200.0), (128, 128, 128), 0.75)          # a dim room reflection: grey over a brown iris
+wash = mixed(greeng, blob(0.66, 0.96, 300.0, 345.0), (222, 226, 214), 0.75)              # the halo of a window: a light, flat wash
+fg = L.glare_recolour(grey_over, grey_over, rf_)
+fw = L.glare_recolour(wash, wash, rf_)
+lab = lambda im: L.srgb_to_lab(np.asarray(im, np.float32))
+Cab = lambda a: np.hypot(a[..., 1], a[..., 2])
+gz = (rho > 0.68) & (rho < 0.88) & (th > 160) & (th < 190)
+wz = (rho > 0.72) & (rho < 0.92) & (th > 310) & (th < 335)
+ring_g = (rho > 0.68) & (rho < 0.88) & ((th < 120) | (th > 240))
+ring_w = (rho > 0.72) & (rho < 0.92) & (th > 30) & (th < 250)
+Lb, Lg, Lw0, Lw1, Lgr = lab(brown), lab(fg), lab(wash), lab(fw), lab(greeng)
+check("a grey overlay on a brown iris is found and takes the iris's colour: its chroma back to within a third of the ring's",
+      fg is not grey_over and float(np.median(Cab(Lg)[gz])) >= 0.67 * float(np.median(Cab(Lb)[ring_g])),
+      (float(np.median(Cab(lab(grey_over))[gz])), float(np.median(Cab(Lg)[gz])), float(np.median(Cab(Lb)[ring_g]))))
+check("a light featureless wash on a green-grey iris is found, its level brought down toward the ring's, never below it",
+      fw is not wash and float(np.median(Lw1[..., 0][wz])) < float(np.median(Lw0[..., 0][wz])) - 8.0
+      and float(np.median(Lw1[..., 0][wz])) >= float(np.median(Lgr[..., 0][ring_w])) - 3.0,
+      (float(np.median(Lw0[..., 0][wz])), float(np.median(Lw1[..., 0][wz])), float(np.median(Lgr[..., 0][ring_w]))))
+guards = {
+    "pale collarette": mixed(greeng, lambda r, t: np.exp(-0.5 * ((r - 0.47) / 0.04) ** 2), (230, 225, 200), 0.6),
+    "light crypt rims": mixed(greeng, lambda r, t: sum(np.exp(-0.5 * ((r * np.cos(np.radians(t - a)) - rr) ** 2 + (r * np.sin(np.radians(t - a))) ** 2) / 0.02 ** 2)
+                                                       for a, rr in ((20, 0.7), (110, 0.8), (200, 0.65), (290, 0.75))), (235, 230, 210), 0.8),
+    "whitish sector": mixed(greeng, blob(0.33, 0.99, 250.0, 285.0), (215, 218, 210), 0.65),
+    "grey sector": mixed(brown, blob(0.33, 0.99, 60.0, 95.0), (120, 120, 120), 0.65),
+    "pigment spot": mixed(greeng, lambda r, t: np.exp(-0.5 * ((r * np.cos(np.radians(t - 40)) - 0.75) ** 2 + (r * np.sin(np.radians(t - 40))) ** 2) / 0.05 ** 2), (120, 70, 30), 0.9),
+    "lighter limbal ring": mixed(greeng, lambda r, t: soft(r - 0.88), (200, 205, 195), 0.5),
+    "light cream tissue (more colourful than the ring)": mixed(greeng, blob(0.62, 0.92, 20.0, 60.0), (235, 215, 120), 0.6),
+}
+left = {k: L.glare_recolour(im, im, rf_) is im for k, im in guards.items()}
+check("a pale collarette, light crypt rims, a whitish and a grey sector, a pigment spot, a lighter limbal ring and light cream tissue are left alone (the very object)",
+      all(left.values()), left)
+huge = mixed(greeng, blob(0.5, 0.99, 90.0, 300.0), (222, 226, 214), 0.75)
+check("a reflection over a third of the disc is a retake, not a fill: left alone", L.glare_recolour(huge, huge, rf_) is huge)
+check("a clean eye: the very object comes back", L.glare_recolour(greeng, greeng, rf_) is greeng and L.glare_recolour(eye0, eye0, rf_) is eye0)
+# the lid is excluded by its own mask, whatever ran before: the lid eye of section 5, not recoloured first
+wl_, _ = L.glare_veil_mask(lid_im, lid_im, rf_)
+lidz = np.asarray(Image.fromarray(w_lid).resize(lid_im.size), np.float32) > 0.05 if w_lid is not None else np.zeros(lid_im.size, bool)
+glz = np.zeros(lid_im.size[::-1], bool) if wl_ is None else np.asarray(Image.fromarray(wl_).resize(lid_im.size), np.float32) > 0.05
+check("the thin lid's cap is excluded explicitly (lid_cap_mask), not left to the lid step having run first", not (glz & lidz).any(), int((glz & lidz).sum()))
+was = L.GLRC_ON
+L.GLRC_ON = False
+try:
+    check("SNAPEYES_GLARECOLOUR=off: the very object comes back", L.glare_recolour(wash, wash, rf_) is wash)
+finally:
+    L.GLRC_ON = was
+t0 = time.time()
+for _ in range(3):
+    L.glare_recolour(wash, wash, rf_)
+gms = (time.time() - t0) / 3 * 1000
+check("it costs under 0.3 s at 1024 px (no model call)", gms < 300, round(gms))
+check("/api/enhance and a master without a preview run it right after the lid step",
+      read("api/enhance.py").count("out = L.lid_recolour(out, base, r_frac)   # where a thin lid covered the iris, the iris's colour, never the lid's skin (2026-11-26)\n        out = L.glare_recolour(out, base, r_frac)") == 2
+      and "out = L.glare_recolour(out, base, r_frac)" in read("api/master_eye.py"))
+
 ok = sum(RESULTS)
 print(f"\n{ok} of {len(RESULTS)} passed")
 sys.exit(0 if ok == len(RESULTS) else 1)
