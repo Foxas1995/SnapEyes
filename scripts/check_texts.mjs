@@ -69,7 +69,7 @@ const DASH = new RegExp('[' + String.fromCharCode(0x2012, 0x2013, 0x2014, 0x2015
 const W = '2026-09-29 13:15';
 export const SAMPLES = {
   dec1: [[3.7], [4]], 'errors.requestFailed': [[500]], 'capture.addTitle': [[2]], 'capture.retakeTitle': [[2]],
-  'capture.back': [[1], [3], [5]], 'capture.thumbLabel': [[1]], 'working.checking': [[5, 2], [1, 0]],
+  'capture.back': [[1], [3], [5]], 'working.checking': [[5, 2], [1, 0]],
   'working.measuringShot': [[2, 5]], 'working.restoringEye': [[2]], 'working.composing': [[1], [3]], 'working.elapsed': [[12]],
   'quality.noneUsable': [[2], [3], [5]], 'quality.fullUnusable': [[5], [8]],
   'collector.header': [[2, 5], [1, 5]], 'collector.shotAlt': [[3]],

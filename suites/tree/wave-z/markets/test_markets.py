@@ -350,7 +350,7 @@ check("E6 confirmation email (en): A$79, total price, no GST; no euro sign, no V
 with open(os.path.join(HERE, "sample_au_confirmation.txt"), "w", encoding="utf-8") as f:
     f.write(t.split("______")[0])
 note = [m for m in mails_to("info@snapeyes.com", n0) if m["subject"].startswith("SnapEyes: naujas užsakymas")]
-check("E7 owner note: A$79, market au (2026-11-26: the subject in Lithuanian, the amount as the site writes it)", len(note) == 1 and note[0]["subject"].endswith("A$79")
+check("E7 owner note: A$79, market au (2026-11-26: the subject in Lithuanian, the amount as the site writes it)", len(note) == 1 and "A$79 (#" in note[0]["subject"] and note[0]["subject"].endswith(")")
       and "Market: au" in note[0]["text"] and "CHECK THE AMOUNT" not in note[0]["text"], [m["subject"] for m in note])
 check("E8 emails carry no en or em dash", all(not any(d in m["text"] for d in DASHES) for m in conf + note))
 c, j = get(f"/api/order?o={oA}&k={kA}")
@@ -413,7 +413,7 @@ t = (mails_to("magyar@example.com", n0) or [{"text": ""}])[0]["text"]
 nH = [m for m in mails_to("info@snapeyes.com", n0) if m["subject"].startswith("SnapEyes: naujas užsakymas")]
 check("E14 a paid hu session still counts (a known market): paid huf, email 13 990 Ft, owner 13990 HUF",
       c == 200 and pHp.get("currency") == "huf" and pHp.get("market") == "hu" and "amount_mismatch" not in pHp
-      and "Price: 13 990 Ft." in t and len(nH) == 1 and nH[0]["subject"].endswith("13 990 Ft"), (c, j, pHp, t[:900]))
+      and "Price: 13 990 Ft." in t and len(nH) == 1 and "13 990 Ft (#" in nH[0]["subject"], (c, j, pHp, t[:900]))
 c, j = hook(dict(sHp, currency="eur"))
 check("E15 ... but a hu session paid in eur is refused (the currency of its market)", c == 200
       and j.get("ignored") == "session does not match" and not pay.session_matches(dict(sHp, currency="eur"), oH, recH), (c, j))

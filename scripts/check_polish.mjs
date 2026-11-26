@@ -7,8 +7,8 @@
 //             src/notfound/notfound.json, a way home that keeps the language and is 44 px high
 //   targets   the language buttons, the logo, the quiet link and the footer's links of the landing (390 px) and of /try (360 px) answer a touch 22 px above and below their
 //             centre (their hit area is 44 px high; elementFromPoint says what a finger would hit), without the layout moving
-//   fold      on a phone (360 x 740, 390 x 844, 412 x 915, 375 x 667, 320 x 568) the gold camera button is on the first screen of /try in every language, on the first
-//             three the quiet row (upload, sample eye) too and the steps after it (2026-11-26)
+//   fold      on a phone (360 x 740, 390 x 844, 412 x 915, 375 x 667, 320 x 568) the gold camera button is on the first screen of /try in every language, on 360 x 740,
+//             390 x 844, 412 x 915 and 390 x 660 (an in-app browser) the quiet row (upload, sample eye) too and the steps after it (2026-11-26)
 //   heic      a photo the browser cannot open (a .heic file) gets a sentence that says what to do (JPEG or PNG, or the phone), in all four languages
 import { mkdtempSync, readFileSync, existsSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -136,8 +136,8 @@ try {
 
   // ---- the fold of /try (2026-11-26: ads send strangers straight to /try; the gold button is the page's camera again, the quiet row under it uploads a photo or
   // tries the sample eye). On every phone the gold button is on the first screen in every language; on 360 x 740, 390 x 844 and 412 x 915 the quiet row too,
-  // and the four steps come after the buttons
-  for (const [w, h, row] of [[360, 740, true], [390, 844, true], [412, 915, true], [375, 667, false], [320, 568, false]]) {
+  // and the four steps come after the buttons; 390 x 660 is what an in-app browser (Facebook, Instagram) leaves visible of a 390 x 844 phone, the quiet row too
+  for (const [w, h, row] of [[360, 740, true], [390, 844, true], [412, 915, true], [390, 660, true], [375, 667, false], [320, 568, false]]) {
     for (const l of LANGS) {
       const page = await fresh(w, h);
       await page.goto(`${origin}/try?lang=${l}`);

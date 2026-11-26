@@ -200,9 +200,9 @@ export async function run(): Promise<Array<[string, boolean, string?]>> {
   }
   const app = readFileSync('src/try/TryApp.tsx', 'utf8');
   const tips = app.slice(app.indexOf('data-testid="more-tips"'), app.indexOf('</details>', app.indexOf('data-testid="more-tips"')));
-  check('the open eye, the 3-5 shots and the pair are inside the closed "More tips" disclosure of the first screen, not beside the four steps',
-    tips.includes('T.capture.stepsOpenMore') && tips.includes('T.capture.stepsShotsMore') && tips.includes('T.capture.helper') && !/<details data-testid="more-tips"[^>]*\sopen/.test(app)
-      && app.split('T.capture.stepsShotsMore').length === 2 && app.split('T.capture.helper').length === 2);
+  check('the camera tip, the open eye and the 3-5 shots are inside the closed "More tips" disclosure of the first screen, not beside the four steps',
+    tips.includes('T.capture.stepsOpenMore') && tips.includes('T.capture.stepsShotsMore') && tips.includes('T.capture.cameraTip') && !app.includes('T.capture.helper') && !/<details data-testid="more-tips"[^>]*\sopen/.test(app)
+      && app.split('T.capture.stepsShotsMore').length === 2 && app.split('T.capture.cameraTip').length === 2); // 2026-11-26: the pair tip went (the video shows it)
   check('the eye remembers the share of the iris /api/deglare filled under a lid (its lid_pct), so the card can say it only when it was done',
     /lidPct: typeof d\.lid_pct === 'number' \? d\.lid_pct : 0/.test(app));
   check('the eye remembers the pupil measured on its photo (/api/analyze quality.pupil_size), for the pupil line',

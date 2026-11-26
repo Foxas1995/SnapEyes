@@ -1073,14 +1073,10 @@ export const TryApp: React.FC = () => {
               <div className="text-center mt-2">
                 <h1 ref={stepHead} tabIndex={-1} className="font-luxury text-3xl sm:text-4xl font-bold focus:outline-none">{(replaceNo ? T.capture.retakeTitle(replaceNo) : T.capture.addTitle(eyes.length + 1)).toUpperCase()}</h1>
                 <p className="text-zinc-400 text-sm mt-2">{replaceNo ? T.capture.retakeLead : T.capture.addLead}</p>
-                <div className="flex flex-wrap justify-center gap-x-2 gap-y-1 mt-3">
-                  {eyes.map((e, i) => (
-                    <span key={e.id} className="flex flex-col items-center gap-0.5 w-16">
-                      <img {...NO_SAVE} src={e.thumb} alt="" className={`w-9 h-9 rounded-full object-cover ${e.id === replacing ? 'border-2 border-dashed border-gold/70 opacity-50' : 'border border-gold/40'}`} />
-                      <span className={`text-[8px] leading-tight text-center ${e.sample ? 'font-semibold text-amber-200/90' : 'text-zinc-400'}`}>
-                        {e.sample ? T.capture.sampleThumb : T.capture.thumbLabel(i + 1)}
-                      </span>
-                    </span>
+                {/* the eyes so far, pictures only (2026-11-26: the 8 px captions under them went; the sample eye keeps its amber ring) */}
+                <div className="flex flex-wrap justify-center gap-2 mt-3">
+                  {eyes.map((e) => (
+                    <img key={e.id} {...NO_SAVE} src={e.thumb} alt="" className={`w-9 h-9 rounded-full object-cover ${e.id === replacing ? 'border-2 border-dashed border-gold/70 opacity-50' : e.sample ? 'border-2 border-amber-300/80' : 'border border-gold/40'}`} />
                   ))}
                   {!replaceNo && <span className="w-9 h-9 rounded-full border-2 border-dashed border-gold/60" aria-hidden />}
                 </div>
@@ -1118,7 +1114,6 @@ export const TryApp: React.FC = () => {
                   <p>{T.capture.cameraTip}</p>
                   <p><span className="text-gold font-bold">{T.capture.stepsOpen}</span>{T.capture.stepsOpenMore}</p>
                   <p><span className="text-gold font-bold">{T.capture.stepsShots}</span>{T.capture.stepsShotsMore}</p>
-                  {!adding && <p className="text-zinc-400">{T.capture.helper}</p>}
                 </div>
               </details>
             </div>

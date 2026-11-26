@@ -2974,7 +2974,8 @@ def note_paid(order, paid):
     spec = paid.get("spec") or {}
     cur = paid.get("currency")
     # the subject and the first line in Lithuanian, read at a glance in Gmail (the owner, 2026-11-26), the amount as the site writes it in Lithuanian ("24,97 €")
-    subject = f"SnapEyes: naujas užsakymas, {price_text(paid.get('amount_total') or 0, 'lt', cur)}"
+    # the order's id at the end, so that Gmail does not thread two orders of the same amount together (there is no shorter form of the id)
+    subject = f"SnapEyes: naujas užsakymas, {price_text(paid.get('amount_total') or 0, 'lt', cur)} (#{order})"
     mm = paid.get("amount_mismatch") if isinstance(paid.get("amount_mismatch"), dict) else None
     text = (f"Apmokėtas užsakymas {order}{'' if paid.get('livemode') else ' (TEST režimas)'}\n"
             f"Eyes: {spec.get('eyes')}, style {spec.get('style')}, layout {spec.get('layout')}\n"
