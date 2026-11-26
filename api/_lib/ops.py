@@ -738,14 +738,16 @@ KEPT_PAGE = 12               # visits in one reply of that page
 def a_kept(body, who):
     """The page Peržiūros: the kept copies of the free preview (api/_lib/keep.py, 30 days): {day (YYYY-MM-DD, default the newest), offset}. Returns the
     days that have copies, and KEPT_PAGE visits of the day (newest visit names first), each with its steps in time order: the step, the time, what
-    the server said (the outcome and its codes, the anonymous context) and links to its pictures valid KEPT_SIGN seconds. Read only."""
+    the server said (the outcome and its codes, the anonymous context; none when the step broke off) and links to its pictures valid KEPT_SIGN seconds, and
+    area (keep.status: the area's size against the cap, today's visits against their ceiling, and which of them holds keeping back). Read only."""
     from . import keep as KP
     all_days = KP.days()
     day = body.get("day") if isinstance(body.get("day"), str) and body.get("day") in all_days else (all_days[0] if all_days else None)
     off = body.get("offset")
     off = off if isinstance(off, int) and not isinstance(off, bool) and off >= 0 else 0
+    area = KP.status()          # the kept area's size against its cap and today's visits against their ceiling: the owner sees when to raise them
     if day is None:
-        return {"ok": True, "on": KP.on(), "keep_days": KP.KEEP_DAYS, "days": [], "day": None, "visits": [], "total": 0, "offset": 0, "more": False}
+        return {"ok": True, "on": KP.on(), "keep_days": KP.KEEP_DAYS, "days": [], "day": None, "visits": [], "total": 0, "offset": 0, "more": False, "area": area}
     names = sorted(KP.visits(day), reverse=True)
     page = names[off:off + KEPT_PAGE]
 
@@ -782,7 +784,7 @@ def a_kept(body, who):
 
     rows = [r for r in each([lambda v=v: one(v) for v in page], width=4) if isinstance(r, dict)]
     return {"ok": True, "on": KP.on(), "keep_days": KP.KEEP_DAYS, "days": all_days, "day": day, "visits": rows, "total": len(names), "offset": off,
-            "more": off + KEPT_PAGE < len(names), "sign_seconds": KEPT_SIGN}
+            "more": off + KEPT_PAGE < len(names), "sign_seconds": KEPT_SIGN, "area": area}
 
 
 def act_kept_delete(body, who):

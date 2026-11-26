@@ -644,6 +644,18 @@ TEXT_DE = {
 TEXTS = {"de": TEXT_DE, "lt": TEXT_LT, "hu": TEXT_HU, "hr": TEXT_HR, "fi": TEXT_FI, "et": TEXT_ET, "lv": TEXT_LV}   # by the request's "lang"; English is inline
 
 def analyze(body):
+    """POST /api/analyze (the module text). A failure after the photo's kept copy was started (the vision model busy, an error) writes its JSON too, with
+    outcome failed and the error's class (api/_lib/keep.py); the error itself goes on as it always did."""
+    box = {}
+    try:
+        return _analyze(body, box)
+    except Exception as e:
+        if box.get("kp") is not None:
+            box["kp"].done({"outcome": "failed", "error": type(e).__name__})
+        raise
+
+
+def _analyze(body, box):
     PC.check()
     device, study = telemetry(body.get("device")), telemetry(body.get("study"))
     lang = body.get("lang") if body.get("lang") in TEXTS else "en"
@@ -654,7 +666,7 @@ def analyze(body):
         return TEXTS[lang][key].format(**kw) if lang in TEXTS else en
     im = L.b64_to_pil(body.get("image"))
     # the photo as the analysis sees it is kept (api/_lib/keep.py): prepared and written in a thread while the photo is checked, its outcome beside it below
-    kp = KP.begin("analyze", body)
+    kp = box["kp"] = KP.begin("analyze", body)
     kp.image("photo", lambda: KP.photo_jpeg(im))
     W, H = im.size
     ow, oh = int(body.get("origWidth") or W), int(body.get("origHeight") or H)

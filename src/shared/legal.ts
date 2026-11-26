@@ -265,7 +265,7 @@ export const CHECKOUT_LEGAL: Record<LegalLang, CheckoutLegal> = {
     ],
     continueButton: 'Continue to payment',
     photoNotice: [
-      { text: 'Only photograph your own eye, or the eye of someone who has agreed to it (for a child: a parent or guardian). Your photo is used to make your artwork; we keep it for 30 days to check quality. ' },
+      { text: 'Only photograph your own eye, or the eye of someone who has agreed to it (for a child: a parent or guardian). Your photo is used to make your artwork; we keep it for up to 30 days to check quality. ' },
       { text: 'Privacy policy', doc: 'privacy' },
     ],
   },
@@ -286,7 +286,7 @@ export const CHECKOUT_LEGAL: Record<LegalLang, CheckoutLegal> = {
     ],
     continueButton: 'Weiter zur Zahlung',
     photoNotice: [
-      { text: 'Fotografieren Sie nur Ihr eigenes Auge oder das Auge einer Person, die damit einverstanden ist (bei einem Kind: ein Elternteil oder eine sorgeberechtigte Person). Ihr Foto dient dazu, Ihr Kunstwerk zu erstellen; wir bewahren es 30 Tage auf, um die Qualität zu prüfen. ' },
+      { text: 'Fotografieren Sie nur Ihr eigenes Auge oder das Auge einer Person, die damit einverstanden ist (bei einem Kind: ein Elternteil oder eine sorgeberechtigte Person). Ihr Foto dient dazu, Ihr Kunstwerk zu erstellen; wir bewahren es bis zu 30 Tage auf, um die Qualität zu prüfen. ' },
       { text: 'Datenschutzerklärung', doc: 'privacy' },
     ],
   },
@@ -311,7 +311,7 @@ export const CHECKOUT_LEGAL: Record<LegalLang, CheckoutLegal> = {
     ],
     continueButton: 'Pereiti prie apmokėjimo',
     photoNotice: [
-      { text: 'Fotografuokite tik savo akį arba kito žmogaus akį, jei jis su tuo sutiko (vaiko atveju sutikti turi vienas iš tėvų, globėjas ar rūpintojas). Jūsų nuotrauka naudojama Jūsų kūriniui sukurti; 30 dienų ją saugome kokybei tikrinti. ' },
+      { text: 'Fotografuokite tik savo akį arba kito žmogaus akį, jei jis su tuo sutiko (vaiko atveju sutikti turi vienas iš tėvų, globėjas ar rūpintojas). Jūsų nuotrauka naudojama Jūsų kūriniui sukurti; iki 30 dienų ją saugome kokybei tikrinti. ' },
       { text: 'Privatumo politika', doc: 'privacy' },
     ],
   },
@@ -339,7 +339,7 @@ export const CHECKOUT_LEGAL: Record<LegalLang, CheckoutLegal> = {
     ],
     continueButton: 'Megrendelés fizetési kötelezettséggel',
     photoNotice: [
-      { text: 'Csak a saját szemedet fotózd le, vagy olyan személy szemét, aki ehhez hozzájárult (gyermek esetén a szülő vagy a gondviselő). A fotódat az alkotásod elkészítéséhez használjuk; 30 napig megőrizzük a minőség ellenőrzéséhez. ' },
+      { text: 'Csak a saját szemedet fotózd le, vagy olyan személy szemét, aki ehhez hozzájárult (gyermek esetén a szülő vagy a gondviselő). A fotódat az alkotásod elkészítéséhez használjuk; legfeljebb 30 napig megőrizzük a minőség ellenőrzéséhez. ' },
       { text: 'Adatkezelési tájékoztató', doc: 'privacy' },
     ],
   },
@@ -364,7 +364,7 @@ export const CHECKOUT_LEGAL: Record<LegalLang, CheckoutLegal> = {
     ],
     continueButton: 'Narudžba s obvezom plaćanja',
     photoNotice: [
-      { text: 'Fotografirajte samo svoje oko ili oko osobe koja je na to pristala (za dijete: roditelj ili skrbnik). Vaša se fotografija koristi za izradu vašeg umjetničkog djela; čuvamo je 30 dana radi provjere kvalitete. ' },
+      { text: 'Fotografirajte samo svoje oko ili oko osobe koja je na to pristala (za dijete: roditelj ili skrbnik). Vaša se fotografija koristi za izradu vašeg umjetničkog djela; čuvamo je do 30 dana radi provjere kvalitete. ' },
       { text: 'Politika privatnosti', doc: 'privacy' },
     ],
   },
@@ -390,7 +390,7 @@ export const CHECKOUT_LEGAL: Record<LegalLang, CheckoutLegal> = {
     ],
     continueButton: 'Siirry maksamaan',
     photoNotice: [
-      { text: 'Kuvaa vain omaa silmääsi tai sellaisen ihmisen silmää, joka on antanut siihen luvan (lapsen puolesta: vanhempi tai huoltaja). Kuvaasi käytetään taideteoksesi tekemiseen; säilytämme sitä 30 päivää laadun tarkistamiseksi. ' },
+      { text: 'Kuvaa vain omaa silmääsi tai sellaisen ihmisen silmää, joka on antanut siihen luvan (lapsen puolesta: vanhempi tai huoltaja). Kuvaasi käytetään taideteoksesi tekemiseen; säilytämme sitä enintään 30 päivää laadun tarkistamiseksi. ' },
       { text: 'Tietosuojaseloste', doc: 'privacy' },
     ],
   },
@@ -415,7 +415,7 @@ export const CHECKOUT_LEGAL: Record<LegalLang, CheckoutLegal> = {
     ],
     continueButton: 'Tellimus koos maksekohustusega',
     photoNotice: [
-      { text: 'Pildista ainult oma silma või sellise inimese silma, kes on sellega nõustunud (lapse puhul: vanem või eestkostja). Sinu fotot kasutatakse sinu kunstiteose valmistamiseks; säilitame seda 30 päeva kvaliteedi kontrollimiseks. ' },
+      { text: 'Pildista ainult oma silma või sellise inimese silma, kes on sellega nõustunud (lapse puhul: vanem või eestkostja). Sinu fotot kasutatakse sinu kunstiteose valmistamiseks; säilitame seda kuni 30 päeva kvaliteedi kontrollimiseks. ' },
       { text: 'Privaatsuspoliitika', doc: 'privacy' },
     ],
   },
@@ -440,7 +440,7 @@ export const CHECKOUT_LEGAL: Record<LegalLang, CheckoutLegal> = {
     ],
     continueButton: 'Pasūtījums ar pienākumu maksāt',
     photoNotice: [
-      { text: 'Fotografējiet tikai savu aci vai tāda cilvēka aci, kurš tam ir piekritis (bērna gadījumā: vecāks vai aizbildnis). Jūsu fotogrāfija tiek izmantota jūsu mākslas darba izveidei; glabājam to 30 dienas kvalitātes pārbaudei. ' },
+      { text: 'Fotografējiet tikai savu aci vai tāda cilvēka aci, kurš tam ir piekritis (bērna gadījumā: vecāks vai aizbildnis). Jūsu fotogrāfija tiek izmantota jūsu mākslas darba izveidei; glabājam to līdz 30 dienām kvalitātes pārbaudei. ' },
       { text: 'Privātuma politika', doc: 'privacy' },
     ],
   },
@@ -492,10 +492,16 @@ export const CHECKOUT_LEGAL_AU: Record<'en' | 'de', Pick<CheckoutLegal, 'withdra
  *  adds the consent to the use of the eye photos (some US state laws treat an iris image as a biometric identifier:
  *  used only for the preview and the artwork, never to identify anyone, deleted as the privacy policy describes).
  *  Identical to api/_lib/pay.py CONSENT_TEXT_US. The line under it names the terms' "Your rights in the United States". */
-export const CHECKOUT_LEGAL_US: Record<'en', Pick<CheckoutLegal, 'withdrawalConsent' | 'acceptance'>> = {
+// photoNotice: the photo step's line as it was before the kept free previews: a US visitor's photos are not kept (api/_lib/keep.py, 2026-11-26), and the US
+// checkbox says the photos are used only to make the preview and the artwork
+export const CHECKOUT_LEGAL_US: Record<'en', Pick<CheckoutLegal, 'withdrawalConsent' | 'acceptance' | 'photoNotice'>> = {
   en: {
     withdrawalConsent:
       "I expressly agree that SnapEyes starts making my personalised digital artwork right away, before the withdrawal period ends. I know that once this has started, I lose my right of withdrawal and can't cancel for a change of mind; my rights if the file is faulty are not affected. I also agree that SnapEyes uses the photos of my eyes only to make my preview and my artwork, never to identify anyone, and deletes them as its privacy policy describes.",
+    photoNotice: [
+      { text: 'Only photograph your own eye, or the eye of someone who has agreed to it (for a child: a parent or guardian). Your photo is used only to make your artwork. ' },
+      { text: 'Privacy policy', doc: 'privacy' },
+    ],
     acceptance: [
       { text: 'By ordering you accept our ' },
       { text: 'Terms of sale', doc: 'terms' },

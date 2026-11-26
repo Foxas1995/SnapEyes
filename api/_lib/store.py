@@ -391,7 +391,7 @@ def delete(path, timeout=10.0, retry=True):
 
 
 def list_folder(folder, limit=1000, timeout=15.0, retry=True, offset=0, search=""):
-    """What lies directly in one folder: a list of {"name", "folder": bool}, files and sub-folders, sorted by
+    """What lies directly in one folder: a list of {"name", "folder": bool, "size": bytes of a file or None}, files and sub-folders, sorted by
     name. For housekeeping and counting only (scripts/order_admin.py purge, the daily clean-up, the upload
     ceiling): Supabase lists a folder case-insensitively (see exists()), so a listing is never the answer to "is
     this object there?". Order ids are lower case, so the orders/ listing names each order folder once.
@@ -408,7 +408,12 @@ def list_folder(folder, limit=1000, timeout=15.0, retry=True, offset=0, search="
         base = _local_file(d, folder)
         if not base.is_dir():
             return []
-        out = [{"name": p.name, "folder": p.is_dir()} for p in base.iterdir()
+        def size(p):
+            try:
+                return None if p.is_dir() else p.stat().st_size
+            except OSError:          # a file replaced or deleted by another thread between the listing and this look
+                return None
+        out = [{"name": p.name, "folder": p.is_dir(), "size": size(p)} for p in base.iterdir()
                if not p.name.endswith(".part") and p.name.lower().startswith(search.lower())]
         return sorted(out, key=lambda x: x["name"])[offset:offset + limit]
     url, key, bucket = _require()
@@ -428,7 +433,9 @@ def list_folder(folder, limit=1000, timeout=15.0, retry=True, offset=0, search="
     for row in rows if isinstance(rows, list) else []:
         name = row.get("name") if isinstance(row, dict) else None
         if isinstance(name, str) and name and name != ".emptyFolderPlaceholder":
-            out.append({"name": name, "folder": row.get("id") is None})
+            meta = row.get("metadata") if isinstance(row.get("metadata"), dict) else {}
+            size = meta.get("size")       # Supabase's metadata of a file (the kept previews' cap sums it, api/_lib/keep.py)
+            out.append({"name": name, "folder": row.get("id") is None, "size": size if isinstance(size, int) and not isinstance(size, bool) else None})
     return out
 
 

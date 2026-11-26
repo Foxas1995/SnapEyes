@@ -39,7 +39,7 @@ import { count, note as noteCounter, withCamp } from '../shared/counter';
 import { track } from '../shared/metaPixel';
 import { noteFeedback } from '../shared/feedback';
 import { readCatalogue } from '../shared/catalogue';
-import { CHECKOUT_LEGAL, LEGAL_DOCS, LEGAL_LABELS, consentBox, legalHref } from '../shared/legal';
+import { LEGAL_DOCS, LEGAL_LABELS, checkoutLegal, consentBox, legalHref } from '../shared/legal';
 import { currencyOf, currentMarket, money, priceMinor, serverPrices, withMarket } from '../shared/markets';
 import { STYLES as REGISTRY, isStyle } from '../shared/styles';
 import { BrandPicture } from '../shared/BrandLogo';
@@ -1142,7 +1142,7 @@ export const TryApp: React.FC = () => {
 
             {/* whose eye may be photographed (the terms of sale), and where the photo goes */}
             <p data-testid="photo-notice" className="text-[10px] leading-relaxed text-zinc-400 text-center">
-              <LegalParts parts={CHECKOUT_LEGAL[lang].photoNotice} lang={lang} />
+              <LegalParts parts={checkoutLegal(lang).photoNotice} lang={lang} />
             </p>
 
             {storageOn && (

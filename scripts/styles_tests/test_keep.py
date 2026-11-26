@@ -115,8 +115,10 @@ def kept_files():
     out = []
     for r, _d, fs in os.walk(root):
         for f in fs:
-            if not f.endswith(".part"):
-                out.append(os.path.relpath(os.path.join(r, f), STORE).replace(os.sep, "/"))
+            rel = os.path.relpath(os.path.join(r, f), STORE).replace(os.sep, "/")
+            # the visits' own files (the instances' reports in _n/ and the size sums are the area's bookkeeping, not a visit's)
+            if not f.endswith(".part") and "/_n/" not in rel and not f.startswith("_"):
+                out.append(rel)
     return sorted(out)
 
 
@@ -127,7 +129,7 @@ def last_event(kind):
 def wipe():
     shutil.rmtree(os.path.join(STORE, "kept"), ignore_errors=True)
     with KP._LOCK:
-        KP._COUNT.update(day="", items=0, visits={}, full_day="", full_t=0.0, full=False)
+        KP._COUNT.update(day="", items=0, bytes=0, visits={}, held_day="", held_t=0.0, held=None)
 
 
 # ============================================================================================ 1. the module
@@ -194,7 +196,7 @@ nk_code = KP.begin("compose", {"visit": "lz1abc-0a1b2c3d52", "nokeep": True}).do
 check("the switch off: code off; a request that says nokeep (the owner's laboratory): code skip; nothing written for either",
       off_code == "off" and nk_code == "skip" and not any("0a1b2c3d52" in f for f in kept_files()), (off_code, nk_code))
 wipe()
-real_item, real_visit_max, real_day_max = KP.ITEM_DAY_MAX, KP.VISIT_ITEMS_MAX, KP.VISIT_DAY_MAX
+real_item, real_visit_max = KP.ITEM_DAY_MAX, KP.VISIT_ITEMS_MAX
 KP.VISIT_ITEMS_MAX = 2
 codes = []
 for i in range(3):
@@ -212,13 +214,29 @@ check("the ceilings of an instance: a visit keeps at most VISIT_ITEMS_MAX pictur
 wipe()
 for i in range(3):
     os.makedirs(os.path.join(STORE, "kept", day, f"v-lz1abc-other{i:05d}"), exist_ok=True)
-KP.VISIT_DAY_MAX = 3
+os.environ["SNAPEYES_KEEP_VISITS_DAY"] = "3"
 k = KP.begin("analyze", {"visit": "lz1abc-ceiling003"})
 k.image("photo", lambda: pj)
 full_code = k.done({"outcome": "accepted"})
-KP.VISIT_DAY_MAX = real_day_max
-check("the deployment's ceiling of visits a day (counted from the day's folder in the writer thread): reached, nothing is written and the code is full",
-      full_code == "full" and not any("ceiling003" in f and f.endswith(".jpg") for f in kept_files()), (full_code, kept_files()))
+os.environ.pop("SNAPEYES_KEEP_VISITS_DAY")
+check("the deployment's ceiling of visits a day (SNAPEYES_KEEP_VISITS_DAY, default 100; counted from the day's folder in the writer thread): reached, nothing is "
+      "written and the code is day", full_code == "day" and not any("ceiling003" in f and f.endswith(".jpg") for f in kept_files()) and KP.visit_day_max() == 100
+      and KP.max_mb() == 500 and KP.VISIT_ITEMS_MAX == 12, (full_code, kept_files()))
+wipe()
+os.environ["SNAPEYES_KEEP_MAX_MB"] = "10"
+real_margin = KP.MARGIN_MB
+KP.MARGIN_MB = 0
+store.put(f"kept/{day}/_n/otherinstance.json", json.dumps({"bytes": 11 * 1024 * 1024}).encode(), "application/json", upsert=True)
+k = KP.begin("analyze", {"visit": "lz1abc-ceiling004"})
+k.image("photo", lambda: pj)
+cap_code = k.done({"outcome": "accepted"})
+mine = json.load(open(os.path.join(STORE, "kept", day, "_n", KP.INSTANCE + ".json"), encoding="utf-8")) if os.path.isfile(os.path.join(STORE, "kept", day, "_n", KP.INSTANCE + ".json")) else None
+KP.MARGIN_MB = real_margin
+os.environ.pop("SNAPEYES_KEEP_MAX_MB")
+check("the writer's look at the area (every five minutes per instance): it reports its own bytes of today (kept/<day>/_n/<instance>.json), sums the instances' reports "
+      "and the clean-up's sum of the finished days, and past the cap plus the margin keeps nothing (code cap)",
+      cap_code == "cap" and isinstance(mine, dict) and isinstance(mine.get("bytes"), int) and not any("ceiling004" in f and f.endswith(".jpg") for f in kept_files()), (cap_code, mine))
+wipe()
 wipe()
 
 # ============================================================================================ 2. over HTTP
@@ -289,6 +307,25 @@ bot = dict(HEADERS, **{"User-Agent": "Googlebot/2.1 (+http://www.google.com/bot.
 n_before = len(kept_files())
 cb, ab = post("/api/analyze", {"image": PHOTO, "origWidth": 1024, "origHeight": 1024, "lang": "lt", "visit": VISIT}, bot)
 check("a robot's photo is not kept (the event says robot)", cb == 200 and len(kept_files()) == n_before and last_event("analyze").get("kept") == "robot", (cb, last_event("analyze").get("kept")))
+n_before = len(kept_files())
+cu1, au1 = post("/api/analyze", {"image": PHOTO, "origWidth": 1024, "origHeight": 1024, "lang": "en", "market": "us", "visit": "lzus01-abcdefgh"})
+k_us1 = last_event("analyze").get("kept")
+cu2, au2 = post("/api/analyze", {"image": PHOTO, "origWidth": 1024, "origHeight": 1024, "lang": "en", "visit": "lzus02-abcdefgh"},
+                dict(HEADERS, **{"X-Vercel-Ip-Country": "US"}))
+k_us2 = last_event("analyze").get("kept")
+cu3, eu3 = post("/api/enhance", {"crop": b64(EYE.resize((1024, 1024)), 95), "mode": "artistic", "pad": 1.12, "ticket": au1.get("ticket"), "lang": "en",
+                                 "market": "us", "visit": "lzus01-abcdefgh"})
+check("a visitor in the United States is never kept (the price market us, or the country US): the code says market and nothing is written, the reply as always",
+      cu1 == 200 and cu2 == 200 and cu3 == 200 and k_us1 == "market" and k_us2 == "market" and last_event("enhance").get("kept") == "market"
+      and len(kept_files()) == n_before and not any("lzus0" in f for f in kept_files()), (cu1, cu2, cu3, k_us1, k_us2, last_event("enhance").get("kept")))
+L.gemini_image = lambda *a, **kw: (_ for _ in ()).throw(RuntimeError("the image model failed"))
+cf_, ef_ = post("/api/enhance", {"crop": b64(EYE.resize((1024, 1024)), 95), "mode": "artistic", "pad": 1.12, "ticket": a1["ticket"], "lang": "lt", "visit": "lzfail-abcdefgh"})
+L.gemini_image = lambda prompt, im, size=None, thinking=None, model=None: EYE.copy()
+fail_files = [f for f in kept_files() if "/v-lzfail-abcdefgh/" in f]
+fail_meta = next((json.load(open(os.path.join(STORE, *f.split("/")), encoding="utf-8")) for f in fail_files if f.endswith(".json")), {})
+check("a restoration that fails after its crop was kept: the crop and a JSON with outcome failed and the error's class (the owner sees the failures); the reply is the error as always",
+      cf_ == 500 and len(fail_files) == 2 and any(f.endswith("-before.jpg") for f in fail_files) and fail_meta.get("outcome") == "failed"
+      and fail_meta.get("error") == "RuntimeError" and fail_meta.get("step") == "enhance", (cf_, fail_files, fail_meta))
 blob = "".join(open(os.path.join(STORE, *f.split("/")), encoding="utf-8").read() for f in kept_files() if f.endswith(".json"))
 check("nothing personal in what is kept: no IP address, no user agent, no cookie, no ticket, no email", "203.0.113.77" not in blob and "Mozilla" not in blob
       and "iPhone OS" not in blob and "_fbp" not in blob and "fb.1." not in blob and a1["ticket"] not in blob and "@" not in blob, blob[:400])
@@ -312,6 +349,21 @@ check("kept/<day> folders older than 30 days go with everything in them; a day 2
       and not any(f"kept/{old_day}/" in f for f in left) and any(f"kept/{edge_day}/" in f for f in left) and any(f"kept/{day}/" in f for f in left), (res, left[:5]))
 dry = KP.purge(days_kept=1, yes=False)
 check("a dry run deletes nothing", len(kept_files()) == len(left) and dry.get("files", 0) >= 2, dry)
+# the size cap: the oldest finished days go until the area is under SNAPEYES_KEEP_MAX_MB; never today's
+os.environ["SNAPEYES_KEEP_MAX_MB"] = "10"
+cap_days = [time.strftime("%Y-%m-%d", time.gmtime(time.time() - d * 86400)) for d in (5, 4, 3)]
+for d in cap_days:
+    store.put(f"kept/{d}/v-big-visit0000/120000-analyze-abcdef-photo.jpg", os.urandom(6 * 1024 * 1024), "image/jpeg", upsert=True)
+    store.put(f"kept/{d}/v-big-visit0000/120000-analyze-abcdef.json", b"{}", "application/json", upsert=True)
+cres = KP.purge()
+area = json.load(open(os.path.join(STORE, "kept", "_area.json"), encoding="utf-8"))
+left_days = sorted({f.split("/")[1] for f in kept_files()})
+os.environ.pop("SNAPEYES_KEEP_MAX_MB")
+check("the size cap (SNAPEYES_KEEP_MAX_MB, here 10): three finished days of 6 MB, the small day of 29 days ago and today: the OLDEST go (the small one, then two of 6 MB), the newest stays, today stays; the finished days are summed "
+      "once (kept/<day>/_size.json) and the sums written to kept/_area.json for the writers and the admin page",
+      cres.get("cap_days") == 3 and edge_day not in left_days and cap_days[0] not in left_days and cap_days[1] not in left_days and cap_days[2] in left_days and day in left_days
+      and area.get("past_bytes", 0) >= 6 * 1024 * 1024 and area.get("cap_mb") == 10 and os.path.isfile(os.path.join(STORE, "kept", cap_days[2], "_size.json")),
+      (cres, left_days, area))
 src = open(os.path.join(API, "_lib", "cleanup.py"), encoding="utf-8").read()
 check("the clean-up's run calls the purge with 30 days (keep.KEEP_DAYS) on every run", "keep.purge(keep.KEEP_DAYS, yes, stop_left, say)" in src and KP.KEEP_DAYS == 30)
 
@@ -338,6 +390,10 @@ check("the view of a day: the days, the visits with their steps in time order (a
       ca == 200 and day in va.get("days", []) and va.get("day") == day and va.get("keep_days") == 30 and steps[:3] == ["analyze", "analyze", "enhance"] and "compose" in steps
       and sorted(set(pics)) == ["after", "art", "before", "photo"] and all(isinstance(u, str) and "expires=" in u for s in vis["steps"] for u in s["pictures"].values())
       and any((s.get("meta") or {}).get("reason") == "no_eye" for s in vis["steps"]), (ca, steps, pics, va.get("days")))
+ar = va.get("area") or {}
+check("the page's line about the area: its size, the cap (500 MB), today's size and visits against the ceiling (100), and what holds keeping back (none here)",
+      isinstance(ar.get("area_mb"), (int, float)) and ar.get("cap_mb") == 500 and ar.get("visits_day_max") == 100 and isinstance(ar.get("visits_today"), int)
+      and ar.get("held") is None and ar.get("margin_mb") == 200, ar)
 cn, jn = admin("kept", key=False, day=day)
 check("without the admin key: refused", cn in (401, 403), (cn, jn))
 cd1, jd1 = admin("kept_delete", day=day, visit=f"v-{VISIT}", confirm="no")

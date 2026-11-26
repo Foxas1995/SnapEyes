@@ -219,6 +219,18 @@ def redisplay(body):
 
 
 def enhance(body):
+    """POST /api/enhance (the module text). A failure after the crop's kept copy was started writes its JSON too, with outcome failed and the error's class
+    (api/_lib/keep.py: the owner wants to see the failures most of all); the error itself goes on as it always did."""
+    box = {}
+    try:
+        return _enhance(body, box)
+    except Exception as e:
+        if box.get("kp") is not None:
+            box["kp"].done({"outcome": "failed", "error": type(e).__name__})
+        raise
+
+
+def _enhance(body, box):
     t0 = time.time()
     if body.get("sample") is True:
         return sample(body)
@@ -229,8 +241,8 @@ def enhance(body):
     cap = PC.check()                    # the day's ceiling of free previews of this connection, before the model is called
     crop = L.b64_to_pil(body.get("crop"))
     # the crop as it arrived is kept (api/_lib/keep.py), written while the model works; the clean restoration and the codes beside it below
-    kp = KP.begin("enhance", body)
-    kp.image("before", lambda: KP.b64_bytes(body.get("crop")))
+    kp = box["kp"] = KP.begin("enhance", body)
+    kp.image("before", lambda im=crop: KP.crop_jpeg(im))
     s = min(crop.size); crop = crop.crop((0, 0, s, s))
     if s < 48: raise ValueError("crop too small")
     if s > L.WORK:                      # mask and model both work at WORK; do not allocate more than that

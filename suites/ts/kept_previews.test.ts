@@ -3,7 +3,8 @@
 // (the numbers measured and the anonymous context), the page drawn with a visit, and the photo step's visit (src/shared/visit.ts: random, per page load, never
 // stored). Pure page code, loaded through Vite's module runner by scripts/run_ts_tests.mjs; returns its results.
 import { readFileSync } from 'node:fs';
-import { codesText, outcomeText, type KeptStep } from '../../src/admin/Previews';
+import { areaText, codesText, outcomeText, type KeptStep } from '../../src/admin/Previews';
+import { checkoutLegal } from '../../src/shared/legal';
 import { TAB_GROUPS } from '../../src/admin/AdminApp';
 import { VISIT } from '../../src/shared/visit';
 
@@ -35,5 +36,17 @@ export async function run(): Promise<Row[]> {
   const adminApi = readFileSync('src/admin/api.ts', 'utf8');
   check('the photo step sends the visit with analyze, deglare and enhance (TryApp post) and compose (composeApi); the owner\'s laboratory says nokeep',
     tryApp.includes('visit: VISIT, ...body') && composeApi.includes('visit: VISIT') && adminApi.includes('nokeep: true'));
+  const failed = outcomeText(step({ outcome: 'failed', error: 'RuntimeError' }, 'enhance'));
+  check('a step that failed (the model failed after the crop was kept): "Nepavyko" with the class of the error, in red', failed?.text === 'Nepavyko (RuntimeError)' && failed.bad, JSON.stringify(failed));
+  const a0 = areaText({ area_mb: 123.4, today_mb: 12, cap_mb: 500, visits_today: 40, visits_day_max: 100, held: null });
+  const a1 = areaText({ area_mb: 720, today_mb: 300, cap_mb: 500, visits_today: 60, visits_day_max: 100, held: 'cap' });
+  const a2 = areaText({ area_mb: 200, today_mb: 150, cap_mb: 500, visits_today: 100, visits_day_max: 100, held: 'day' });
+  check('the area line: the size against the cap and the visits of today against the ceiling; when the cap or the ceiling of the day holds keeping back, it says so and names the setting that raises it',
+    a0.text.includes('123.4 MB iš 500 MB') && a0.text.includes('40 iš 100') && a0.held === null && !!a1.held && a1.held.includes('SNAPEYES_KEEP_MAX_MB')
+      && !!a2.held && a2.held.includes('SNAPEYES_KEEP_VISITS_DAY') && areaText(undefined).held === null, JSON.stringify([a0, a1, a2]));
+  const us = JSON.stringify(checkoutLegal('en', 'us').photoNotice);
+  const eu = JSON.stringify(checkoutLegal('en', 'eu').photoNotice);
+  check('the line of the photo step: the US one as before (only to make the artwork: a US visitor is not kept), the EU one names the 30 days', us.includes('used only to make your artwork')
+    && !us.includes('30') && eu.includes('up to 30 days'), `${us} | ${eu}`);
   return out;
 }
