@@ -16,6 +16,7 @@ from PIL import Image
 from _lib import iris as L
 from _lib import previewcap as PC   # the day's ceiling of free previews per connection: refused here, before the photo is checked
 from _lib import events as E   # the admin panel's usage events (no personal data)
+from _lib import keep as KP   # the kept copy of the photo and its outcome, 30 days, for the owner's admin page (the owner's decision of 2026-11-26)
 from _lib import coverage as CV   # how much of the iris an eyelid covers, measured on the photo
 from _lib import lashblock as LB  # a dark lash curtain over the iris with a lid margin behind it, measured on the photo
 from _lib import overshoot as OS   # a limbus fit that runs off the photo is refitted inside a sane radius
@@ -652,13 +653,17 @@ def analyze(body):
         as it is."""
         return TEXTS[lang][key].format(**kw) if lang in TEXTS else en
     im = L.b64_to_pil(body.get("image"))
+    # the photo as the analysis sees it is kept (api/_lib/keep.py): prepared and written in a thread while the photo is checked, its outcome beside it below
+    kp = KP.begin("analyze", body)
+    kp.image("photo", lambda: KP.photo_jpeg(im))
     W, H = im.size
     ow, oh = int(body.get("origWidth") or W), int(body.get("origHeight") or H)
     res, ori, _irs = E.photo_classes(ow, oh)         # the analysis event keeps classes of the photo (never the photo)
     scale = ow / float(W)
     v = L.gemini_json(L.VISION_MODEL, L.PROMPT_VISION, im)
+    kept_no_eye = lambda: kp.done({"outcome": "refused", "reason": "no_eye", "res": res, "ori": ori, "source": E.device_source(device)})
     if not v or v.get("found") is False or "iris_box" not in v:
-        E.record("analyze", ok=False, verdict="no_eye", lang=lang, device=E.device_class(device), source=E.device_source(device), res=res, ori=ori)
+        E.record("analyze", ok=False, verdict="no_eye", lang=lang, device=E.device_class(device), source=E.device_source(device), res=res, ori=ori, kept=kept_no_eye())
         return {"ok": False, "reason": "no_eye", "targets": TARGETS,
                 "message": say("no_eye", "We could not find an eye in this photo. Fill the frame with one open eye and try again.")}
     box = v.get("iris_box")
@@ -666,7 +671,7 @@ def analyze(body):
               and all(isinstance(c, (int, float)) and c == c and abs(c) < 1e6 for c in box)
               and box[2] > box[0] and box[3] > box[1])
     if not ok_box:
-        E.record("analyze", ok=False, verdict="no_eye", lang=lang, device=E.device_class(device), source=E.device_source(device), res=res, ori=ori)
+        E.record("analyze", ok=False, verdict="no_eye", lang=lang, device=E.device_class(device), source=E.device_source(device), res=res, ori=ori, kept=kept_no_eye())
         return {"ok": False, "reason": "no_eye", "targets": TARGETS,
                 "message": say("no_eye", "We could not find an eye in this photo. Fill the frame with one open eye and try again.")}
     # The model is asked for [x1,y1,x2,y2] but sometimes answers in its native [y1,x1,y2,x2] order. On a
@@ -880,8 +885,13 @@ def analyze(body):
     # No ticket for a circle that is not an iris: from a crop of eyelid skin the image model invented a
     # complete brown iris, which would then be sold as the customer's own eye. The same for a photo too blurry to
     # carry the customer's own pattern (blur_blocked): the model would invent it.
+    # the kept copy's outcome: accepted (a work ticket goes back) or refused, with the reason the capture screen shows
+    kept = kp.done({"outcome": "accepted" if locked and not blocked else "refused", "reason": reason if blocked else (None if locked else "unlocked"),
+                    "verdict": verdict, "detail": detail, "locked": bool(locked), "blocked": bool(blocked), "block_by": block_by, "diameter_px": int(diam_orig),
+                    "glare_on_fibres_pct": round(glare_fib, 1), "occlusion_pct": occl, "pupil_size": pupil_size,
+                    "lid_wedge_pct": None if cover is None else cover["wedge_pct"], "res": res, "ori": ori, "source": E.device_source(device)})
     E.record("analyze", ok=True, verdict=verdict, detail=detail, blocked=bool(blocked), block_reason=reason, locked=bool(locked), shake_asked=bool(locked) and basis < FIBRE_OK and block_by in (None, "shake"), lang=lang, device=E.device_class(device), source=E.device_source(device),
-             res=res, ori=ori, irs=E.photo_classes(ow, oh, diam_orig)[2])
+             res=res, ori=ori, irs=E.photo_classes(ow, oh, diam_orig)[2], kept=kept)
     return {"ok": True, "ticket": L.mint_ticket("work") if locked and not blocked else None, "pupil_r": pupil_r, "fibre": round(fibre, 2),
             "iris": {"cx": cx / W, "cy": cy / H, "r": r / W}, "pad": pad, "glare_boxes_crop": boxes,
             "quality": {"diameter_px": int(diam_orig), "sharpness": round(sharp, 1), "fibre": round(fibre, 2), "sharpness_label": label, "occlusion_pct": occl,

@@ -137,8 +137,12 @@ ATTRIBUTED = ("analyze", "deglare", "enhance", "compose", "checkout", "help", "e
 for _kind in ATTRIBUTED:
     for _field, _typ in ATTR.items():
         FIELDS[_kind].setdefault(_field, _typ)
-# What the analysis saw of the photo, as classes (photo_classes): the resolution of the original in megapixels, its orientation, the size of the iris in it. The photo itself is never stored.
+# What the analysis saw of the photo, as classes (photo_classes): the resolution of the original in megapixels, its orientation, the size of the iris in it. The photo itself is kept apart,
+# for 30 days, by api/_lib/keep.py (the owner's decision of 2026-11-26), never in an event
 FIELDS["analyze"].update(res="c", ori="c", irs="c")
+# what became of the kept copy of the step's pictures (api/_lib/keep.py Keeper.done: ok, slow, fail, full, skip, off, time, robot, sample, admin)
+for _kind in ("analyze", "enhance", "compose"):
+    FIELDS[_kind]["kept"] = "c"
 EXP_STAGES = ("visit", "preview", "checkout", "paid")
 CHECKOUT_STAGES = ("start", "paid")
 SOURCES = ("camera", "gallery", "live", "sample", "lab")

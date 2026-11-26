@@ -20,6 +20,8 @@ it twice): a missed day is caught up by the next run, and a second run finds not
      48 h the terms promise); then the prints of paid orders (api/_lib/prints.py daily, from the index cleanup/print/): one whose artwork is
      delivered and that was not sent yet goes to merchOne, one that was sent is read back from merchOne (the shipping e-mail when its webhook
      was lost), for at most prints.DAILY_SECONDS of the run
+  1b. the kept copies of the free preview (kept/<UTC day>/, api/_lib/keep.py purge): every day folder older than keep.KEEP_DAYS (30) days
+     goes with everything in it (the owner's decision of 2026-11-26; the privacy policy promises 30 days)
   2. UNPAID orders older than 26 h are deleted with their images and their admin log (ops/orderlog/<order>/, which
      belongs to the order record: pay.drop_orderlog) (policy: within 30 days). Only after Stripe was
      asked: a session paid without paid.json is recorded as paid instead (the customer gets the confirmation), one
@@ -155,6 +157,10 @@ def run(yes=True, stop_left=10.0, out=None, lock=True):
         from . import prints
         res["prints"] = prints.daily(yes, stop_left, say, prints.DAILY_SECONDS if boxed else 1e9)
         late = bool(res["prints"].pop("more", False)) or late
+        # the kept copies of the free preview (api/_lib/keep.py): a day's folder goes KEEP_DAYS (30) days later, as the privacy policy promises
+        from . import keep
+        res["kept"] = keep.purge(keep.KEEP_DAYS, yes, stop_left, say)
+        late = bool(res["kept"].pop("more", False)) or late
         if not res["more"]:
             res["unpaid"] = _unpaid(yes, stop_left, say)
             res["more"] = res["unpaid"].pop("more", False)

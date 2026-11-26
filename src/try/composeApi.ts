@@ -7,6 +7,7 @@
 import { callApi, type ApiReply } from '../order/api';
 import type { Eye } from './multi';
 import { composeSide, sealedFor } from './multi';
+import { VISIT } from '../shared/visit';
 import type { Lang } from './lang';
 import { T } from './copy';
 import { withCamp } from '../shared/counter';
@@ -68,7 +69,8 @@ export interface CallOptions { timeoutMs?: number; api?: typeof callApi }
 
 /** One call of /api/compose for these eyes. extra: style or styles, size, layout, names, date, family_name, opts, retake, again. */
 export async function composeCall<D = Record<string, unknown>>(ctx: Ctx, extra: Record<string, unknown>, o: CallOptions = {}): Promise<Outcome<D>> {
-  const body = { lang: ctx.lang, ...(ctx.market ? { market: ctx.market } : {}), ...(await eyesBody(ctx)), ...extra };
+  // visit: this tab's random visit (src/shared/visit.ts): the server keeps the large preview with the tab's photos (api/_lib/keep.py)
+  const body = { lang: ctx.lang, visit: VISIT, ...(ctx.market ? { market: ctx.market } : {}), ...(await eyesBody(ctx)), ...extra };
   const api = o.api ?? callApi;
   return outcomeOf(await api<D>('/api/compose', { body, timeoutMs: o.timeoutMs ?? 60_000 }));
 }

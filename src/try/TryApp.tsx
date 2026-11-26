@@ -32,6 +32,7 @@ import {
   loadOrderRef, runCheckout, saveOrderRef, saveSnapshot, staleEyes, takeSnapshot,
 } from './checkout';
 import { callApi, type CheckoutInfo } from '../order/api';
+import { VISIT } from '../shared/visit';
 import { experimentToken, listFor, noteChanged, noteCheckoutInfo, noteInfoUnavailable, notePreview } from '../shared/pricing';
 import { priceChangedNote } from './priceNote';
 import { count, note as noteCounter, withCamp } from '../shared/counter';
@@ -150,7 +151,8 @@ async function post<R>(path: string, body: Record<string, unknown>, answerNotOk 
     r = await fetch(path, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify(withCamp({ lang: T.lang, market: currentMarket(), ...body })),
+      // visit: this tab's random visit (src/shared/visit.ts), so that the server's kept copies of its photo step lie together (api/_lib/keep.py)
+      body: JSON.stringify(withCamp({ lang: T.lang, market: currentMarket(), visit: VISIT, ...body })),
     });
     // Vercel answers a timeout or an oversized body with text/plain, so read text first and never let
     // JSON.parse throw the real status away

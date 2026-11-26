@@ -31,7 +31,8 @@ force, the eyes' ids, classes and gate results, the current artwork's record; re
 the registry with its ranges of eye counts, the ceiling, the owner's override, the effective stage, the ticks L0 to L11 and the waiver, the revision the page
 sends back; api/_lib/stage_overrides.py), styles_stats (the numbers of that page worked out of the usage events: the set-level gate funnel and the opening line
 per eye count, the demand for styles that cannot be bought yet, chosen against recommended, render times p50 and p95 against the estimate, errors, review,
-gate, fallbacks, the attention card; api/_lib/style_stats.py), styles_audit (the audit log of the switch) and order_link (one signed link of one image of an order, made when the owner clicks).
+gate, fallbacks, the attention card; api/_lib/style_stats.py), styles_audit (the audit log of the switch) and order_link (one signed link of one image of an order, made when the owner clicks), kept (the page Peržiūros:
+the kept copies of the free preview by day and visit, with links valid ten minutes; api/_lib/keep.py; kept_delete deletes one visit's copies, audited).
 
 Actions (the page asks for a confirmation first; refund and delete_files also need the order number typed as
 "confirm"; rerun_step and lab_steps draw a 4K master through the master plan's step runner, with the claims and guards of a paid order): link (the withdrawal link, and the order page link to copy: opening that one starts making the file),
@@ -638,8 +639,8 @@ def a_why(body, who):
 
 
 def a_photos(body, who):
-    """The page Nuotrauku kokybe: what the server saw of the photos, as classes, by campaign (default), device class or browser family. {days, dev, br, src, cmp, by (cmp, dev or br)}. Read only. No photo
-    of a free preview is ever stored: these are counts of classes."""
+    """The page Nuotrauku kokybe: what the server saw of the photos, as classes, by campaign (default), device class or browser family. {days, dev, br, src, cmp, by (cmp, dev or br)}. Read only. These
+    are counts of classes; the photos themselves are kept apart for 30 days (api/_lib/keep.py) and shown on the page Peržiūros (a_kept)."""
     n, f, rows, agg = _traffic(body)
     by = body.get("by") if body.get("by") in ("cmp", "dev", "br") else "cmp"
     return dict(TR.photos_report(agg, f, by), ok=True, days=n, filters=f, available=TR.available(agg), partial=not all(c for _d, _a, c in rows), recording=E.retention_ok())
@@ -728,6 +729,74 @@ def act_feedback_delete(body, who):
     except ValueError as e:
         raise L.ClientError(str(e)) from None
     return {"ok": True, "result": "deleted" if gone else "not_found", "audit_detail": "1 text" if gone else "none"}
+
+
+KEPT_SIGN = 600              # the links of the page Peržiūros: ten minutes
+KEPT_PAGE = 12               # visits in one reply of that page
+
+
+def a_kept(body, who):
+    """The page Peržiūros: the kept copies of the free preview (api/_lib/keep.py, 30 days): {day (YYYY-MM-DD, default the newest), offset}. Returns the
+    days that have copies, and KEPT_PAGE visits of the day (newest visit names first), each with its steps in time order: the step, the time, what
+    the server said (the outcome and its codes, the anonymous context) and links to its pictures valid KEPT_SIGN seconds. Read only."""
+    from . import keep as KP
+    all_days = KP.days()
+    day = body.get("day") if isinstance(body.get("day"), str) and body.get("day") in all_days else (all_days[0] if all_days else None)
+    off = body.get("offset")
+    off = off if isinstance(off, int) and not isinstance(off, bool) and off >= 0 else 0
+    if day is None:
+        return {"ok": True, "on": KP.on(), "keep_days": KP.KEEP_DAYS, "days": [], "day": None, "visits": [], "total": 0, "offset": 0, "more": False}
+    names = sorted(KP.visits(day), reverse=True)
+    page = names[off:off + KEPT_PAGE]
+
+    def one(visit):
+        files = KP.visit_files(day, visit)
+        steps, order = {}, []
+        for f in files:
+            k = f"{f['time']}-{f['step']}-{f['id']}"
+            if k not in steps:
+                steps[k] = {"time": f["time"], "step": f["step"], "meta": None, "pictures": {}}
+                order.append(k)
+            path = f"{KP.TOP}/{day}/{visit}/{f['name']}"
+            if f["picture"]:
+                steps[k]["pictures"][f["picture"]] = path
+            else:
+                steps[k]["meta_path"] = path
+        jobs = []
+        for k in order:
+            s = steps[k]
+            if s.get("meta_path"):
+                jobs.append(lambda s=s: s.__setitem__("meta", store.get_json(s.pop("meta_path"), timeout=6.0)))
+            for pic, path in list(s["pictures"].items()):
+                jobs.append(lambda s=s, pic=pic, path=path: s["pictures"].__setitem__(pic, store.signed_url(path, KEPT_SIGN)))
+        each(jobs, width=12)
+        out = []
+        # in time order: the file names say the second, the JSON's t the moment (two steps of one second keep the order they happened in)
+        order.sort(key=lambda k: (steps[k]["time"], (steps[k].get("meta") or {}).get("t") or 0))
+        for k in order:
+            s = steps[k]
+            s.pop("meta_path", None)
+            s["pictures"] = {p: u for p, u in s["pictures"].items() if isinstance(u, str) and not u.startswith(f"{KP.TOP}/")}
+            out.append(s)
+        return {"visit": visit, "steps": out}
+
+    rows = [r for r in each([lambda v=v: one(v) for v in page], width=4) if isinstance(r, dict)]
+    return {"ok": True, "on": KP.on(), "keep_days": KP.KEEP_DAYS, "days": all_days, "day": day, "visits": rows, "total": len(names), "offset": off,
+            "more": off + KEPT_PAGE < len(names), "sign_seconds": KEPT_SIGN}
+
+
+def act_kept_delete(body, who):
+    """Delete one visit's kept copies ({day, visit, confirm: the visit's name}), for a person who asks us to: everything in kept/<day>/<visit>/ goes.
+    The audit log names the day and the number of files, never the pictures."""
+    from . import keep as KP
+    day, visit = body.get("day"), body.get("visit")
+    if not isinstance(visit, str) or body.get("confirm") != visit:
+        raise L.ClientError("Type the visit's name to confirm.")
+    try:
+        n = KP.delete_visit(day, visit)
+    except ValueError as e:
+        raise L.ClientError(str(e)) from None
+    return {"ok": True, "result": "deleted" if n else "not_found", "deleted": n, "audit_detail": f"kept {day} {n} files"}
 
 
 def a_errors(body, who):
@@ -2277,6 +2346,7 @@ ACTIONS = {
     "sources": a_sources, "daily": a_daily, "funnel": a_funnel, "why": a_why, "photos": a_photos, "ads": a_ads,
     "ads_put": audited("ads_put", act_ads_put), "ads_delete": audited("ads_delete", act_ads_delete),
     "feedback": a_feedback, "feedback_delete": audited("feedback_delete", act_feedback_delete),
+    "kept": a_kept, "kept_delete": audited("kept_delete", act_kept_delete),
     "styles_limits": audited("styles_limits", act_styles_limits),
     "exp_start": audited("exp_start", act_exp_start),
     "print_status": a_print_status,

@@ -37,6 +37,7 @@ from _lib import pupil_seal as PS   # the render's pupil: a halo round it, a col
 from _lib import events as E   # the admin panel's usage events (no personal data)
 from _lib import preview as P
 from _lib import previewcap as PC   # the day's ceiling of free previews per connection (api/_lib/previewcap.py)
+from _lib import keep as KP   # the kept copies of the crop and the restoration, 30 days, for the owner's admin page (the owner's decision of 2026-11-26)
 from _lib.styles import eye as EYE   # the eye profile: measured here, sealed, read by compose, the order draft and the master
 from _lib.styles import gate as GATE   # the gate's severity: how far past its rules an eye is (the second restoration)
 from _lib.styles import reveal as REV   # the Reveal's numbers and its display copy (WP9)
@@ -227,6 +228,9 @@ def enhance(body):
         raise PermissionError("expired_or_missing_ticket")
     cap = PC.check()                    # the day's ceiling of free previews of this connection, before the model is called
     crop = L.b64_to_pil(body.get("crop"))
+    # the crop as it arrived is kept (api/_lib/keep.py), written while the model works; the clean restoration and the codes beside it below
+    kp = KP.begin("enhance", body)
+    kp.image("before", lambda: KP.b64_bytes(body.get("crop")))
     s = min(crop.size); crop = crop.crop((0, 0, s, s))
     if s < 48: raise ValueError("crop too small")
     if s > L.WORK:                      # mask and model both work at WORK; do not allocate more than that
@@ -264,12 +268,15 @@ def enhance(body):
         u2 = L.store(f"eyes/{sid}/{mode}.jpg", L.pil_bytes(out, "JPEG", 93), "image/jpeg")
         L.store(f"eyes/{sid}/{mode}.json", json.dumps(meta).encode(), "application/json")
         res["stored"] = bool(u1 and u2)
+    kp.image("after", lambda: bytes(clean))
+    kept = kp.done(dict({"outcome": "restored", "mode": mode, "qa_ok": bool(qa.get("ok")), "fallback": fallback, "used_sr": used_sr, "fidelity": res["fidelity"],
+                         "reveal": rv["code"], "retry": (retry or {}).get("code")}, **{k: v for k, v in _codes(prof, prof_ms).items() if k != "profile_ms"}))
     PC.mark(cap)                        # one more preview made by this connection today
     quota = PC.left(cap)                # and how many it has left: the page says so under the result (src/try/ResultView.tsx)
     if quota:
         res["previews"] = quota
     E.record("enhance", mode=mode, qa_ok=bool(qa.get("ok")), ring_de00=qa.get("ring_de00"), fallback=fallback, used_sr=used_sr, fidelity=res["fidelity"],
-             reveal=rv["code"], **({"reveal_ms": rv["ms"]} if rv["params"] is not None else {}), **_codes(prof, prof_ms), **_retry_codes(retry))
+             reveal=rv["code"], **({"reveal_ms": rv["ms"]} if rv["params"] is not None else {}), **_codes(prof, prof_ms), **_retry_codes(retry), kept=kept)
     return res
 
 def handle(req): L.run(req, enhance)

@@ -67,7 +67,8 @@ export function publicCall<T>(path: string, body: Json, timeoutMs = 135_000): Pr
   return call<T>(path, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-    body: JSON.stringify(body),
+    // nokeep: the owner's laboratory runs are not visitors' previews, so the server keeps no copy of them (api/_lib/keep.py)
+    body: JSON.stringify({ ...(body as Record<string, unknown>), nokeep: true }),
   }, timeoutMs);
 }
 

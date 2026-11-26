@@ -10,6 +10,7 @@ from _lib import store
 from _lib import pay
 from _lib import counter
 from _lib import feedback
+from _lib import keep
 from _lib import merchone
 from _lib import prints
 from _lib import meta
@@ -48,6 +49,8 @@ def handle(req):
             "counter": counter.on(),
             # whether the anonymous feedback box of /try is offered here (SNAPEYES_FEEDBACK, a store for the answers and the daily clean-up that deletes the texts after 90 days): /try shows it only when this is true
             "feedback": feedback.on(),
+            # whether the free preview's pictures are kept for the owner's admin page (api/_lib/keep.py: SNAPEYES_KEEP, a store and the daily clean-up that deletes them after 30 days)
+            "keep": keep.on(),
             # whether /legal/order-mail.json is readable and complete enough for live sales (pay.legal_problem)
             "legal": not pay.legal_problem(),
             # whether /api/deglare calls the image model for reflections (off by default, see deglare.DEGLARE_MODEL)

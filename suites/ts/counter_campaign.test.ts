@@ -45,7 +45,9 @@ export async function run(): Promise<Row[]> {
   const tryApp = read('src/try/TryApp.tsx');
   const api = read('src/order/api.ts');
   const compose = read('src/try/composeApi.ts');
-  check('the analysis, the reflection removal and the restoration of /try carry the code and the market (TryApp post)', /JSON\.stringify\(withCamp\(\{ lang: T\.lang, market: currentMarket\(\), \.\.\.body \}\)\)/.test(tryApp));
+  check('the analysis, the reflection removal and the restoration of /try carry the code and the market (TryApp post)'
+    + ' - 1126: and the tab\'s visit (src/shared/visit.ts), which groups the kept copies of the photo step (api/_lib/keep.py)',
+    /JSON\.stringify\(withCamp\(\{ lang: T\.lang, market: currentMarket\(\), visit: VISIT, \.\.\.body \}\)\)/.test(tryApp));
   check('a request to /api/checkout or /api/compose carries it (callApi), a request to any other endpoint does not (the order drafts, the status, the withdrawal)',
     /\[\/\]api\[\/\]\(checkout\|compose\)/.test(api) && /withCamp\(opts\.body/.test(api));
   check('the manual route click of the retake card carries it', /withCamp\(\{ action: 'help'/.test(compose));

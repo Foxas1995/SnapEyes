@@ -62,6 +62,7 @@ from _lib import catalogue
 from _lib import events as E   # the admin panel's usage events (no personal data)
 from _lib import preview as P
 from _lib import store         # Answer: the refusals that are not a 400, and _StatusReq, which gives them their status
+from _lib import keep as KP    # the kept copy of the large preview, 30 days, for the owner's admin page (the owner's decision of 2026-11-26)
 from _lib import markets as MK
 from _lib import words as W
 from _lib.styles import gate as GATE   # the restoration gate: the set-level result of the eyes of one request
@@ -678,6 +679,16 @@ def _jpeg(img, q=90):
     return L.pil_to_b64(img, "JPEG", q)
 
 
+def _kept_art(req, jpg, style, n, layout, gate):
+    """Keep the large preview a visitor is shown (api/_lib/keep.py): the picture as it goes back, with the style, the eye count, the layout and the set's
+    gate beside it. The keeper was made by compose() (none for the owner's lab, the sample eye, a clean render or another size). Returns the event's code."""
+    kp = req.get("kp")
+    if kp is None:
+        return None
+    kp.image("art", lambda: KP.b64_bytes(jpg))
+    return kp.done({"outcome": "shown", "style": style, "eyes": n, "layout": layout, "gate": gate, "size": req["size"]})
+
+
 # ----------------------------------------------------------------------------- the reply's shared parts
 def _pick_reply(cat):
     return {"id": cat["pick"], "reason": cat["reason"]} if cat["pick"] else None
@@ -787,11 +798,13 @@ def _one_engine(req, style, n, plains, metas, cat, admin, clean, t0):
     canvas = pv.fmt or canvas or eng["canvases"][0]
     word = "wallpaper" if canvas == "9:19.5" else "artwork"
     pick_id = cat["pick"]
+    jpg = _jpeg(img)
     if not admin:
-        E.record("compose", tiles=1, **_event_fields(req, style, n, layout, word, size, _gate_code(style, n, metas), qa.get("ok"), pick_id,
-                                                    opts.get("look"), fallback, clean, cls=_set_cls(metas)))
+        kept = _kept_art(req, jpg, style, n, layout, _gate_code(style, n, metas))
+        E.record("compose", tiles=1, kept=kept, **_event_fields(req, style, n, layout, word, size, _gate_code(style, n, metas), qa.get("ok"), pick_id,
+                                                               opts.get("look"), fallback, clean, cls=_set_cls(metas)))
     return {"ok": True, "style": style, "layout": layout, "layouts": list(layouts), "format": word, "canvas": canvas,
-            "count": n, "width": img.size[0], "height": img.size[1], "image": _jpeg(img),
+            "count": n, "width": img.size[0], "height": img.size[1], "image": jpg,
             "styles": list(catalogue.previewable_ids(n, admin)), "qa": qa, "eyes": _eyes_reply(metas), "tiles": cat["tiles"], "pick": _pick_reply(cat),
             "size": size, "opts": opts, "design_used": design, "fallback": fallback, **_plan_ids(style, n, layout, opts, spec["eye_ids"], metas, eyes, spec),
             "engine": _engine_facts(), "selfcheck": _selfcheck_of(pv),
@@ -818,11 +831,13 @@ def _one_legacy(req, style, n, body, opened, metas, cat, admin, clean, t0):
         qa = {"ok": all(q["ok"] for q in eyes), "eyes": eyes}
     else:
         qa = L.colour_qa("compose", graded=graded)
+    jpg = _jpeg(out)
     if not admin:
-        E.record("compose", tiles=1, **_event_fields(req, style, n, layout, fmt, size, _gate_code(style, n, metas), qa.get("ok"), cat["pick"], None, None, clean,
-                                                    cls=_set_cls(metas)))
+        kept = _kept_art(req, jpg, style, n, layout, _gate_code(style, n, metas))
+        E.record("compose", tiles=1, kept=kept, **_event_fields(req, style, n, layout, fmt, size, _gate_code(style, n, metas), qa.get("ok"), cat["pick"], None, None, clean,
+                                                               cls=_set_cls(metas)))
     return {"ok": True, "style": style, "layout": layout, "layouts": list(layouts), "format": fmt,
-            "count": n, "width": out.size[0], "height": out.size[1], "image": _jpeg(out),
+            "count": n, "width": out.size[0], "height": out.size[1], "image": jpg,
             "styles": list(catalogue.previewable_ids(n, admin)), "qa": qa, "eyes": _eyes_reply(metas), "tiles": cat["tiles"], "pick": _pick_reply(cat),
             "size": size, "opts": {}, "design_used": style, "fallback": None, **_plan_ids(style, n, layout, {}, [(m or {}).get("eye_id") or "" for m in metas], metas),
             "engine": _engine_facts(), "selfcheck": None,
@@ -1011,6 +1026,10 @@ def compose(body, bearer=""):
     if req["batch"]:
         return _batch(req, styles, n, body, (raw, metas, plains), cat, admin, t0)
     style = styles[0]
+    # the large preview is kept for 30 days (api/_lib/keep.py): never the owner's lab, a clean render, another size than the large one, or the AI-made sample eye
+    sample = any(isinstance(m, dict) and m.get("eye_id") == P.SAMPLE_SHA256[:16] for m in metas)
+    if not admin and not clean and req["size"] == PREVIEW_SIZE:
+        req["kp"] = KP.begin("compose", body, skip="sample" if sample else None)
     # a single preview is a picture made like a tile: charged before it is drawn, given back when it is not (a busy answer, a refusal, a failure); the owner's lab is not counted
     day = _utc_day()
     if not admin and not _tiles_room(1):

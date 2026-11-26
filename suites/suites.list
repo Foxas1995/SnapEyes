@@ -67,3 +67,4 @@ v3pupil:scripts/styles_tests:test_pupil_shape.py
 v3gift:scripts/styles_tests:test_gift.py::pre
 v3meta:scripts/styles_tests:test_meta.py::pre
 v3paym:scripts/styles_tests:test_paymethods.py::pre
+v3keep:scripts/styles_tests:test_keep.py
