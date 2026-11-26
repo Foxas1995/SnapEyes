@@ -420,8 +420,9 @@ section("7  iris.lid_rim_cracks: the dark lines the model drew into a thin lower
 from PIL import ImageDraw  # noqa: E402
 
 
-def cracked(im, seed=3, a0=76.0, a1=104.0, r0=0.905, r1=0.968):
-    """A render of im with thin dark cracks drawn across the rim band (r0..r1 iris radii, a0..a1 degrees), and the mask of the cracks."""
+def cracked(im, seed=3, a0=76.0, a1=104.0, r0=0.955, r1=0.972):
+    """A render of im with thin dark cracks drawn across the rim band (r0..r1 iris radii, a0..a1 degrees: on the light sliver itself), and the mask of
+    the cracks. Cracks over the iris further in than the lid itself are not the step's business (its own depth bound and light test)."""
     rng = np.random.default_rng(seed)
     N = im.size[0]
     R = SI.R_FRAC * N
@@ -492,6 +493,40 @@ check("it costs under 0.4 s at 1024 px (no model call)", rms < 400, round(rms))
 check("/api/enhance (both modes) and a master without a preview run it right after the lid step",
       read("api/enhance.py").count("out = L.lid_recolour(out, base, r_frac)   # where a thin lid covered the iris, the iris's colour, never the lid's skin (2026-11-26)\n        out = L.lid_rim_cracks(out, base, r_frac)") == 2
       and "out = L.lid_rim_cracks(out, base, r_frac)" in read("api/master_eye.py"))
+
+# ============================================================================================ 8. a rim sliver followed to its real ends (2026-11-26)
+section("8  the thin tail: a rim sliver goes on along the rim while the outermost band shows faint skin; never from a thin mark alone")
+PINK = (205, 170, 180)
+# the photo: the sliver of section 5 (70..110 degrees, from 0.955 iris radii) and beyond it a thinner tail (110..135, from 0.975: too thin for the width tests)
+tail_src, _, _ = painted(eye0, lambda r, t: (soft(r - 0.955, 0.01) * soft(t - 70.0, 4.0) * soft(110.0 - t, 2.0), PINK))
+tail_src, _, _ = painted(tail_src, lambda r, t: (soft(r - 0.975, 0.006) * soft(t - 108.0, 2.0) * soft(135.0 - t, 3.0), PINK))
+tail_src = L.mask_disk(tail_src, 1.12)
+dt = {}
+wt, pt = L.lid_cap_mask(tail_src, debug=dt)
+tail_deg = [int(b * 2) for b in np.nonzero(dt.get("tail", np.zeros(1, bool)))[0]]
+check("a sliver with a thinner tail beyond it: the sliver is found by the rules and the tail is followed along the rim past its end (110 degrees) to about 135",
+      wt is not None and sum(1 for d_ in tail_deg if d_ > 112) >= 6 and 126 <= max(tail_deg) <= 138 and pt <= L.LIDC_MAX_PCT, (tail_deg, round(pt, 2)))
+# the render: the model draws the lid as a light band wider than the photo's thin tail, and cracks across it
+tail_band, _, _ = painted(tail_src, lambda r, t: (soft(r - 0.945, 0.01) * soft(t - 112.0, 3.0) * soft(132.0 - t, 3.0) * 0.8, PINK))
+tail_band = L.mask_disk(tail_band, 1.12)
+tail_out, tcrack = cracked(tail_band, seed=5, a0=116.0, a1=128.0, r0=0.955, r1=0.972)
+tl = L.lid_recolour(tail_out, tail_src)
+tr = L.lid_rim_cracks(tl, tail_src)
+tclean = L.lid_recolour(tail_band, tail_src)
+tband = (rho > 0.975) & (rho < 0.99) & (th > 118) & (th < 130)
+T0, T1 = ycc(tail_out), ycc(tr)
+tg0, tg1 = float((Yof(tclean) - Yof(tl))[tcrack].mean()), float((Yof(tclean) - Yof(tr))[tcrack].mean())
+check("...the thin pink tail is recoloured (its chroma comes to the ring's) and the cracks drawn over it are lifted (to within a third of the clean render)",
+      float(np.median(np.hypot(*(T1[tband][:, 1:] - ref).T))) < float(np.median(np.hypot(*(T0[tband][:, 1:] - ref).T))) - 2.0 and tg0 > 15.0 and tg1 <= tg0 / 3.0,
+      (round(float(np.median(np.hypot(*(T0[tband][:, 1:] - ref).T))), 1), round(float(np.median(np.hypot(*(T1[tband][:, 1:] - ref).T))), 1), round(tg0, 1), round(tg1, 1)))
+mark, _, _ = painted(eye0, lambda r, t: (soft(r - 0.975, 0.006) * soft(t - 108.0, 2.0) * soft(135.0 - t, 3.0), PINK))
+mark = L.mask_disk(mark, 1.12)
+mark_out, _ = cracked(mark, seed=5, a0=116.0, a1=130.0, r0=0.93, r1=0.972)
+check("the same thin pink mark at the rim with no sliver it could grow from is left alone: no cap, the very object back from both steps",
+      L.lid_cap_mask(mark)[0] is None and L.lid_recolour(mark_out, mark) is mark_out and L.lid_rim_cracks(mark_out, mark) is mark_out)
+check("the upper cap of section 5 grows no tail (only a rim sliver does), and the guards stay: a darker limbal ring, a pigment spot at the rim and a clean eye come back as the very object",
+      not L.lid_cap_mask(lid_im, debug=(du := {}))[0] is None and not du["tail"].any()
+      and all(L.lid_recolour(im, im) is im and L.lid_rim_cracks(im, im) is im for im in (limbal, spot, eye0)))
 
 ok = sum(RESULTS)
 print(f"\n{ok} of {len(RESULTS)} passed")

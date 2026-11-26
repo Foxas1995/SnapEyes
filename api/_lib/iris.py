@@ -3497,6 +3497,15 @@ LIDC_REACH_MIN = 0.50            # ...but never inside this radius...
 LIDC_REACH_FADE = 0.10           # ...and the colour fades in over this much radius at the inner end (no line across the fibres)
 LIDC_UNFADE = (0.08, 8.0)        # a crop masked to its disc (mask_disk: faded to black over the last 3.5 percent of the radius) is read with the fade
                                  # divided out where the disc's alpha is at least the first, when the ring just outside the disc is darker than L* the second
+# the third round (2026-11-26, the owner's place 4 again: the lower sliver of v-mwxvtun2 goes on pink and cracked past where the cap stopped, about 124
+# degrees): a cap or sliver the rules above found goes on along the rim as a thin tail while the rim's outermost band (LIDC_EDGE) still shows faint
+# skin, too thin for the width tests above. A tail only ever grows from a rim sliver already found (a run the rim band found), never starts on its own.
+LIDC_TAIL = (3.0, 3.0, -8.0)     # faint skin at the rim: at least the first redder (a*) than the ring, the second off it in a*b*, not darker than the third...
+LIDC_TAIL_SHIFT = (-60.0, 90.0)  # ...its step from the ring (degrees of atan2(db*, da*)) red to pink or brown, never green or blue (plain iris further
+                                 # in, LIDC_IN_MAX; the along test of a cap is not asked of a tail: its outer band is not off the ring at all)
+LIDC_TAIL_SHARE = 0.30           # ...in at least this share of the rim band's cells at an angle (one of its three rows at LIDC_SIDE: the thinnest tail)
+LIDC_TAIL_GAP = 2                # the tail goes on over at most this many 2-degree angles without it (a stretch of clean rim longer than that ends it)...
+LIDC_TAIL_MAX = 60.0             # ...and at most this many degrees past the cap's end
 
 
 def lid_cap_mask(src, r_frac=None, debug=None):
@@ -3583,19 +3592,67 @@ def lid_cap_mask(src, r_frac=None, debug=None):
             if keep[b] or not loose[b]:
                 break
             keep[b] = True
+    # the thin tail along the rim beyond each end (the third round): faint skin in the rim band, short gaps bridged, never a run of its own
+    eb = band(LIDC_EDGE)
+    # the step from the ring, not the cell's own hue: a faint pink over a blue iris still has a blue hue of its own, its step from the ring is red
+    shift = np.degrees(np.arctan2(P[..., 2] - med[..., 2], da))
+    faint = ((shift >= LIDC_TAIL_SHIFT[0]) & (shift <= LIDC_TAIL_SHIFT[1]) & (da >= LIDC_TAIL[0]) & (dab >= LIDC_TAIL[1]) & (dL >= LIDC_TAIL[2]))
+    tail_ok = (faint[eb].astype(np.float32).mean(0) >= LIDC_TAIL_SHARE) & (inner <= LIDC_IN_MAX) & axis
+    tail = np.zeros_like(keep)
+    reach_t = int(round(LIDC_TAIL_MAX / step))
+    # only a rim sliver grows a tail (a run whose core the rim band found, not the outer band): a wide cap's ends are its own (LIDC_ENDS), and on a warm
+    # iris whose rim is redder in places a tail from a wide upper cap ran on round the rim and greyed it (two brown eyes of 2026-11-26)
+    outer_ok = (outer >= LIDC_OUT_MIN) & (outer_skin >= LIDC_OUT_SKIN)
+    sliver_run = np.zeros_like(keep)
+    joined = keep | (np.roll(keep, 1) & np.roll(keep, -1))                 # one cap split by a single angle is still one cap
+    if not joined.all():
+        s0 = int(np.argmin(joined))
+        kk = np.roll(joined, -s0)
+        i = 0
+        while i < LIDC_BINS:
+            if kk[i]:
+                j = i
+                while j < LIDC_BINS and kk[j]:
+                    j += 1
+                idx = (np.arange(i, j) + s0) % LIDC_BINS
+                cidx = idx[core[idx]]
+                if len(cidx) and float(outer_ok[cidx].mean()) < 0.5:
+                    sliver_run[idx] = True
+                i = j
+            else:
+                i += 1
+    sliver_run &= keep
+    ends =[(a, -1) for a in np.nonzero(keep & ~np.roll(keep, 1) & sliver_run)[0]] + [(a, 1) for a in np.nonzero(keep & ~np.roll(keep, -1) & sliver_run)[0]]
+    for a, sgn in ends:
+        last, gap = 0, 0
+        for k in range(1, reach_t + 1):
+            b = (a + sgn * k) % LIDC_BINS
+            if keep[b]:
+                break
+            if tail_ok[b]:
+                last, gap = k, 0
+            else:
+                gap += 1
+                if gap > LIDC_TAIL_GAP:
+                    break
+        for k in range(1, last + 1):
+            tail[(a + sgn * k) % LIDC_BINS] = True
+    tail &= ~keep
+    keep = keep | tail
     # how far in each cap angle reaches: the innermost radius from which LIDC_DEPTH_FRAC of the cells out to the rim are lid
-    tail = np.cumsum(ev[::-1], 0)[::-1] / np.arange(len(rs), 0, -1, dtype=np.float32)[:, None]
+    tail_frac = np.cumsum(ev[::-1], 0)[::-1] / np.arange(len(rs), 0, -1, dtype=np.float32)[:, None]
     depth = np.full(LIDC_BINS, 2.0, np.float32)
     soft = ((hue >= LIDC_SKIN_HUE[0]) & (hue <= LIDC_SKIN_HUE[1]) & (C >= LIDC_SOFT[0]) & (dab >= LIDC_SOFT[1]) & (da >= LIDC_SOFT[2])) | (ev > 0)
     soft3 = (np.roll(soft, 1, 0).astype(np.float32) + soft + np.roll(soft, -1, 0)) / 3.0
     depth_lid = np.full(LIDC_BINS, 2.0, np.float32)                        # the lid itself (its share of the disc is what LIDC_MAX_PCT bounds)
-    for a in np.nonzero(keep)[0]:
-        ok = np.nonzero(tail[:, a] >= LIDC_DEPTH_FRAC)[0]
+    for a in np.nonzero(keep & ~tail)[0]:
+        ok = np.nonzero(tail_frac[:, a] >= LIDC_DEPTH_FRAC)[0]
         k = ok[0] if len(ok) else int(np.searchsorted(rs, LIDC_OUTER[0]))
         depth_lid[a] = rs[k] - LIDC_GROW
         while k > 0 and rs[k - 1] >= LIDC_REACH_MIN and soft3[k - 1, a] >= 0.34:     # the lashes and the lid's shadow reaching in under the cap
             k -= 1
         depth[a] = rs[k] - LIDC_GROW
+    depth[tail] = depth_lid[tail] = LIDC_EDGE[0] - LIDC_GROW          # a tail is the rim band only
     # the fade beyond each end: the end's depth, the weight going down to nothing over LIDC_END_FADE angles
     wa = keep.astype(np.float32)
     for a in np.nonzero(keep & ~np.roll(keep, 1))[0]:
@@ -3616,6 +3673,8 @@ def lid_cap_mask(src, r_frac=None, debug=None):
     m = inside & keep[ang]
     disk = rho < 1.0
     pct = 100.0 * float(((rho >= depth_lid[ang]) & keep[ang] & disk).sum()) / max(1.0, float(disk.sum()))
+    if debug is not None:
+        debug.update(keep=keep, tail=tail, depth_lid=depth_lid)
     if pct <= 0.0 or pct > LIDC_MAX_PCT:
         return None, pct
     ramp = np.clip((rho - depth[ang] + LIDC_REACH_FADE) / LIDC_REACH_FADE, 0.0, 1.0) * (rho < 1.02)
@@ -3686,6 +3745,9 @@ RIMC_RADII = (0.86, 0.89, 0.975, 0.99)   # ...and the weight across it: up from 
 RIMC_READ = (0.90, 0.98)         # the cap's weight at an angle is its largest in this band
 RIMC_ALONG = 0.02                # the closing along the rim, a share of the iris radius (an odd number of px, at least 5)...
 RIMC_ACROSS = 0.012              # ...and across it (at least 3)
+RIMC_DEPTH = 0.02                # and never further in than the lid itself at that angle (lid_cap_mask's depth of the lid, not of the lashes under
+                                 # it), reached over this much radius: a fixed inner radius took the dark gaps between real fibres on a thin sliver
+RIMC_LIGHT = (2.0, 6.0)          # and only where the closed level is lighter than the render's clean ring at its radius: from the first (Y levels), in full the second more
 RIMC_GRAIN = 2.5                 # a lift counts from this many times its median in the sliver (the grain's gaps), in full from twice that (1.5 flattened the grain on the live eye, 4 left traces of the cracks)
 
 
@@ -3704,8 +3766,9 @@ def _rimc_bilinear(img, y, x):
     return (img[y0, x0] * (1 - fx) + img[y0, x0 + 1] * fx) * (1 - fy) + (img[y0 + 1, x0] * (1 - fx) + img[y0 + 1, x0 + 1] * fx) * fy
 
 
-def rim_sliver_weight(src, r_frac):
-    """The thin lid cap's weight per 2-degree angle (LIDC_BINS) on its rim-sliver runs only, or None (no cap, or no run of it is a sliver)."""
+def rim_sliver_weight(src, r_frac, depth=None):
+    """The thin lid cap's weight per 2-degree angle (LIDC_BINS) on its rim-sliver runs only, or None (no cap, or no run of it is a sliver). A dict
+    given as depth receives the lid's own inner radius per angle ("lid")."""
     d = {}
     w, _pct = lid_cap_mask(src, r_frac, debug=d)
     if w is None:
@@ -3732,13 +3795,15 @@ def rim_sliver_weight(src, r_frac):
             while j < LIDC_BINS and c[j]:
                 j += 1
             idx = (np.arange(i, j) + start) % LIDC_BINS
-            core = idx[aw[idx] >= 0.99]
+            core = idx[(aw[idx] >= 0.99) & ~d["tail"][idx]]                 # the cap as the rules found it, without the tail it grew
             if len(core) and float(outer_ok[core].mean()) < 0.5:       # its own lid was found by the rim band: a sliver
                 keep[idx] = True
             i = j
         else:
             i += 1
     aw = aw * keep
+    if depth is not None:
+        depth["lid"] = d["depth_lid"]
     return aw if aw.any() else None
 
 
@@ -3750,7 +3815,8 @@ def lid_rim_cracks(out, src, r_frac=None):
     try:
         if r_frac is None:
             r_frac = iris_radius_frac()
-        aw2 = rim_sliver_weight(src, r_frac)
+        dep = {}
+        aw2 = rim_sliver_weight(src, r_frac, dep)
         if aw2 is None:
             return out
         N = out.size[0]
@@ -3765,8 +3831,11 @@ def lid_rim_cracks(out, src, r_frac=None):
         step = 360.0 / LIDC_BINS
         centres = np.arange(-1, LIDC_BINS + 1, dtype=np.float32) * step + step / 2.0
         aw = np.interp(np.degrees(tt), centres, np.concatenate([[aw2[-1]], aw2, [aw2[0]]])).astype(np.float32)
+        dl = np.clip(np.asarray(dep["lid"], np.float32), 0.0, 2.0)
+        lid_in = np.interp(np.degrees(tt), centres, np.concatenate([[dl[-1]], dl, [dl[0]]])).astype(np.float32)[None, :]
         r = rr[:, None]
         rw = np.clip(np.minimum((r - RIMC_RADII[0]) / (RIMC_RADII[1] - RIMC_RADII[0]), (RIMC_RADII[3] - r) / (RIMC_RADII[3] - RIMC_RADII[2])), 0.0, 1.0)
+        rw = rw * np.clip((r - lid_in) / RIMC_DEPTH, 0.0, 1.0)
         ka = max(5, int(round(RIMC_ALONG * R)) | 1)
         kr = max(3, int(round(RIMC_ACROSS * R)) | 1)
         cl = _rimc_runfilter(_rimc_runfilter(Yp, ka, np.max), ka, np.min)
@@ -3775,6 +3844,12 @@ def lid_rim_cracks(out, src, r_frac=None):
         if not core.any():
             return out
         t = max(float(np.median((cl - Yp)[core])), 1.0)
+        # cracks are dark lines across a LIGHT band (the lid's skin as the model drew it): the closed level must be lighter than the render's own iris
+        # at that radius on the angles the cap does not touch. A dark lash line, the shadow under the lid or a dark sliver keeps its gaps (they are
+        # the iris's or the lashes', not cracks)
+        clean = aw < 0.02
+        ring = np.median(Yp[:, clean], axis=1)[:, None] if clean.sum() >= 12 else np.median(Yp, axis=1)[:, None]
+        light = np.clip((cl - ring - RIMC_LIGHT[0]) / RIMC_LIGHT[1], 0.0, 1.0)
         # the closed level and the weight go back to the square (both smooth); the lift is read at each pixel against its own brightness, so a crack
         # one or two pixels wide is lifted by its full depth (a polar lift mapped back is smeared to a fraction of it)
         ax = (np.arange(N, dtype=np.float32) + 0.5 - N / 2.0) / np.float32(R)
@@ -3785,7 +3860,7 @@ def lid_rim_cracks(out, src, r_frac=None):
         ri = (rho[sel] - RIMC_BAND[0]) / (RIMC_BAND[1] - RIMC_BAND[0]) * (Nr - 1)
         back = lambda a: _rimc_bilinear(np.concatenate([a, a[:, :1]], 1), ri, ti)
         lift = back(cl) - Y[sel]
-        dv = lift * np.clip((lift - RIMC_GRAIN * t) / (RIMC_GRAIN * t), 0.0, 1.0) * back(aw[None, :] * rw)
+        dv = lift * np.clip((lift - RIMC_GRAIN * t) / (RIMC_GRAIN * t), 0.0, 1.0) * back(aw[None, :] * rw * light)
         if float(np.abs(dv).max()) < 0.5:
             return out
         Y2 = Y.copy()
