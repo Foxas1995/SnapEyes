@@ -108,7 +108,7 @@ export const hu: TryCopy = {
     liveLight: 'Fény',
     liveShutter: 'Fotó készítése',
     // the live camera's burst (2026-11-26): under the hint before the tap (n is the number of pictures one tap takes), during it, and at its end
-    liveBurst: (n: number) => `${n} fotót készítünk. Ne mozdulj.`,
+    liveBurst: (n: number) => `${n} fotót készítünk. Ne mozdulj a jelzésig.`,
     liveStill: 'Ne mozdulj',
     liveDone: 'Kész',
     // the tips' second line in a tab with the live camera (?cam=1): it zooms by itself, so only the distance (closer than about 10 cm no phone focuses)

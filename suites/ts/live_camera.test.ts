@@ -6,8 +6,7 @@
 import { readFileSync } from 'node:fs';
 import {
   BURST, CAM_KEY, DARK_LUMA, INAPP_BOTTOM, INAPP_TOP, MAX_TAKES, camOn, centreCrop, chooseStill, chooseZoom, circleCentre, debugLine, failClass, inApp, liveCap, liveSupported,
-  meanLuma, photoSettings, resClass, stillVerdict, takeBurst, tooDark, viewInsets, zoomCode,
-} from '../../src/try/livecam/logic';
+  meanLuma, photoSettings, resClass, stillVerdict, takeBurst, tooDark, viewInsets, zoomCode, DONE_BUZZ, DONE_TONES, TICK_TONE, burstMethod } from '../../src/try/livecam/logic';
 import { capText } from '../../src/admin/Previews';
 import { T, setCopyLang } from '../../src/try/copy';
 
@@ -132,6 +131,17 @@ export async function run(): Promise<Row[]> {
     JSON.stringify(photoSettings({ w: 4000, h: 3000 }, ['auto', 'off', 'flash'])) === JSON.stringify({ imageWidth: 4000, imageHeight: 3000, fillLightMode: 'off' })
       && JSON.stringify(photoSettings(null, ['off'])) === JSON.stringify({ fillLightMode: 'off' }) && JSON.stringify(photoSettings({ w: 10, h: 5 }, ['flash'])) === JSON.stringify({ imageWidth: 10, imageHeight: 5 })
       && photoSettings(null, undefined) === null);
+  // ---- 2026-11-27 (the owner's own test): with the torch on the burst is frames of the video, and the burst can be heard
+  check('with the torch on the pictures are frames of the video (stills came out burnt and dark twice); stills otherwise, where the browser has them',
+    burstMethod(true, false) === 'still' && burstMethod(true, true) === 'frame' && burstMethod(false, false) === 'frame' && burstMethod(false, true) === 'frame'
+      && cam.includes('let method: LiveMethod = burstMethod(!!window.ImageCapture, torch.on);') && !cam.includes("window.ImageCapture ? 'still' : 'frame'"));
+  check('the burst can be heard: the sound is opened inside the tap, one tick per picture that is in, two rising tones and a buzz at the end, no buzz during the burst',
+    TICK_TONE.ms <= 100 && DONE_TONES.length === 2 && DONE_TONES[1].hz > DONE_TONES[0].hz && DONE_TONES[1].at >= DONE_TONES[0].ms && DONE_BUZZ.length === 3
+      && cam.indexOf('const audio = openAudio();') > cam.indexOf('setBusy(true);') && cam.indexOf('const audio = openAudio();') < cam.indexOf('let method: LiveMethod')
+      && cam.includes('tone(audio, TICK_TONE.hz, TICK_TONE.ms);') && cam.includes('DONE_TONES.forEach((t) => tone(audio, t.hz, t.ms, t.at + 120));')
+      && (cam.match(/navigator\.vibrate/g) ?? []).length === 1 && cam.includes('navigator.vibrate?.([...DONE_BUZZ])') && cam.includes('closeAudio(audio, 0);'));
+  check('the burst line says to hold still until the signal, in every language',
+    LANGS.every((l) => { setCopyLang(l); const w = T.capture.liveBurst(4); setCopyLang('en'); return /signal|signāl|signaal|jelz|merkki/i.test(w); }));
   const lt = debugLine({ geo, method: 'still', video: { w: 3840, h: 2160 }, asked: { w: 4000, h: 3000 }, got: { w: 4000, h: 3000 }, takes: { n: 6, burnt: 2, black: 0 }, zoom: 'track', zoomValue: 2, torch: true });
   check('the facts line says how many takes and why some were thrown away', lt.includes(`takes 6, burnt 2${DOT}zoom 2x track`) && !lt.includes('black'), lt);
   check('the dark code at the tap rides with the burst\'s codes, and the admin reads it',

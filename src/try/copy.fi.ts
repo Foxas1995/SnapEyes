@@ -88,7 +88,7 @@ export const fi: TryCopy = {
     liveLight: 'Valo',
     liveShutter: 'Ota kuva',
     // the live camera's burst (2026-11-26): under the hint before the tap (n is the number of pictures one tap takes), during it, and at its end
-    liveBurst: (n: number) => `Otamme ${n} kuvaa. Pysy paikallaan.`,
+    liveBurst: (n: number) => `Otamme ${n} kuvaa. Pysy paikallaan merkkiääneen asti.`,
     liveStill: 'Pysy paikallaan',
     liveDone: 'Valmis',
     // the tips' second line in a tab with the live camera (?cam=1): it zooms by itself, so only the distance (closer than about 10 cm no phone focuses)

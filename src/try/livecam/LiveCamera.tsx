@@ -7,11 +7,14 @@
 // 2026-11-26, the owner's Android phone in Messenger: `fixed inset-0` followed the layout viewport, which in that web view is about 90 px taller than what is
 // visible and can pan, so the shutter fell below the screen. Now the page behind is locked while the view is open, the view is sized from visualViewport, and
 // in Facebook's, Messenger's and Instagram's browsers the controls keep out of the top 72 and the bottom 100 px. Pure parts: ./logic.ts.
+// 2026-11-27, the owner's own test: with the torch on the pictures are frames of the video (stills came out burnt and dark, logic.ts burstMethod), and the
+// burst can be heard: a tick for each picture, two rising tones and a buzz at the end (the screen faces away from whoever photographs their own eye).
 import React, { useEffect, useRef, useState } from 'react';
 import { Camera, Check, X, Flashlight } from 'lucide-react';
 import {
-  BURST, BURST_GAP_MS, DARK_EVERY_MS, DARK_SIDE, FRAME_WAIT_MS, GRANT_WAIT_MS, SETTLE_MS, type Cap, type Facts, type LiveFail, type LiveMethod, type ZoomMode,
-  centreCrop, chooseStill, chooseZoom, circleCentre, debugLine, failClass, inApp, liveCap, meanLuma, photoSettings, takeBurst, tooDark, viewInsets,
+  BURST, BURST_GAP_MS, DARK_EVERY_MS, DARK_SIDE, DONE_BUZZ, DONE_TONES, FRAME_WAIT_MS, GRANT_WAIT_MS, SETTLE_MS, TICK_TONE, TONE_GAIN, type Cap, type Facts, type LiveFail,
+  type LiveMethod, type ZoomMode,
+  burstMethod, centreCrop, chooseStill, chooseZoom, circleCentre, debugLine, failClass, inApp, liveCap, meanLuma, photoSettings, takeBurst, tooDark, viewInsets,
 } from './logic';
 
 export interface LiveCameraProps {
@@ -44,6 +47,32 @@ declare global { interface Window { ImageCapture?: new (t: MediaStreamTrack) => 
 const timeout = (ms: number) => new Promise<never>((_, rej) => setTimeout(() => rej(Object.assign(new Error('timeout'), { name: 'TimeoutError' })), ms));
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const toBlob = (c: HTMLCanvasElement) => new Promise<Blob | null>((r) => c.toBlob(r, 'image/jpeg', 0.92));
+
+/** The burst's sounds: an audio context opened inside the shutter's tap (later it would not be allowed to play), or null where there is none. */
+function openAudio(): AudioContext | null {
+  try {
+    const A = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!A) return null;
+    const c = new A();
+    void c.resume?.().catch(() => undefined);
+    return c;
+  } catch { return null; }
+}
+/** One short tone, `at` ms from now; silent where the browser refuses. */
+function tone(c: AudioContext | null, hz: number, ms: number, at = 0): void {
+  if (!c) return;
+  try {
+    const o = c.createOscillator(), g = c.createGain();
+    const t0 = c.currentTime + at / 1000, t1 = t0 + ms / 1000;
+    o.type = 'sine'; o.frequency.value = hz;
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(TONE_GAIN, t0 + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, t1);
+    o.connect(g); g.connect(c.destination);
+    o.start(t0); o.stop(t1 + 0.02);
+  } catch { /* no sound */ }
+}
+const closeAudio = (c: AudioContext | null, after: number) => { if (c) window.setTimeout(() => { c.close().catch(() => undefined); }, after); };
 
 /** A picture cropped to its middle for the CSS zoom (a still or a frame), as a JPEG; its canvas is released at once (memory: one still at a time). */
 async function cropped(src: CanvasImageSource, w: number, h: number, factor: number): Promise<{ blob: Blob; w: number; h: number } | null> {
@@ -204,8 +233,9 @@ const LiveCamera: React.FC<LiveCameraProps> = ({ stream: asked, hint, darkLine, 
     if (!t || !v || busy || doneRef.current) return;
     setBusy(true);
     const darkAtTap = dark;
+    const audio = openAudio();           // inside the tap
     try {
-      let method: LiveMethod = window.ImageCapture ? 'still' : 'frame';
+      let method: LiveMethod = burstMethod(!!window.ImageCapture, torch.on);
       const ic = method === 'still' && window.ImageCapture ? new window.ImageCapture(t) : null;
       // the largest still the camera offers, up to about 12 MP, and no flash where the camera lets us say so (the torch stays as the person set it); a plain
       // takePhoto when it says nothing or the asked one is refused, the video's frames when stills fail
@@ -251,7 +281,7 @@ const LiveCamera: React.FC<LiveCameraProps> = ({ stream: asked, hint, darkLine, 
           const c = await cropped(v, v.videoWidth, v.videoHeight, crop);
           if (c) pic = { ...c, luma };
         }
-        if (pic) got = { w: pic.w, h: pic.h };
+        if (pic) { got = { w: pic.w, h: pic.h }; tone(audio, TICK_TONE.hz, TICK_TONE.ms); }      // a picture is in: one tick
         setShot((s) => ({ ...s, method, asked: method === 'still' ? size : null, got }));
         return pic;
       }, (k) => setTaken(k));
@@ -262,11 +292,15 @@ const LiveCamera: React.FC<LiveCameraProps> = ({ stream: asked, hint, darkLine, 
       const size0 = { w: res.kept[0].w, h: res.kept[0].h };
       doneRef.current = true;
       stop();
-      // the last one is in: "Done" with a check (the page keeps the view a moment while the pictures are already on their way) and one short buzz where allowed
+      // the last one is in: "Done" with a check (the page keeps the view a moment while the pictures are already on their way), two rising tones and a buzz
+      // where allowed: the phone may come down now
       setFinished(true);
-      try { navigator.vibrate?.(40); } catch { /* blocked or missing */ }
+      DONE_TONES.forEach((t) => tone(audio, t.hz, t.ms, t.at + 120));
+      try { navigator.vibrate?.([...DONE_BUZZ]); } catch { /* blocked or missing */ }
+      closeAudio(audio, 1500);
       onFrames(files, liveCap(method, size0.w, size0.h, zoom.mode, torch.has, darkAtTap, zoom.value));
     } catch (e) {
+      closeAudio(audio, 0);
       fail(e);
     }
   };

@@ -6,8 +6,10 @@ import { FeedbackBox } from './Feedback';
 /** Shown for a shot the engine blocked (too blurry, pupil too wide, ...): a title that says why and the capture
  *  guide's steps for that reason, once. The server's own message is not repeated here: it lists the same steps.
  *  There is deliberately no way forward from here: the server issued no work ticket. Under the card, outside its
- *  alert, the anonymous feedback box asks whether this helped (src/try/Feedback.tsx; code is the block reason). */
-export const RetakeGuide: React.FC<{ block: BlockCopy; code?: string }> = ({ block, code }) => (
+ *  alert, the anonymous feedback box asks whether this helped (src/try/Feedback.tsx; code is the block reason).
+ *  The children are the screen's own buttons (retake, the soft offer): they stand between the card and the feedback box, so a phone
+ *  shows them without scrolling (the owner, 2026-11-27: the box had pushed them under the first screen). */
+export const RetakeGuide: React.FC<{ block: BlockCopy; code?: string; children?: React.ReactNode }> = ({ block, code, children }) => (
   <>
     <div role="alert" data-testid="retake-guide" className="fx-note bg-rose-950/30 border border-rose-500/40 rounded-2xl p-4">
       <p className="text-sm font-bold text-rose-200 flex items-center gap-2">
@@ -23,6 +25,7 @@ export const RetakeGuide: React.FC<{ block: BlockCopy; code?: string }> = ({ blo
         ))}
       </ol>
     </div>
+    {children}
     {/* outside the alert: the box changes as it is used, and an alert would read every change aloud */}
     <FeedbackBox where="retake" ctx={code} />
   </>

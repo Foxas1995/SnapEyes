@@ -112,7 +112,7 @@ const en = {
     liveLight: 'Light',
     liveShutter: 'Take the photo',
     // the live camera's burst (2026-11-26): under the hint before the tap (n is the number of pictures one tap takes), during it, and at its end
-    liveBurst: (n: number) => `We take ${n} photos. Hold still.`,
+    liveBurst: (n: number) => `We take ${n} photos. Hold still until the signal.`,
     liveStill: 'Hold still',
     liveDone: 'Done',
     // the tips' second line in a tab with the live camera (?cam=1): it zooms by itself, so only the distance (closer than about 10 cm no phone focuses)
@@ -676,7 +676,7 @@ const de: TryCopy = {
     liveLight: 'Licht',
     liveShutter: 'Foto aufnehmen',
     // the live camera's burst (2026-11-26): under the hint before the tap (n is the number of pictures one tap takes), during it, and at its end
-    liveBurst: (n: number) => `Wir machen ${n} Fotos. Bitte stillhalten.`,
+    liveBurst: (n: number) => `Wir machen ${n} Fotos. Bitte stillhalten bis zum Signal.`,
     liveStill: 'Stillhalten',
     liveDone: 'Fertig',
     // the tips' second line in a tab with the live camera (?cam=1): it zooms by itself, so only the distance (closer than about 10 cm no phone focuses)

@@ -92,7 +92,7 @@ export const et: TryCopy = {
     liveLight: 'Valgus',
     liveShutter: 'Tee foto',
     // the live camera's burst (2026-11-26): under the hint before the tap (n is the number of pictures one tap takes), during it, and at its end
-    liveBurst: (n: number) => `Teeme ${n} fotot. Ära liiguta.`,
+    liveBurst: (n: number) => `Teeme ${n} fotot. Ära liiguta kuni signaalini.`,
     liveStill: 'Ära liiguta',
     liveDone: 'Valmis',
     // the tips' second line in a tab with the live camera (?cam=1): it zooms by itself, so only the distance (closer than about 10 cm no phone focuses)

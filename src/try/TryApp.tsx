@@ -1275,7 +1275,8 @@ export const TryApp: React.FC = () => {
             </div>
             {/* the best of a gallery pick still cannot be used: never say "used" */}
             {analysis.picked && !usable(analysis) && <p className="text-xs text-rose-200/90 bg-rose-950/25 border border-rose-500/30 rounded-xl p-3">{T.quality.noneUsable(analysis.picked.of)}</p>}
-            {blockOf(analysis) && <RetakeGuide block={blockOf(analysis)!} code={blockCode(analysis)} />}
+            {/* the buttons stand above the feedback box of a blocked photo (inside the guide, between its card and the box) */}
+            {((actions: React.ReactNode) => (blockOf(analysis) ? <RetakeGuide block={blockOf(analysis)!} code={blockCode(analysis)}>{actions}</RetakeGuide> : actions))(<>
             <div className={`grid gap-3 ${usable(analysis) ? 'grid-cols-2' : 'grid-cols-1'}`}>
               {/* with the soft offer under it, the retake is the gold one */}
               <button onClick={retake} className={`py-3 rounded-xl text-sm flex items-center justify-center gap-2 ${softOffer ? 'gold-metal font-bold' : 'bg-white/5 border border-white/10 font-semibold'}`}><RefreshCcw className="w-4 h-4" /> {T.quality.retake}</button>
@@ -1286,6 +1287,7 @@ export const TryApp: React.FC = () => {
               )}
             </div>
             {softOffer && <SoftOffer onGo={goSoft} />}
+            </>)}
             {backLink}
           </section>
         )}
@@ -1422,8 +1424,7 @@ const ShotCollector: React.FC<{
       )}
       {/* nothing usable and the latest shot blocked: the capture guide's steps for the next one. Its title says
           why; the server's message is left out because it lists the same steps */}
-      {guide && <RetakeGuide block={guide} code={blockCode(latest)} />}
-
+      {((actions: React.ReactNode) => (guide ? <RetakeGuide block={guide} code={blockCode(latest)}>{actions}</RetakeGuide> : actions))(<>
       <div>
         <div className="flex items-start gap-3">
           {shots.map((s, i) => {
@@ -1462,6 +1463,7 @@ const ShotCollector: React.FC<{
       </div>
       {soft}
       <button onClick={onStartOver} className="text-xs text-zinc-400 underline underline-offset-4 self-center">{T.collector.startOver}</button>
+      </>)}
     </section>
   );
 };

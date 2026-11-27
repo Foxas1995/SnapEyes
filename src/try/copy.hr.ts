@@ -90,7 +90,7 @@ export const hr: TryCopy = {
     liveLight: 'Svjetlo',
     liveShutter: 'Snimite fotografiju',
     // the live camera's burst (2026-11-26): under the hint before the tap (n is the number of pictures one tap takes), during it, and at its end
-    liveBurst: (n: number) => `Snimit ćemo ${n} fotografije. Ne mičite se.`,
+    liveBurst: (n: number) => `Snimit ćemo ${n} fotografije. Ne mičite se do signala.`,
     liveStill: 'Ne mičite se',
     liveDone: 'Gotovo',
     // the tips' second line in a tab with the live camera (?cam=1): it zooms by itself, so only the distance (closer than about 10 cm no phone focuses)

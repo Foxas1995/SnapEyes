@@ -176,6 +176,19 @@ export async function takeBurst<P extends { luma: number }>(take: (i: number) =>
   return { kept: best, takes, burnt, black, fallback: true };
 }
 
+// The burst's signals (2026-11-27, the owner after his own test: "it could vibrate or make a small sound, so one waits until all the photos are taken").
+// With the rear camera at the eye nobody sees the screen, so the count on it is not enough: one short tick for each picture that is in, and at the end
+// two rising tones with a buzz. No buzz during the burst: a shaking phone would blur the next picture.
+export const TICK_TONE = { hz: 880, ms: 70 };
+export const DONE_TONES: readonly { hz: number; ms: number; at: number }[] = [{ hz: 880, ms: 110, at: 0 }, { hz: 1320, ms: 180, at: 130 }];
+export const DONE_BUZZ: readonly number[] = [70, 60, 160];
+export const TONE_GAIN = 0.5;
+
+/** How a burst is taken. A still (ImageCapture.takePhoto) restarts the camera for every picture, and with the torch on the exposure does not survive that:
+ *  the owner's phone gave burnt and dark stills twice (2026-11-26 and 2026-11-27: two washed out, two dark, all refused). So while the torch is on the
+ *  pictures are frames of the video, whose exposure has settled with the light and is what the person sees; stills otherwise, where the browser has them. */
+export const burstMethod = (imageCapture: boolean, torchOn: boolean): LiveMethod => (imageCapture && !torchOn ? 'still' : 'frame');
+
 /** The photo settings asked of takePhoto: the size (chooseStill) and no flash where the camera lists fillLightMode 'off' (the torch stays as the person set it). */
 export function photoSettings(size: { w: number; h: number } | null, fillModes: unknown): { imageWidth?: number; imageHeight?: number; fillLightMode?: string } | null {
   const off = Array.isArray(fillModes) && fillModes.includes('off');
