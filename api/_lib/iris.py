@@ -3739,7 +3739,7 @@ def lid_recolour(out, src, r_frac=None):
 # lift is laid back with the cap's own weight (its feathered ends) and a radial ramp at both ends, so there is no seam. Tried first (2026-11-26):
 # borrowing the brightness detail of the neighbouring rim on both sides, cross-faded. On the live eye the neighbouring rim is cracked too: the
 # borrowed detail carried the cracks back and the cross-fade left a light streak where the two sides met. Luminance only; the chroma is the render's.
-RIMC_ON = (os.environ.get("SNAPEYES_RIMCRACKS") or "on").strip().lstrip("﻿").strip().lower() not in ("off", "0", "false", "no")
+RIMC_ON = (os.environ.get("SNAPEYES_RIMCRACKS") or "on").strip().lstrip("\ufeff").strip().lower() not in ("off", "0", "false", "no")
 RIMC_BAND = (0.84, 1.0)          # the polar band read (iris radii)...
 RIMC_RADII = (0.86, 0.89, 0.975, 0.99)   # ...and the weight across it: up from the first to the second, down from the third to the fourth
 RIMC_READ = (0.90, 0.98)         # the cap's weight at an angle is its largest in this band
