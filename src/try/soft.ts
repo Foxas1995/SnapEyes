@@ -1,12 +1,17 @@
 // A soft photo the customer may go on with (the owner, 2026-11-26). api/analyze.py refuses a photo as too blurry exactly as before, and when that photo is
 // otherwise usable (SOFT_BY: its circle locked, no other reason, the iris large enough, Detail at least SOFT_DETAIL) it also sends a second work ticket,
-// soft_ticket, and quality.soft. The page counts the visit's blur refusals in memory (nothing is stored) and from the SECOND one on, when a refused photo
+// soft_ticket, and quality.soft. The page counts the visit's blur refusals in memory (nothing is stored) and from the FIRST one on, when a refused photo
 // of this visit carried a soft ticket, offers a quiet second button under the retake. It goes on with the best such photo (the highest Detail) as if it
 // had been accepted as a weak one. No React and no DOM here.
+// From the second refusal on until 2026-11-27. That day a paid visitor's first photo (the iris 46 percent of the frame, the lids over 3 percent of it,
+// Detail 19, where the day's accepted photos read 23 to 35 and the day before's 7 to 19) was refused by the pattern line alone (1.27 under 1.6: a pale,
+// smooth iris lit by the flash) and carried a soft ticket; her second photo, from farther away, was refused for another reason (its circle did not lock),
+// so the offer never showed and she left without a preview. In two days the pattern line refused 16 photos of 6 visitors, 4 of whom saw no preview.
+// The owner: "yes, do it" (the offer at once).
 import { num, type Analysis } from './shots';
 
-/** The blur refusals a visit needs before the soft photo is offered: after the first one nothing new is shown. */
-export const SOFT_AFTER = 2;
+/** The blur refusals a visit needs before the soft photo is offered: the first one is enough (2 until 2026-11-27, see above). */
+export const SOFT_AFTER = 1;
 
 /** A refusal for blur (the reason the server gave, whatever line raised it). */
 export const isBlur = (a: Analysis | null | undefined): boolean =>
@@ -25,7 +30,7 @@ export function keepSoft<F>(cur: SoftPick<F> | null, a: Analysis, file: F, at: n
   return { a, file, at };
 }
 
-/** Whether the refusal screen offers the soft photo: from the second blur refusal of the visit on, with a soft photo whose ticket is still good. */
+/** Whether the refusal screen offers the soft photo: from the first blur refusal of the visit on, with a soft photo whose ticket is still good. */
 export const offerSoft = <F>(blurs: number, pick: SoftPick<F> | null, now: number, ttlMs: number): boolean =>
   blurs >= SOFT_AFTER && !!pick && now - pick.at < ttlMs;
 

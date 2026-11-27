@@ -1,6 +1,7 @@
 // The soft photo and the camera-first blur refusal (the owner, 2026-11-26: a paid visitor shot ten close-ups of one eye with the front camera, nine were refused
 // as too blurry at Detail 11 to 12, and she never saw a preview). What this holds:
-//   1. src/try/soft.ts: no offer after one blur refusal; an offer from the second one on when a refused photo of the visit carried a soft ticket; none when
+//   1. src/try/soft.ts: an offer from the first blur refusal on when a refused photo of the visit carried a soft ticket (the owner, 2026-11-27: a visitor's
+//      good first photo was refused by the pattern line, her second for another reason, and the offer that waited for two blur refusals never showed); none when
 //      nothing was eligible (no soft ticket, another reason, a stale ticket); the continue goes on with the best such photo (the highest Detail), as an
 //      accepted weak one whose work ticket is the soft ticket, and the page's own rules (usable, blockOf) then let it through;
 //   2. the words: the blur refusal's error, retakeLine and first step start with the back camera sentence in all eight languages, the old camera step is gone
@@ -32,10 +33,15 @@ export async function run(): Promise<Row[]> {
   let pick: SoftPick<string> | null = null;
   let blurs = 0;
   const see = (a: Analysis, file: string, at = 0) => { if (isBlur(a)) { blurs += 1; pick = keepSoft(pick, a, file, at); } };
+  check('before any blur refusal: no offer', !offerSoft(0, null, 1, TTL) && !offerSoft(0, { a: refused(), file: 'x', at: 0 }, 1, TTL));
+  let first: SoftPick<string> | null = null;
+  first = keepSoft(first, refused({ detail: 20 }, false), 'plain', 0);
+  check('one blur refusal without a soft ticket: no offer (nothing to go on with)', first === null && !offerSoft(1, first, 1, TTL));
   see(refused({ detail: 11 }), 'one');
-  check('one blur refusal with a soft ticket: no offer yet (after the first refusal nothing new is shown)', SOFT_AFTER === 2 && blurs === 1 && !!pick && !offerSoft(blurs, pick, 1, TTL));
+  check('one blur refusal with a soft ticket: the offer at once, with the soft photo held (from the second refusal on until 2026-11-27)',
+    SOFT_AFTER === 1 && blurs === 1 && !!pick && offerSoft(blurs, pick, 1, TTL));
   see(refused({ detail: 12 }), 'two');
-  check('the second blur refusal: the offer, with the soft photo held', blurs === 2 && offerSoft(blurs, pick, 1, TTL));
+  check('the second blur refusal: the offer stays, with the better photo held', blurs === 2 && offerSoft(blurs, pick, 1, TTL) && pick!.file === 'two');
   see(refused({ detail: 9 }), 'three');
   check('... the continue uses the best soft photo of the visit (the highest Detail), not the latest', pick!.file === 'two' && pick!.a.quality!.detail === 12);
   const go = softAnalysis(pick!.a);

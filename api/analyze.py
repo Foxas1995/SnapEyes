@@ -370,7 +370,7 @@ def blur_blocked(locked, basis, detail, pattern, shape, label, direction=None, d
 # lines, which read a pattern dragged across itself) that is otherwise usable: its circle locked, no other reason (too far, too small, too dark, a wide
 # pupil, an eyelid), the iris at least GOOD_DIAMETER_PX across in the original and Detail at least SOFT_DETAIL. It is still refused exactly as before
 # (no ticket, the same reason and words), and it carries a second work ticket in soft_ticket and quality.soft; the page offers it only after the
-# visit's second blur refusal (src/try/soft.ts), as a quiet second button under the retake. SOFT_DETAIL is the lowest Detail a photo the engine
+# visit's first blur refusal (src/try/soft.ts; the second until 2026-11-27), as a quiet second button under the retake. SOFT_DETAIL is the lowest Detail a photo the engine
 # accepted that day had (7): her photos (11 to 12) are well above it, and a photo under it would not have been accepted as weak by any other line.
 SOFT_BY = ("detail", "pattern", "label", "shake")
 SOFT_DETAIL = 7
@@ -865,7 +865,7 @@ def _analyze(body, box):
     share = iris_share(locked, r, box, W, H)
     if share is not None and share < FAR_SHARE and (blocked or not locked):
         blocked, block_by, reason = True, "far", "too_far"
-    # a soft photo the page may let the customer go on with after two blur refusals (SOFT_BY): refused as before, plus a second ticket
+    # a soft photo the page may let the customer go on with after a blur refusal (SOFT_BY): refused as before, plus a second ticket
     soft = soft_ok(locked, blocked, reason, block_by, diam_orig, detail, cover, pupil_block)
     # a reflection sitting on the pupil hides nothing recoverable: say so instead of pretending to restore it
     on_pupil = False

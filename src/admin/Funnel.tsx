@@ -38,7 +38,7 @@ export const FunnelPage: React.FC<{ call: Call }> = ({ call }) => {
           <section className={`${CARD} flex flex-col gap-3`}>
             <h3 className="text-sm font-bold">Visas piltuvas</h3>
             {num(steps.landing) === 0 && num(steps.try) === 0 ? <p className={`text-sm ${MUTED}`}>Šiuo laikotarpiu dar nėra apsilankymų.</p> : <FunnelBars steps={steps} order={FUNNEL_STEPS} title="Piltuvas" />}
-            {num(steps.soft_offer) > 0 && <p className="text-sm">Po dviejų atmetimų dėl neryškumo pasiūlyta tęsti su neryškia nuotrauka: <b>{num(steps.soft_offer)}</b>, tęsė: <b>{num(steps.soft_go)}</b>.</p>}
+            {num(steps.soft_offer) > 0 && <p className="text-sm">Atmetus dėl neryškumo pasiūlyta tęsti su neryškia nuotrauka: <b>{num(steps.soft_offer)}</b>, tęsė: <b>{num(steps.soft_go)}</b>.</p>}
             {num(steps.soon) > 0 && <p className="text-sm">Pirkimo kortelę uždarytą (užsakymai dar neatidaryti) matė: <b>{num(steps.soon)}</b>. Tai žmonės, kurie būtų galėję pirkti.</p>}
           </section>
           <section className={`${CARD} flex flex-col gap-2`}>

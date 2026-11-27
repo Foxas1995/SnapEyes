@@ -145,7 +145,7 @@ const en = {
 
   quality: {
     retake: 'Retake',
-    // a soft photo the customer may go on with after two blur refusals (src/try/soft.ts): the line above the quiet second button, and the button
+    // a soft photo the customer may go on with after a blur refusal (src/try/soft.ts): the line above the quiet second button, and the button
     soft: { line: 'The photo is soft, so we will rebuild more of the detail.', go: 'Continue with this photo' },
     notCentred: 'This photo is not centred on an iris, so it cannot be restored. Please retake it with one eye filling the frame.',
     // shots the engine blocked (api/analyze.py quality.blocked + block_reason): no work ticket, so never a way
