@@ -343,6 +343,25 @@ check("it costs well under half a second at 1024 px (no model call)", ms < 500, 
 en = read("api/enhance.py")
 check("/api/enhance re-colours every restoration after its chroma and pupil locks, on the crop the model was given",
       en.count("out = L.lid_recolour(out, base, r_frac)") == 2)
+# a half-open eye (2026-11-27, the live v-mwylfr7z): an upper and a lower lid, over a fifth of the disc together
+two_im, rho2, th2 = painted(eye0, lambda r, t: (np.maximum(soft(r - 0.84) * soft(t - 250.0, 4.0) * soft(290.0 - t, 4.0), soft(r - 0.66) * soft(t - 40.0, 4.0) * soft(140.0 - t, 4.0)), (198, 160, 150)))
+w_two, pct_two = L.lid_cap_mask(two_im)
+fixed_two = L.lid_recolour(two_im, two_im)
+A2, B2 = ycc(two_im), ycc(fixed_two)
+cap_up, cap_dn = (rho2 > 0.88) & (rho2 < 0.97) & (th2 > 256) & (th2 < 284), (rho2 > 0.74) & (rho2 < 0.97) & (th2 > 52) & (th2 < 128)
+ref2 = np.median(E0[(rho > 0.70) & (rho < 0.97) & ((th < 15) | (th > 345) | ((th > 165) & (th < 195)))][:, 1:], 0)
+dist = lambda Z, m_: float(np.median(np.hypot(*(Z[m_][:, 1:] - ref2).T)))
+was_max = L.LIDC_MAX_PCT
+L.LIDC_MAX_PCT = 20.0
+try:
+    w_old, pct_old = L.lid_cap_mask(two_im)
+    same_old = L.lid_recolour(two_im, two_im) is two_im
+finally:
+    L.LIDC_MAX_PCT = was_max
+check("a half-open eye, an upper and a lower lid over %.1f percent of the disc together: both caps take the iris's chroma (the distance to it falls to a third or less on each: %.1f to %.1f, %.1f to %.1f); "
+      "with the bound of 20 percent it had until 2026-11-27 the same eye was left with its lids' colour" % (pct_two, dist(A2, cap_up), dist(B2, cap_up), dist(A2, cap_dn), dist(B2, cap_dn)),
+      w_two is not None and 20.0 < pct_two <= L.LIDC_MAX_PCT == 35.0 and fixed_two is not two_im and dist(B2, cap_up) <= dist(A2, cap_up) / 3.0 and dist(B2, cap_dn) <= dist(A2, cap_dn) / 3.0
+      and w_old is None and abs(pct_old - pct_two) < 0.01 and same_old, (round(pct_two, 2), w_old is None, same_old))
 
 # ============================================================================================ 6. the colour and level under a reflection the deglare left (2026-11-26)
 section("6  iris.glare_recolour: a reflection left in the render takes the iris's colour and level, light tissue and the lid stay")

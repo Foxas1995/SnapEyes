@@ -3537,9 +3537,14 @@ LIDC_CENTRE = 45.0               # ...and the middle of its run within this many
 LIDC_ARC_MIN = 12.0              # a cap spans at least this many degrees at the rim (a fleck of pigment at the rim is shorter)
 LIDC_DEPTH_FRAC = 0.6            # a cap angle reaches in to the innermost radius from which this share of the cells out to the rim are lid
 LIDC_GROW = 0.03                 # the mask then reaches this much further in (the lid margin's soft edge)
-LIDC_MAX_PCT = 20.0              # a lid over this share of the disc (percent; the lid itself, not the lashes under it) is left alone: no thin lid. The
-                                 # same bound as lidcap.CAP_PCT; the live eye that asked for this reads 15.6 with its lower sliver, and analyze refuses
-                                 # a lid wedge of 11 percent by its own measure (EYELID_BLOCK_PCT), so what reaches here is what it let through
+LIDC_MAX_PCT = 35.0              # a lid over this share of the disc (percent; the lid itself, not the lashes under it) is left alone: no thin lid. The
+                                 # live eye that asked for this reads 15.6 with its lower sliver, and analyze refuses a lid wedge of 11 percent by its
+                                 # own measure (EYELID_BLOCK_PCT), so what reaches here is what it let through. 20.0 (lidcap.CAP_PCT's bound) until
+                                 # 2026-11-27: a half-open eye of that day (v-mwylfr7z, an upper and a lower lid, 22.7 together; coverage.lid_cover
+                                 # read 0.0, its sclera veto took the pale lid skin beside the rim for the white of the eye) was let through and kept
+                                 # both lids' pink as red bands of fibres top and bottom (the owner: "the eye not fully open and the colours are bad
+                                 # again"). Whatever analyze lets through must not keep the lid's colour; the caps lie within LIDC_AXIS of the
+                                 # vertical, so the sides always hold the iris the colour is read from
 LIDC_FEATHER = 2.0               # soft edge, px at LIDC_SIDE
 # the second round (2026-11-26, the owner's four places on v-mwxvtun2 after the first): the cap's ends, the lashes and shadow under it, the rim
 LIDC_ENDS = (0.2, 40.0)          # a cap run goes on round the rim while at least this share of the outer or rim band is skin (and the angles further in

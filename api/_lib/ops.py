@@ -732,26 +732,36 @@ def act_feedback_delete(body, who):
 
 
 KEPT_SIGN = 3600             # the links of the page Peržiūros: an hour (ten minutes until 2026-11-26: a page left open showed broken pictures)
-KEPT_PAGE = 12               # visits in one reply of that page
+KEPT_PAGE = 12               # visits in one reply of that page...
+KEPT_PAGE_MAX = 25           # ...or as many as the page asks for (limit), at most this (the page shows 100 by asking four times: 12 visits take about 5 s)
 
 
 def a_kept(body, who):
-    """The page Peržiūros: the kept copies of the free preview (api/_lib/keep.py, 30 days): {day (YYYY-MM-DD, default the newest), offset}. Returns the
-    days that have copies, and KEPT_PAGE visits of the day (newest visit names first), each with its steps in time order: the step, the time, what
+    """The page Peržiūros: the kept copies of the free preview (api/_lib/keep.py, 30 days): {day (YYYY-MM-DD, default the newest; "all": every day
+    together, the newest day first: the owner, 2026-11-27, of a day's list that ended after four visits), offset, limit (default KEPT_PAGE, at most
+    KEPT_PAGE_MAX)}. Returns the
+    days that have copies, and that many visits (newest visit names first; each says its day), each with its steps in time order: the step, the time, what
     the server said (the outcome and its codes, the anonymous context; none when the step broke off) and links to its pictures valid KEPT_SIGN seconds, and
     area (keep.status: the area's size against the cap, today's visits against their ceiling, and which of them holds keeping back). Read only."""
     from . import keep as KP
     all_days = KP.days()
-    day = body.get("day") if isinstance(body.get("day"), str) and body.get("day") in all_days else (all_days[0] if all_days else None)
+    every = body.get("day") == "all" and bool(all_days)
+    day = "all" if every else body.get("day") if isinstance(body.get("day"), str) and body.get("day") in all_days else (all_days[0] if all_days else None)
     off = body.get("offset")
     off = off if isinstance(off, int) and not isinstance(off, bool) and off >= 0 else 0
+    lim = body.get("limit")
+    lim = min(lim, KEPT_PAGE_MAX) if isinstance(lim, int) and not isinstance(lim, bool) and lim >= 1 else KEPT_PAGE
     area = KP.status()          # the kept area's size against its cap and today's visits against their ceiling: the owner sees when to raise them
     if day is None:
         return {"ok": True, "on": KP.on(), "keep_days": KP.KEEP_DAYS, "days": [], "day": None, "visits": [], "total": 0, "offset": 0, "more": False, "area": area}
-    names = sorted(KP.visits(day), reverse=True)
-    page = names[off:off + KEPT_PAGE]
+    if every:                   # (day, visit) of every day: the newest day first, in it the newest visit names first
+        per = each([lambda d=d: [(d, v) for v in KP.visits(d)] for d in all_days], width=8)
+        names = sorted([p for lst in per if isinstance(lst, list) for p in lst], reverse=True)
+    else:
+        names = [(day, v) for v in sorted(KP.visits(day), reverse=True)]
+    page = names[off:off + lim]
 
-    def one(visit):
+    def one(day, visit):
         files = KP.visit_files(day, visit)
         steps, order = {}, []
         for f in files:
@@ -780,11 +790,11 @@ def a_kept(body, who):
             s.pop("meta_path", None)
             s["pictures"] = {p: u for p, u in s["pictures"].items() if isinstance(u, str) and not u.startswith(f"{KP.TOP}/")}
             out.append(s)
-        return {"visit": visit, "steps": out}
+        return {"visit": visit, "day": day, "steps": out}
 
-    rows = [r for r in each([lambda v=v: one(v) for v in page], width=4) if isinstance(r, dict)]
+    rows = [r for r in each([lambda p=p: one(*p) for p in page], width=4) if isinstance(r, dict)]
     return {"ok": True, "on": KP.on(), "keep_days": KP.KEEP_DAYS, "days": all_days, "day": day, "visits": rows, "total": len(names), "offset": off,
-            "more": off + KEPT_PAGE < len(names), "sign_seconds": KEPT_SIGN, "area": area}
+            "more": off + lim < len(names), "limit": lim, "sign_seconds": KEPT_SIGN, "area": area}
 
 
 def _kept_meta(s):

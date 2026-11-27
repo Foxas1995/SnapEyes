@@ -3,7 +3,7 @@
 // (the numbers measured and the anonymous context), the page drawn with a visit, and the photo step's visit (src/shared/visit.ts: random, per page load, never
 // stored). Pure page code, loaded through Vite's module runner by scripts/run_ts_tests.mjs; returns its results.
 import { readFileSync } from 'node:fs';
-import { areaText, attemptsOf, codesText, contextText, missingText, outcomeText, stepTime, type KeptStep } from '../../src/admin/Previews';
+import { KEPT_ALL, KEPT_CHUNK, KEPT_SHOWN, areaText, attemptsOf, chunkOffsets, codesText, contextText, missingText, outcomeText, shownText, stepTime, type KeptStep } from '../../src/admin/Previews';
 import { checkoutLegal } from '../../src/shared/legal';
 import { TAB_GROUPS } from '../../src/admin/AdminApp';
 import { VISIT } from '../../src/shared/visit';
@@ -70,5 +70,15 @@ export async function run(): Promise<Row[]> {
   const eu = JSON.stringify(checkoutLegal('en', 'eu').photoNotice);
   check('the line of the photo step: the US one as before (only to make the artwork: a US visitor is not kept), the EU one without only and without the 30 days', us.includes('used only to make your artwork')
     && !us.includes('30') && eu.includes('Your photo is used to make your artwork.') && !eu.includes('30') && !eu.includes('only'), `${us} | ${eu}`);
+  // every day together, 100 visits a page (the owner, 2026-11-27: the list of a day ended after four visits)
+  const src = readFileSync(new URL('../../src/admin/Previews.tsx', import.meta.url), 'utf8');
+  check('the page shows 100 visits, asked for 25 at a time from where the page starts, and its line says how many there are and which are shown, of every day or of the one chosen',
+    KEPT_SHOWN === 100 && KEPT_CHUNK === 25 && JSON.stringify(chunkOffsets(0)) === '[0,25,50,75]' && JSON.stringify(chunkOffsets(100)) === '[100,125,150,175]'
+      && shownText({ day: KEPT_ALL, total: 14, offset: 0, visits: new Array(14) }) === 'Apsilankymų iš viso: 14'
+      && shownText({ day: KEPT_ALL, total: 230, offset: 100, visits: new Array(100) }) === 'Apsilankymų iš viso: 230 (rodomi 101 iki 200)'
+      && shownText({ day: '2026-11-27', total: 4, offset: 0, visits: new Array(4) }) === 'Apsilankymų 2026-11-27: 4', shownText({ day: KEPT_ALL, total: 230, offset: 100, visits: new Array(100) }));
+  check('the page opens on every day together, asks the server for each part with its limit, stops when no more follow, and a visit is deleted and timed by its own day',
+    src.includes('useState<string>(KEPT_ALL)') && src.includes("call<KeptReply>('kept', { day, offset: off, limit: KEPT_CHUNK }") && src.includes('if (!r.data.more) break;')
+      && src.includes("'kept_delete', { day: v.day ?? data?.day") && src.includes('day={v.day ?? data.day}') && src.includes("'Visos dienos'"));
   return out;
 }

@@ -2,7 +2,7 @@
 // with every photo it sent and what the analysis said of it (accepted, or refused and why), the crop and the clean restoration, and the large previews
 // it was shown, with the codes the server computed and the anonymous context (campaign, device, browser, language, country). The links are signed for
 // ten minutes. A visit's copies can be deleted here (for a person who asks us to; audited). Kept 30 days, then the daily clean-up deletes them.
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type React from 'react';
 import type { Call } from './AdminApp';
 import { BLOCK_LT, STYLE_LT, VERDICT_LT, explain } from './format';
@@ -17,7 +17,7 @@ export interface KeptStep {
   meta_error?: boolean;
   pictures: Partial<Record<'photo' | 'before' | 'after' | 'art', string>>;
 }
-export interface KeptVisit { visit: string; steps: KeptStep[] }
+export interface KeptVisit { visit: string; day?: string; steps: KeptStep[] }
 /** The kept area against its cap and today's visits against their ceiling (api/_lib/keep.py status). */
 export interface KeptArea {
   on?: boolean; area_mb?: number; today_mb?: number; cap_mb?: number; margin_mb?: number; visits_today?: number; visits_day_max?: number;
@@ -165,8 +165,23 @@ const AttemptBlock: React.FC<{ a: KeptAttempt; day: string | null; only: boolean
   );
 };
 
+/** The page shows this many visits (the owner, 2026-11-27: "show 100 results a page, we will learn from them"), asked for KEPT_CHUNK at a time so the
+ * first ones are on the screen in seconds; every day together unless one day is chosen. */
+export const KEPT_SHOWN = 100;
+export const KEPT_CHUNK = 25;
+export const KEPT_ALL = 'all';
+
+/** The requests of one page: the offsets of its chunks, in order. */
+export const chunkOffsets = (offset: number): number[] => Array.from({ length: Math.ceil(KEPT_SHOWN / KEPT_CHUNK) }, (_, i) => offset + i * KEPT_CHUNK);
+
+/** The line above the list: how many visits there are and which of them are shown. */
+export function shownText(d: { day: string | null; total: number; offset: number; visits: unknown[] }): string {
+  const head = d.day === KEPT_ALL ? 'Apsilankymų iš viso' : `Apsilankymų ${d.day}`;
+  return d.total > d.visits.length ? `${head}: ${d.total} (rodomi ${d.offset + 1} iki ${d.offset + d.visits.length})` : `${head}: ${d.total}`;
+}
+
 export const PreviewsPage: React.FC<{ call: Call }> = ({ call }) => {
-  const [day, setDay] = useState<string | null>(null);
+  const [day, setDay] = useState<string>(KEPT_ALL);
   const [offset, setOffset] = useState(0);
   const [data, setData] = useState<KeptReply | null>(null);
   const [err, setErr] = useState('');
@@ -174,20 +189,29 @@ export const PreviewsPage: React.FC<{ call: Call }> = ({ call }) => {
   const [confirm, setConfirm] = useState<ConfirmSpec | null>(null);
   const [msg, setMsg] = useState<{ tone: 'good' | 'bad'; text: string } | null>(null);
 
+  const turn = useRef(0);      // a newer load (another day, another page, Atnaujinti) ends the one still asking for its chunks
   const load = useCallback(async () => {
+    const mine = ++turn.current;
     setBusy(true); setErr('');
-    const r = await call<KeptReply>('kept', { ...(day ? { day } : {}), offset }, 60_000);
+    let got: KeptReply | null = null;
+    for (const off of chunkOffsets(offset)) {
+      const r = await call<KeptReply>('kept', { day, offset: off, limit: KEPT_CHUNK }, 60_000);
+      if (mine !== turn.current) return;
+      if (!r.ok || !r.data) { setErr(r.error || explain(r)); break; }
+      got = got ? { ...r.data, offset: got.offset, visits: [...got.visits, ...r.data.visits] } : r.data;
+      setData(got);
+      if (!r.data.more) break;
+    }
     setBusy(false);
-    if (r.ok && r.data) setData(r.data); else setErr(r.error || explain(r));
   }, [call, day, offset]);
   useEffect(() => { void load(); }, [load]);
 
   const remove = (v: KeptVisit) => setConfirm({
-    title: 'Ištrinti šio apsilankymo peržiūras?', text: `${data?.day ?? ''}, ${v.visit}: visos nuotraukos, rezultatai ir įrašai dings visiems laikams. Taip daroma, kai žmogus paprašo ištrinti.`,
+    title: 'Ištrinti šio apsilankymo peržiūras?', text: `${v.day ?? data?.day ?? ''}, ${v.visit}: visos nuotraukos, rezultatai ir įrašai dings visiems laikams. Taip daroma, kai žmogus paprašo ištrinti.`,
     confirmLabel: 'Ištrinti', danger: true,
     run: async () => {
       setMsg(null);
-      const r = await call<{ result?: string; deleted?: number }>('kept_delete', { day: data?.day, visit: v.visit, confirm: v.visit });
+      const r = await call<{ result?: string; deleted?: number }>('kept_delete', { day: v.day ?? data?.day, visit: v.visit, confirm: v.visit });
       if (r.ok) { setMsg({ tone: 'good', text: `Ištrinta: ${r.data?.deleted ?? 0} failų.` }); void load(); } else setMsg({ tone: 'bad', text: r.error || explain(r) });
     },
   });
@@ -207,32 +231,32 @@ export const PreviewsPage: React.FC<{ call: Call }> = ({ call }) => {
       {msg && <Notice tone={msg.tone}>{msg.text}</Notice>}
       {data && data.days.length > 0 && (
         <div className="flex flex-wrap gap-1.5" role="group" aria-label="Diena">
-          {data.days.map((d) => (
-            <button key={d} type="button" aria-pressed={d === data.day} onClick={() => { setDay(d); setOffset(0); }}
-              className={`px-2.5 py-1 rounded-lg text-xs border ${d === data.day ? 'bg-white/15 border-white/30' : 'border-white/10 text-white/70'}`}>{d}</button>
+          {[KEPT_ALL, ...data.days].map((d) => (
+            <button key={d} type="button" aria-pressed={d === data.day} onClick={() => { setDay(d); setOffset(0); }} data-testid={`kept-day-${d}`}
+              className={`px-2.5 py-1 rounded-lg text-xs border ${d === data.day ? 'bg-white/15 border-white/30' : 'border-white/10 text-white/70'}`}>{d === KEPT_ALL ? 'Visos dienos' : d}</button>
           ))}
         </div>
       )}
       {busy && !data && <Spinner />}
       {data && data.days.length === 0 && <p className={`text-sm ${MUTED}`}>Dar nėra išsaugotų peržiūrų.</p>}
       {data && data.day && (
-        <p className="text-sm">Apsilankymų {data.day}: <b>{data.total}</b>{data.total > data.visits.length ? ` (rodomi ${data.offset + 1} iki ${data.offset + data.visits.length})` : ''}</p>
+        <div className="text-sm flex items-center gap-2" data-testid="kept-shown"><span>{shownText(data)}</span>{busy && <Spinner />}</div>
       )}
       {data?.visits.map((v) => (
-        <section key={v.visit} className={`${CARD} flex flex-col gap-2`} data-testid="kept-visit">
+        <section key={`${v.day ?? ''}/${v.visit}`} className={`${CARD} flex flex-col gap-2`} data-testid="kept-visit">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <h3 className="text-sm font-bold font-mono break-all">{v.visit}</h3>
+            <h3 className="text-sm font-bold font-mono break-all">{data.day === KEPT_ALL && v.day ? <span className={`font-sans font-normal ${MUTED}`}>{v.day} </span> : null}{v.visit}</h3>
             <button type="button" className={`${DANGER} !min-h-[32px] !px-2`} onClick={() => remove(v)}>Ištrinti</button>
           </div>
           {(() => { const at = attemptsOf(v.steps); return at.map((a, i) => (
-            <div key={`${a.n}-${a.time}`} className={i > 0 ? 'border-t border-white/10 pt-3' : ''}><AttemptBlock a={a} day={data.day} only={at.length === 1} /></div>
+            <div key={`${a.n}-${a.time}`} className={i > 0 ? 'border-t border-white/10 pt-3' : ''}><AttemptBlock a={a} day={v.day ?? data.day} only={at.length === 1} /></div>
           )); })()}
         </section>
       ))}
       {data && (data.offset > 0 || data.more) && (
         <div className="flex gap-2">
-          <button type="button" className={BTN} disabled={busy || data.offset === 0} onClick={() => setOffset(Math.max(0, data.offset - 12))}>Ankstesni</button>
-          <button type="button" className={BTN} disabled={busy || !data.more} onClick={() => setOffset(data.offset + 12)}>Kiti</button>
+          <button type="button" className={BTN} disabled={busy || data.offset === 0} onClick={() => setOffset(Math.max(0, data.offset - KEPT_SHOWN))}>Ankstesni {KEPT_SHOWN}</button>
+          <button type="button" className={BTN} disabled={busy || !data.more} onClick={() => setOffset(data.offset + KEPT_SHOWN)}>Kiti {KEPT_SHOWN}</button>
         </div>
       )}
       <ConfirmDialog spec={confirm} onClose={() => setConfirm(null)} />

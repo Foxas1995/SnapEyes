@@ -394,6 +394,18 @@ ar = va.get("area") or {}
 check("the page's line about the area: its size, the cap (500 MB), today's size and visits against the ceiling (100), and what holds keeping back (none here)",
       isinstance(ar.get("area_mb"), (int, float)) and ar.get("cap_mb") == 500 and ar.get("visits_day_max") == 100 and isinstance(ar.get("visits_today"), int)
       and ar.get("held") is None and ar.get("margin_mb") == 200, ar)
+# every day together, the page's 100 visits asked for in parts (the owner, 2026-11-27)
+call_, vall = admin("kept", day="all", limit=999)
+rows_all = [(v.get("day"), v["visit"]) for v in vall.get("visits") or []]
+c1_, v1_ = admin("kept", day="all", limit=1)
+c2_, v2_ = admin("kept", day="all", limit=1, offset=1)
+check("the view of every day together (day all): each visit says its day, the newest day and in it the newest visit first, the visit of this run among them; limit is the page's own "
+      "(999 is cut to 25, 1 gives one visit and says whether more follow, offset moves on by visits) and without it a reply holds 12 as before",
+      call_ == 200 and vall.get("day") == "all" and vall.get("limit") == 25 and rows_all == sorted(rows_all, reverse=True) and (day, f"v-{VISIT}") in rows_all
+      and all(d in vall.get("days", []) for d, _v in rows_all) and vall.get("total", 0) >= va.get("total", 0) >= 1 and len(rows_all) == min(25, vall["total"])
+      and c1_ == 200 and v1_.get("limit") == 1 and len(v1_.get("visits") or []) == 1 and v1_.get("more") is (vall["total"] > 1) and (v1_["visits"][0].get("day"), v1_["visits"][0]["visit"]) == rows_all[0]
+      and c2_ == 200 and (vall["total"] < 2 or (v2_["visits"][0].get("day"), v2_["visits"][0]["visit"]) == rows_all[1]) and va.get("limit") == 12 and vis.get("day") == day,
+      (call_, vall.get("day"), vall.get("limit"), vall.get("total"), rows_all[:3], v1_.get("more"), va.get("limit")))
 cn, jn = admin("kept", key=False, day=day)
 check("without the admin key: refused", cn in (401, 403), (cn, jn))
 cd1, jd1 = admin("kept_delete", day=day, visit=f"v-{VISIT}", confirm="no")
