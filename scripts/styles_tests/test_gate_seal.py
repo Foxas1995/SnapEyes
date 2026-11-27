@@ -906,8 +906,21 @@ check("... a preview lifted past what the studio look does (L* %+.1f) and a prev
       rec_wild["qa"]["ok"] is False and r_wild["needs_review"] is True and r_swap["needs_review"] is True and rec_swap["qa"]["ok"] is False, (rec_wild["qa"], rec_swap["qa"]))
 callers = {f: [ln for ln in open(os.path.join(REPO, *f.split("/")), encoding="utf-8").read().splitlines() if "colour_qa(" in ln and "tone=" in ln]
            for f in ("api/master_eye.py", "api/enhance.py", "api/compose.py", "api/master_compose.py", "api/_lib/styles/steps.py")}
-check("only master_eye asks for the tone rule, and only for a master made from a preview (tone=pv is not None): the preview of /api/enhance, the compose steps and the art step read the colour as before",
-      len(callers["api/master_eye.py"]) == 1 and "tone=pv is not None" in callers["api/master_eye.py"][0] and not any(callers[f] for f in callers if f != "api/master_eye.py"), callers)
+check("master_eye asks for the tone rule only for a master made from a preview (tone=pv is not None), and the preview of /api/enhance asks for it with its own tighter colour limit "
+      "(2026-11-27: its failure is the page's colour warning, which the lightness of the studio look alone must not raise); the compose steps and the art step read the colour as before",
+      len(callers["api/master_eye.py"]) == 1 and "tone=pv is not None" in callers["api/master_eye.py"][0]
+      and len(callers["api/enhance.py"]) == 1 and "tone=True, hue_max=L.QA_PREVIEW_HUE_MAX" in callers["api/enhance.py"][0]
+      and not any(callers[f] for f in callers if f not in ("api/master_eye.py", "api/enhance.py")), callers)
+q_pv_lift = L.colour_qa("t", result=lift_img, source=base_img, r_frac=RF, tone=True, hue_max=L.QA_PREVIEW_HUE_MAX)
+q_pv_wild = L.colour_qa("t", result=wild_img, source=base_img, r_frac=RF, tone=True, hue_max=L.QA_PREVIEW_HUE_MAX)
+q_pv_swap = L.colour_qa("t", result=swap_img, source=base_img, r_frac=RF, tone=True, hue_max=L.QA_PREVIEW_HUE_MAX)
+with mock.patch.object(L, "QA_PREVIEW_HUE_MAX", n_lift[1] / 2.0):
+    q_pv_tight = L.colour_qa("t", result=lift_img, source=base_img, r_frac=RF, tone=True, hue_max=L.QA_PREVIEW_HUE_MAX)
+check("the preview's colour check (the page's warning): a tone lifted by the studio look alone (colour-only %.1f, L* %+.1f) is ok, a tone lifted past it and a colour that moved are not, "
+      "and the colour limit is the preview's own (%.1f, under the full limit %.1f): a colour past it fails where the master's rule would pass"
+      % (n_lift[1], n_lift[2], L.QA_PREVIEW_HUE_MAX, L.QA_RING_DE00_MAX),
+      L.QA_PREVIEW_HUE_MAX < L.QA_RING_DE00_MAX and n_lift[1] < L.QA_PREVIEW_HUE_MAX and q_pv_lift["ok"] is True and q_pv_wild["ok"] is False and q_pv_swap["ok"] is False
+      and q_pv_tight["ok"] is False and q_new["ok"] is True, (q_pv_lift, q_pv_wild, q_pv_swap, q_pv_tight))
 
 # ============================================================================================ 11. the other readers still work
 section("11. nothing else changed")

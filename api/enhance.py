@@ -129,7 +129,9 @@ def _draw(mode, base, source, r_frac, pad):
         out = PG.edge_guard(out, r_frac)         # blue light on the rim of a warm iris is a window, not the eye
     # colour QA: how far the render moved the iris colour from the deglared crop it was made from. The pupil
     # is only made neutral later, by the grade in /api/compose, so it is checked there. Logged, never blocking.
-    qa = L.colour_qa("enhance", result=out, source=source, r_frac=r_frac)
+    # Judged by the tone rule (2026-11-27): the lightness the studio look gives is not a colour that differs, and the page's warning follows this result
+    # (L.QA_PREVIEW_HUE_MAX has the measurements)
+    qa = L.colour_qa("enhance", result=out, source=source, r_frac=r_frac, tone=True, hue_max=L.QA_PREVIEW_HUE_MAX)
     # the clean restoration exactly as the page used to receive it (JPEG q93): sealed, never shown. The order's preview
     # and master_eye's preview_sha are these bytes, as before
     clean = base64.b64decode(L.pil_to_b64(out, "JPEG", 93))
@@ -288,7 +290,7 @@ def _enhance(body, box):
         res["stored"] = bool(u1 and u2)
     kp.image("after", lambda: bytes(clean))
     soft = body.get("soft") is True     # the customer went on with a soft photo the analysis refused (api/analyze.py SOFT_BY): counted, nothing else differs
-    kept = kp.done(dict({"outcome": "restored", "mode": mode, "qa_ok": bool(qa.get("ok")), "fallback": fallback, "used_sr": used_sr, "fidelity": res["fidelity"],
+    kept = kp.done(dict({"outcome": "restored", "mode": mode, "qa_ok": bool(qa.get("ok")), "qa_de": qa.get("ring_de00"), "qa_hue": qa.get("hue_de00"), "qa_dl": qa.get("dl"), "fallback": fallback, "used_sr": used_sr, "fidelity": res["fidelity"],
                          "reveal": rv["code"], "retry": (retry or {}).get("code"), "soft": soft or None}, **{k: v for k, v in _codes(prof, prof_ms).items() if k != "profile_ms"}))
     PC.mark(cap)                        # one more preview made by this connection today
     quota = PC.left(cap)                # and how many it has left: the page says so under the result (src/try/ResultView.tsx)

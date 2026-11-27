@@ -4490,6 +4490,12 @@ QA_RING_DE00_MAX = 10.0      # median ring dE00 above this = the render no longe
 # further than the studio look moves one (more than QA_TONE_DL_MAX L*: 20 against 17.0 at most on 21 of the 22 eyes, the 22nd at 30.8); a master made without a preview keeps the full limit
 # (it is the model's own second opinion of the photo, as above). SNAPEYES_QATONE=off (or 0 / false / no) restores the full limit everywhere. Read once at import.
 QA_TONE_DL_MAX = 20.0
+# The PREVIEW's own check (/api/enhance), 2026-11-27. The page shows a warning under the result when this check fails ("colours may differ slightly from your eye ... daylight or a
+# torch from the side", src/try/multi.ts colourOff), and with the full limit it failed for lightness alone: the owner's own photo taken with the torch read dE00 14.05 of which colour
+# only 0.55 and L* +15.6, so the best-lit photo there is was told to find better light; on the live site 9 of 25 previews of the week failed. The preview is now read by the tone
+# rule too, with a tighter colour limit than the master's: after chroma_lock a normally lit photo is within 0.5 to 1.3 colour-only (ten renders of 2026-09-23, the owner's two of
+# today 0.55 and 0.89), and a dark photo whose colour the lock scaled up with the model's lift read 8.27 (a visitor of 2026-11-26), which is a colour that may really differ.
+QA_PREVIEW_HUE_MAX = 5.0
 QA_TONE_ON = (os.environ.get("SNAPEYES_QATONE") or "on").strip().lstrip("\ufeff").lower() not in ("off", "0", "false", "no")
 # SNAPEYES_GATE2 (DG6 step 2a, 2026-10-13): the three added detectors of the lid rule of the restoration gate (api/_lib/styles/gate.py lid_extra: lid_colour_wedge, lid_lash_lines,
 # lid_ring_structure). PREPARED, OFF BY DEFAULT: unset, empty, off, 0, false and no are off; on, 1, yes or true turns them on. Read once at import (BOM safe). It is read here and not in
@@ -4610,19 +4616,20 @@ def pupil_neutral(graded, fill=None, trim=None):
     c = pupil_core_chroma(graded, fill, trim)
     return None if c is None else bool(abs(c[1]) <= PUPIL_NEUTRAL_MAX and abs(c[2]) <= PUPIL_NEUTRAL_MAX)
 
-def colour_qa(stage, result=None, source=None, r_frac=None, graded=None, tone=False):
+def colour_qa(stage, result=None, source=None, r_frac=None, graded=None, tone=False, hue_max=None):
     """Colour QA for one stage of the chain: logged and returned, never raised and never blocking, because
     there are no orders to hold yet. ok is true only when something was measured and nothing measured failed.
     tone: the result is a master made from the approved preview (QA_TONE_*): the lightness the studio look gave it is not held
     against the photo, only a colour that moved or a tone that moved further than that look does; the record then also says
-    the two numbers it was judged on (hue_de00, dl)."""
+    the two numbers it was judged on (hue_de00, dl). hue_max: the colour-only limit of that rule when it is not the full limit's
+    (the preview: QA_PREVIEW_HUE_MAX)."""
     try:
         de, note, colour_ok, extra = None, "", None, {}
         if result is not None and source is not None:
             de, hue_only, dl = qa_colour(result, source, r_frac, parts=True)
             note += f" colour-only dE00 {hue_only:.2f} lightness shift {dl:+.1f}"
             if tone and QA_TONE_ON:
-                colour_ok = hue_only <= QA_RING_DE00_MAX and abs(dl) <= QA_TONE_DL_MAX
+                colour_ok = hue_only <= (QA_RING_DE00_MAX if hue_max is None else hue_max) and abs(dl) <= QA_TONE_DL_MAX
                 extra = {"hue_de00": round(hue_only, 2), "dl": round(dl, 2)}
             else:
                 colour_ok = de <= QA_RING_DE00_MAX
