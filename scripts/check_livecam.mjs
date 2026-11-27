@@ -92,7 +92,7 @@ try {
     const hint = await page.eval("document.querySelector('[data-testid=live-camera]').textContent");
     ok('burst', ready && /^vv \d+\/\d+ in \d+ sc \d+ . video \d+x\d+ . zoom/.test(facts) && hint.includes('Laikykite akį apskritime'), `the view is ready, shows the hint and the camera's facts: "${facts}"`);
     const before = await page.eval("(document.querySelector('[data-testid=live-burst]') || {}).textContent || ''");
-    ok('burst', before === 'Padarysime 4 kadrus. Nejudėkite.', `before the tap the second line says how many pictures one tap takes: "${before}"`);
+    ok('burst', before === 'Padarysime 4 kadrus. Nejudėkite iki signalo.', `before the tap the second line says how many pictures one tap takes: "${before}"`);
     const clicksBefore = (await j(page, 'window.__clicks')).length;
     await tap(page, 'live-shutter');
     // what the person sees during the burst, sampled until the view closes: the count, the shutter, the "Done"
