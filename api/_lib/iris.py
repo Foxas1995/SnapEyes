@@ -3443,6 +3443,60 @@ def chroma_lock(ai, src, blur=1.6, amount=1.0, r_frac=None):
     return Image.merge("YCbCr", (y, cb, cr)).convert("RGB")
 
 
+# ---- how much lighter than the photo the restoration may be (the owner, 2026-11-27, looking at his own eye before and after: "the colour looks
+# quite different to me too, customers who see such changes will not buy", and of the rule: "a darker photo needs more lightening, a light one
+# may be lightened only a little, we have to learn to tell which it is"). chroma_lock keeps the photo's colour, but the model also lights the
+# iris as a studio would, and the same colour on a lighter iris reads paler: his torch photo's ring went from luma 113 to 153 (L* 48.9 to 64.4,
+# colour-only dE00 0.55). How much the model lifts follows no rule: of two photos of his eye with the same ring (luma 113) one came back 1.34
+# and one 1.20 times lighter, his older 215120 (135) and the site's sample (101) not at all, his dark 215208 (73) 1.47 and 215102 (89) 1.74
+# times. tone_hold reads how light the PHOTO's ring is and allows a lift by that: up to a common level for a dark photo (TONE_HOLD_LEVEL), a
+# little for a photo that is light enough already (TONE_HOLD_LIFT); both numbers are the picture he chose (the lift of his torch photo taken
+# half way back: 1.17, ring luma 132). A restoration lifted more than allowed has the share of its lift above the fibre scale that takes its
+# ring to the allowed one taken out, everywhere by the same share, so the model's light keeps its shape and the fibres their contrast (a
+# ratio); the photo's own dark (the pupil, the black round the disc) is never touched. A restoration within the allowance comes back as the
+# very object it was given. The paid master takes the tone of its preview (preview_lock), so it follows without a step of its own.
+TONE_HOLD_ON = (os.environ.get("SNAPEYES_TONEHOLD") or "on").strip().lstrip("\ufeff").strip().lower() not in ("off", "0", "false", "no")
+TONE_HOLD_SIGMA = 16 / 1024     # the lift is read above this scale (a share of the side: 16 px on a 1024 render), the fibres are finer
+TONE_HOLD_RING = (0.45, 0.90)   # the iris ring that is measured (QA_RING)
+TONE_HOLD_LEVEL = 130.0         # a photo's ring may be lifted to this luma...
+TONE_HOLD_LIFT = 1.17           # ...or by this factor, whichever is more
+TONE_HOLD_DARK = (20.0, 45.0)   # photo luma (low-passed) where nothing is held / all of it: the pupil keeps the render's own level
+TONE_HOLD_SLACK = 0.02          # a ring lift this much over the allowance is left alone
+
+
+def tone_hold(out, src, r_frac=None, parts=False):
+    """out with its brightness above the fibre scale held to what the photo src allows (the text above). parts=True: (image, note), the note
+    {"ring": the photo ring's luma, "lift": the render's ring lift, "allowed": the lift allowed, "held": the share of the lift taken out, 0 when
+    nothing was done}."""
+    if src.size != out.size:
+        src = src.resize(out.size, Image.LANCZOS)
+    r_frac = r_frac or iris_radius_frac()
+    y, cb, cr = out.convert("YCbCr").split()
+    Y = np.asarray(y).astype(np.float32)
+    Ys = np.asarray(src.convert("YCbCr").split()[0]).astype(np.float32)
+    n = Y.shape[0]
+    sig = max(1.0, n * TONE_HOLD_SIGMA)
+    lo_s = _blur_f(Ys, sig)
+    lift = (_blur_f(Y, sig) + 4.0) / (lo_s + 4.0)
+    yy, xx = np.mgrid[0:n, 0:Y.shape[1]]
+    rr = np.sqrt((xx - Y.shape[1] / 2 + 0.5) ** 2 + (yy - n / 2 + 0.5) ** 2) / (r_frac * n)
+    ring = (rr > TONE_HOLD_RING[0]) & (rr < TONE_HOLD_RING[1])
+    level, got = float(np.median(lo_s[ring])), float(np.median(lift[ring]))
+    allowed = max(TONE_HOLD_LIFT, (TONE_HOLD_LEVEL + 4.0) / (level + 4.0))
+    note = {"ring": round(level, 1), "lift": round(got, 3), "allowed": round(allowed, 3), "held": 0.0}
+    if not TONE_HOLD_ON or got <= allowed + TONE_HOLD_SLACK:
+        return (out, note) if parts else out
+    held = 1.0 - (allowed - 1.0) / (got - 1.0)
+    d0, d1 = TONE_HOLD_DARK
+    keep = np.clip((lo_s - d0) / max(d1 - d0, 1e-3), 0.0, 1.0)
+    target = 1.0 + (np.maximum(lift, 1.0) - 1.0) * (1.0 - held * keep)
+    g = np.where(lift > 1.0, target / lift, 1.0)
+    y2 = Image.fromarray(np.clip(Y * g, 0, 255).astype(np.uint8))
+    res = Image.merge("YCbCr", (y2, cb, cr)).convert("RGB")
+    note["held"] = round(held, 3)
+    return (res, note) if parts else res
+
+
 # ---- the colour under a thin lid (the owner, 2026-11-26, looking at a paid visitor's before and after: "where the lid covers a little, the place has
 # to be made in the iris's own colour, not the lid's"). A thin lid as light as the iris passes /api/deglare unfilled (lid_mask needs a margin and
 # lidcap.py did not find this cap), the model draws iris fibres over it, and chroma_lock puts the photo's colour back there, which is the lid's skin:

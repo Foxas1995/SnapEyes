@@ -921,6 +921,35 @@ check("the preview's colour check (the page's warning): a tone lifted by the stu
       % (n_lift[1], n_lift[2], L.QA_PREVIEW_HUE_MAX, L.QA_RING_DE00_MAX),
       L.QA_PREVIEW_HUE_MAX < L.QA_RING_DE00_MAX and n_lift[1] < L.QA_PREVIEW_HUE_MAX and q_pv_lift["ok"] is True and q_pv_wild["ok"] is False and q_pv_swap["ok"] is False
       and q_pv_tight["ok"] is False and q_new["ok"] is True, (q_pv_lift, q_pv_wild, q_pv_swap, q_pv_tight))
+# how much lighter than the photo the restoration may be (2026-11-27, L.tone_hold): the same lifted render over the sample photo and over a darker photo
+held_img, held_note = L.tone_hold(lift_img, base_img, RF, parts=True)
+again_img, again_note = L.tone_hold(held_img, base_img, RF, parts=True)
+dark_img = Image.fromarray(np.clip((np.asarray(base_img, np.float32) / 255.0) ** 1.5 * 255.0 + 0.5, 0, 255).astype(np.uint8))
+dark_out, dark_note = L.tone_hold(base_img, dark_img, RF, parts=True)
+with mock.patch.object(L, "TONE_HOLD_ON", False):
+    off_out = L.tone_hold(lift_img, base_img, RF)
+_n = held_img.size[0]
+_yy, _xx = np.mgrid[0:_n, 0:_n]
+_core = np.hypot(_xx - _n / 2 + 0.5, _yy - _n / 2 + 0.5) / (RF * _n) < 0.12
+_y = lambda im: np.asarray(im.convert("YCbCr").split()[0], np.float32)
+core_move = float(np.abs(_y(held_img) - _y(lift_img))[_core].max())
+n_held = L.qa_colour(held_img, base_img, RF, parts=True)
+check("tone_hold: a render lifted %.2f times over a photo whose ring (luma %.0f) allows %.2f has %.0f percent of its lift taken out and reads the allowed lift after (%.2f; L* %+.1f against %+.1f, "
+      "colour-only dE00 %.1f), its pupil core as it was (luma moved by %.1f at most); a darker photo (ring %.0f) is allowed more (%.2f) and its render lifted %.2f times comes back the very object, "
+      "as do a render that was not lifted and any render with the switch off"
+      % (held_note["lift"], held_note["ring"], held_note["allowed"], 100 * held_note["held"], again_note["lift"], n_held[2], n_lift[2], n_held[1], core_move, dark_note["ring"], dark_note["allowed"], dark_note["lift"]),
+      held_img is not lift_img and 0.2 < held_note["held"] < 1.0 and held_note["lift"] > held_note["allowed"] + L.TONE_HOLD_SLACK and abs(again_note["lift"] - held_note["allowed"]) < 0.03
+      and again_img is held_img and again_note["held"] == 0.0 and 0.0 < n_held[2] < n_lift[2] - 3.0 and n_held[1] < L.QA_PREVIEW_HUE_MAX and core_move <= 2.0
+      and dark_note["ring"] < held_note["ring"] and dark_note["allowed"] > held_note["allowed"] >= L.TONE_HOLD_LIFT and dark_note["lift"] > held_note["allowed"] and dark_out is base_img
+      and dark_note["held"] == 0.0 and L.tone_hold(base_img, base_img, RF) is base_img and off_out is lift_img, (held_note, again_note, dark_note, n_held, core_move))
+enh_src = open(os.path.join(REPO, "api", "enhance.py"), encoding="utf-8").read()
+hold_callers = {f: open(os.path.join(REPO, *f.split("/")), encoding="utf-8").read().count("tone_hold(")
+                for f in ("api/enhance.py", "api/master_eye.py", "api/compose.py", "api/master_compose.py", "api/_lib/styles/steps.py", "api/_lib/preview.py")}
+check("/api/enhance holds the tone once, as the last step of a restoration: after the pupil repairs, before the colour check and the sealed JPEG, never on the photo given back as a fallback; "
+      "the note is kept with the preview; no other step calls it (the paid master takes its preview's tone)",
+      hold_callers == {"api/enhance.py": 1, "api/master_eye.py": 0, "api/compose.py": 0, "api/master_compose.py": 0, "api/_lib/styles/steps.py": 0, "api/_lib/preview.py": 0}
+      and enh_src.index("PG.edge_guard(") < enh_src.index("if not fallback:\n        out, tone = L.tone_hold(out, base, r_frac, parts=True)".replace("\n", "\r\n" if "\r\n" in enh_src else "\n"))
+      < enh_src.index("qa = L.colour_qa(\"enhance\"") < enh_src.index("clean = base64.b64decode(L.pil_to_b64(out") and '"tone": tone' in enh_src, hold_callers)
 
 # ============================================================================================ 11. the other readers still work
 section("11. nothing else changed")

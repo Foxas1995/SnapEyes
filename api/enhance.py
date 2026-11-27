@@ -93,7 +93,7 @@ RETRY_MIN_LEFT = 32.0        # seconds left in the invocation (after the first p
                              # of safety. The budget is 52 s and the p90 of a whole enhance about 17 s: a retry starts unless the first draw took over 20 s
 RETRY_CLEAR = 0.8            # when both fail, the second is kept only when its severity is at most this share of the first's
 
-Draw = collections.namedtuple("Draw", "out clean prof ms fid fallback qa")   # one restoration, from the model call to the measured profile
+Draw = collections.namedtuple("Draw", "out clean prof ms fid fallback qa tone", defaults=(None,))   # one restoration, from the model call to the measured profile (tone: the note of L.tone_hold, None when it did not run)
 
 
 def _draw(mode, base, source, r_frac, pad):
@@ -127,6 +127,11 @@ def _draw(mode, base, source, r_frac, pad):
         out = PG.tone_guard(out, base, r_frac)   # a pupil the model drew grey goes back to the photo's dark
         out = PS.seal(out, raw, base, r_frac)    # a smooth halo round a pupil drawn too small; a blue-grey zone on a photo that is black there
         out = PG.edge_guard(out, r_frac)         # blue light on the rim of a warm iris is a window, not the eye
+    # how much lighter than the photo it may be, by how light the photo is (2026-11-27): the last step, so every repair above reads the render it was
+    # made for. The note goes into the kept copy's JSON
+    tone = None
+    if not fallback:
+        out, tone = L.tone_hold(out, base, r_frac, parts=True)
     # colour QA: how far the render moved the iris colour from the deglared crop it was made from. The pupil
     # is only made neutral later, by the grade in /api/compose, so it is checked there. Logged, never blocking.
     # Judged by the tone rule (2026-11-27): the lightness the studio look gives is not a colour that differs, and the page's warning follows this result
@@ -136,7 +141,7 @@ def _draw(mode, base, source, r_frac, pad):
     # and master_eye's preview_sha are these bytes, as before
     clean = base64.b64decode(L.pil_to_b64(out, "JPEG", 93))
     prof, prof_ms = _measure(clean, pad)
-    return Draw(out, clean, prof, prof_ms, fid, fallback, qa)
+    return Draw(out, clean, prof, prof_ms, fid, fallback, qa, tone)
 
 
 def _failing(prof):
@@ -268,7 +273,7 @@ def _enhance(body, box):
     draw, retry = _draw(mode, base, source, r_frac, pad), {}
     if RETRY_ON and draw.prof is not None and _failing(draw.prof) & set(RETRY_RULES):
         draw, retry = _retry(draw, mode, base, source, r_frac, pad)
-    out, clean, prof, prof_ms, fid, fallback, qa = draw
+    out, clean, prof, prof_ms, fid, fallback, qa, tone = draw
     rv = REV.reveal_for(source, out, pad=pad)    # the Reveal's numbers (about 0.5 s) and the display copy as the Reveal shows it, its watermark on this padding's iris disc; {"params": None} when unmeasured
     prot = P.protect(out, clean, profile=prof)
     if rv["image"] is not None:
@@ -290,7 +295,7 @@ def _enhance(body, box):
         res["stored"] = bool(u1 and u2)
     kp.image("after", lambda: bytes(clean))
     soft = body.get("soft") is True     # the customer went on with a soft photo the analysis refused (api/analyze.py SOFT_BY): counted, nothing else differs
-    kept = kp.done(dict({"outcome": "restored", "mode": mode, "qa_ok": bool(qa.get("ok")), "qa_de": qa.get("ring_de00"), "qa_hue": qa.get("hue_de00"), "qa_dl": qa.get("dl"), "fallback": fallback, "used_sr": used_sr, "fidelity": res["fidelity"],
+    kept = kp.done(dict({"outcome": "restored", "mode": mode, "qa_ok": bool(qa.get("ok")), "qa_de": qa.get("ring_de00"), "qa_hue": qa.get("hue_de00"), "qa_dl": qa.get("dl"), "tone": tone, "fallback": fallback, "used_sr": used_sr, "fidelity": res["fidelity"],
                          "reveal": rv["code"], "retry": (retry or {}).get("code"), "soft": soft or None}, **{k: v for k, v in _codes(prof, prof_ms).items() if k != "profile_ms"}))
     PC.mark(cap)                        # one more preview made by this connection today
     quota = PC.left(cap)                # and how many it has left: the page says so under the result (src/try/ResultView.tsx)
